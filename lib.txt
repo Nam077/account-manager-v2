@@ -1,0 +1,1 @@
+yarn add @nestjs/swagger @nestjs/config @nestjs/jwt @nestjs/passport @nestjs/typeorm class-transformer class-validator passport passport-jwt typeorm
