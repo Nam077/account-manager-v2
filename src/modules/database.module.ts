@@ -5,16 +5,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    TypeOrmModule.forRootAsync({
-      name: 'default',
-      useClass: MainConfigServiceService,
-    }),
-    UserModule,
-  ],
-  providers: [MainConfigServiceService],
+    imports: [
+        ConfigModule.forRoot({
+            isGlobal: true,
+        }),
+        TypeOrmModule.forRootAsync({
+            name: 'default',
+            useClass: MainConfigServiceService,
+        }),
+        UserModule,
+    ],
+    providers: [MainConfigServiceService],
 })
 export class DatabaseModule {}

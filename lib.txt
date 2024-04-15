@@ -5,6 +5,8 @@
 --- config
 --- passport and jwt
 --- logger
+--- bcrypt
 
 ## Installation
-yarn add class-validator class-transformer @nestjs/swagger @nestjs/typeorm typeorm mysql2 @nestjs/config passport passport-jwt @nestjs/passport winston
+yarn add class-validator class-transformer @nestjs/swagger @nestjs/typeorm typeorm mysql2 @nestjs/config passport passport-jwt @nestjs/passport winston bcryptjs
+yarn add @types/bcrypt @types/passport-jwt @types/winston -D
