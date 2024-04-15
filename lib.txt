@@ -1,1 +1,10 @@
-yarn add @nestjs/swagger @nestjs/config @nestjs/jwt @nestjs/passport @nestjs/typeorm class-transformer class-validator passport passport-jwt typeorm
+--- lib for nestjs 
+--- validator
+--- swagger
+--- typeorm for mysql
+--- config
+--- passport and jwt
+--- logger
+
+## Installation
+yarn add class-validator class-transformer @nestjs/swagger @nestjs/typeorm typeorm mysql2 @nestjs/config passport passport-jwt @nestjs/passport winston
