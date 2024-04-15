@@ -2,7 +2,7 @@ import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { ApiResponse } from 'src/interface/api-response.interface';
+import { ApiResponse } from 'src/interfaces/api-response.interface';
 
 /**
  * Parameters for finding data with pagination and search.

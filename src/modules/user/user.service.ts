@@ -17,7 +17,7 @@ import { findWithPaginationAndSearch } from 'src/helper/pagination';
 import { updateEntity } from 'src/helper/update';
 import { CrudService } from 'src/interfaces/crud.interface';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-
+import BycryptService from 'src/helper/hash';
 @Injectable()
 export class UserService
     implements

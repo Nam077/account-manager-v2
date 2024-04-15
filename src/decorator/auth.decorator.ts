@@ -1,6 +1,5 @@
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
-import { map, Observable, of } from 'rxjs';
-import { User } from 'src/modules/entities/user.entity';
+import { of } from 'rxjs';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const ROLE_KEY = 'role';

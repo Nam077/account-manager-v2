@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Observable, from, map, of, switchMap, catchError, throwError } from 'rxjs';
-import { ApiResponse } from 'src/interface/api-response.interface';
+import { ApiResponse } from 'src/interfaces/api-response.interface';
 import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
 
 export function updateEntity<T extends { id: string }>(
