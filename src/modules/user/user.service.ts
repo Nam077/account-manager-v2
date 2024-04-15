@@ -1,6 +1,7 @@
 import {
     BadRequestException,
     ConflictException,
+    ForbiddenException,
     HttpException,
     HttpStatus,
     Injectable,
@@ -10,7 +11,7 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FindAllDto } from 'src/dto/find-all.dto';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { Observable, catchError, from, map, of, switchMap, tap, throwError, forkJoin } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
@@ -21,6 +22,7 @@ import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interfac
 import BycryptService from 'src/helper/hash';
 import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
 import { LoginDto } from '../auth/dto/login.dto';
+import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 @Injectable()
 export class UserService
     implements
@@ -33,7 +35,10 @@ export class UserService
             User
         >
 {
-    constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+    constructor(
+        @InjectRepository(User) private readonly userRepository: Repository<User>,
+        private readonly caslAbilityFactory: CaslAbilityFactory,
+    ) {}
 
     checkExistByEmail(email: string): Observable<boolean> {
         return from(this.userRepository.existsBy({ email }));
@@ -41,6 +46,15 @@ export class UserService
 
     create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User>> {
         const { email, name, password, role } = createDto;
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, User)) {
+            throw new ForbiddenException('You are not allowed to create user');
+        }
+        if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+            if (!ability.can(Action.AddAdmin, User)) {
+                throw new ForbiddenException('You are not allowed to add admin');
+            }
+        }
         return from(this.checkExistByEmail(email)).pipe(
             switchMap((isExist) => {
                 if (isExist) {

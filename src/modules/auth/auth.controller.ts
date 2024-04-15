@@ -7,7 +7,6 @@ import { Details } from 'express-useragent';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthJwtGuard } from './guard/auth-jwt.guard';
 import { GetCurrentUser } from 'src/decorator/auth.decorator';
-import { User } from '../user/entities/user.entity';
 @ApiTags('Auth')
 @ApiBearerAuth()
 @Controller('auth')
@@ -20,7 +19,7 @@ export class AuthController {
 
     @Get('profile')
     @UseGuards(AuthJwtGuard)
-    profile(@GetCurrentUser() user: User) {
-        return user;
+    profile(@GetCurrentUser('id') id: string) {
+        return id;
     }
 }
