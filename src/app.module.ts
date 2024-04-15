@@ -4,6 +4,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './modules/database/database.module';
 import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CaslModule } from './modules/casl/casl.module';
 
 @Module({
     imports: [
@@ -13,6 +15,8 @@ import { UserModule } from './modules/user/user.module';
         }),
         DatabaseModule,
         UserModule,
+        AuthModule,
+        CaslModule,
     ],
     controllers: [AppController],
     providers: [AppService],

@@ -5,6 +5,7 @@ import {
     HttpStatus,
     Injectable,
     NotFoundException,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -18,6 +19,8 @@ import { updateEntity } from 'src/helper/update';
 import { CrudService } from 'src/interfaces/crud.interface';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 import BycryptService from 'src/helper/hash';
+import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
+import { LoginDto } from '../auth/dto/login.dto';
 @Injectable()
 export class UserService
     implements
@@ -146,6 +149,33 @@ export class UserService
         return from(
             this.userRepository.findOne({
                 where: { id },
+            }),
+        );
+    }
+    validateUser(payload: JwtPayload): Observable<User> {
+        return from(this.userRepository.findOne({ where: { id: payload.sub } }));
+    }
+
+    login(loginDto: LoginDto) {
+        return from(
+            this.userRepository.findOne({
+                where: { email: loginDto.email },
+                select: { password: true, email: true, id: true },
+            }),
+        ).pipe(
+            switchMap((user) => {
+                if (!user) {
+                    throw new UnauthorizedException('Invalid credentials');
+                }
+                return BycryptService.compare(loginDto.password, user.password).pipe(
+                    switchMap((isMatch) => {
+                        if (!isMatch) {
+                            throw new UnauthorizedException('Invalid credentials');
+                        }
+                        delete user.password;
+                        return of(user);
+                    }),
+                );
             }),
         );
     }
