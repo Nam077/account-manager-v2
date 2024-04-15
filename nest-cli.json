@@ -6,7 +6,7 @@
     "deleteOutDir": true
   },
   "generateOptions": {
-    "spec": false,
-    "flat": true
+    "spec": false
+    
   }
 }

@@ -8,16 +8,15 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiResponse, PaginatedData } from 'src/interface/api-response.interface';
 import { FindAllDto } from 'src/dto/find-all.dto';
 import { User } from './entities/user.entity';
-import { CrudService } from 'src/interface/crud.interface';
 import { Observable, catchError, from, map, of, switchMap, tap, throwError, forkJoin } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
-import BycryptService from 'src/helper/hash.util';
 import { findWithPaginationAndSearch } from 'src/helper/pagination';
 import { updateEntity } from 'src/helper/update';
+import { CrudService } from 'src/interfaces/crud.interface';
+import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 
 @Injectable()
 export class UserService
