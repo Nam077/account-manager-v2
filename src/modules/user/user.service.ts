@@ -75,6 +75,10 @@ export class UserService
         );
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<User>>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.ReadAll, User)) {
+            throw new ForbiddenException('You are not allowed to read user');
+        }
         const fields = ['id', 'name', 'email', 'role'];
         return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields);
     }
@@ -89,6 +93,7 @@ export class UserService
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
+                const ability = this.caslAbilityFactory.createForUser(currentUser);
                 return { success: true, data: user };
             }),
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
@@ -100,6 +105,10 @@ export class UserService
             switchMap((user) => {
                 if (!user) {
                     return throwError(() => new NotFoundException('User not found'));
+                }
+                const ability = this.caslAbilityFactory.createForUser(currentUser);
+                if (!ability.can(Action.Update, user)) {
+                    throw new ForbiddenException('You are not allowed to update user');
                 }
                 const tasks: Observable<any>[] = [];
                 if (updateDto.email && updateDto.email !== user.email) {
@@ -129,8 +138,12 @@ export class UserService
     }
 
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
         return from(this.userRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
             switchMap((user) => {
+                if (!ability.can(Action.Delete, user)) {
+                    throw new ForbiddenException('You are not allowed to remove user');
+                }
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
@@ -145,6 +158,10 @@ export class UserService
     }
 
     restore(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User>>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, User)) {
+            throw new ForbiddenException('You are not allowed to restore user');
+        }
         return from(this.userRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((user) => {
                 if (!user) {

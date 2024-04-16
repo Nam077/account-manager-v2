@@ -35,6 +35,15 @@ export class UserController {
         return this.userService.update(user, id, updateUserDto);
     }
 
+    @Patch('restore/:id')
+    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.userService.restore(user, id);
+    }
+    @Delete('hard-delete/:id')
+    hardRemove(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.userService.remove(user, id, true);
+    }
+
     @Delete(':id')
     remove(@GetCurrentUser() user: User, @Param('id') id: string) {
         return this.userService.remove(user, id);

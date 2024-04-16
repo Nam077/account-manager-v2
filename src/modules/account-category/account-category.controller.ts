@@ -1,34 +1,56 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { AccountCategoryService } from './account-category.service';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
+import { GetCurrentUser } from 'src/decorator/auth.decorator';
+import { User } from '../user/entities/user.entity';
+import { FindAllDto } from 'src/dto/find-all.dto';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
 
 @Controller('account-category')
+@ApiTags('Account Category')
+@ApiBearerAuth()
+@UseGuards(AuthJwtGuard)
 export class AccountCategoryController {
-  constructor(private readonly accountCategoryService: AccountCategoryService) {}
+    constructor(private readonly accountCategoryService: AccountCategoryService) {}
 
-  @Post()
-  create(@Body() createAccountCategoryDto: CreateAccountCategoryDto) {
-    return this.accountCategoryService.create(createAccountCategoryDto);
-  }
+    @Post()
+    create(@GetCurrentUser() user: User, @Body() createAccountCategoryDto: CreateAccountCategoryDto) {
+        return this.accountCategoryService.create(user, createAccountCategoryDto);
+    }
 
-  @Get()
-  findAll() {
-    return this.accountCategoryService.findAll();
-  }
+    @Get()
+    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllDto) {
+        return this.accountCategoryService.findAll(user, findAllDto);
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.accountCategoryService.findOne(+id);
-  }
+    @Get(':id')
+    findOne(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.accountCategoryService.findOne(user, id);
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAccountCategoryDto: UpdateAccountCategoryDto) {
-    return this.accountCategoryService.update(+id, updateAccountCategoryDto);
-  }
+    @Patch('restore/:id')
+    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.accountCategoryService.restore(user, id);
+    }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.accountCategoryService.remove(+id);
-  }
+    @Patch(':id')
+    update(
+        @GetCurrentUser() user: User,
+        @Param('id') id: string,
+        @Body() updateAccountCategoryDto: UpdateAccountCategoryDto,
+    ) {
+        return this.accountCategoryService.update(user, id, updateAccountCategoryDto);
+    }
+
+    @Delete('hard-delete/:id')
+    hardRemove(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.accountCategoryService.remove(user, id, true);
+    }
+
+    @Delete(':id')
+    remove(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.accountCategoryService.remove(user, id);
+    }
 }
