@@ -6,6 +6,7 @@ import { DatabaseModule } from './modules/database/database.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CaslModule } from './modules/casl/casl.module';
+import { AccountCategoryModule } from './modules/account-category/account-category.module';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { CaslModule } from './modules/casl/casl.module';
         UserModule,
         AuthModule,
         CaslModule,
+        AccountCategoryModule,
     ],
     controllers: [AppController],
     providers: [AppService],
