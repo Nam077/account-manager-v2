@@ -1,4 +1,5 @@
 import { AccountCategory } from 'src/modules/account-category/entities/account-category.entity';
+import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
 import {
     Entity,
     Column,
@@ -8,6 +9,7 @@ import {
     DeleteDateColumn,
     ManyToOne,
     JoinColumn,
+    OneToMany,
 } from 'typeorm';
 @Entity({ name: 'accounts' })
 export class Account {
@@ -50,4 +52,7 @@ export class Account {
     @ManyToOne(() => AccountCategory, (accountCategory) => accountCategory.accounts)
     @JoinColumn({ name: 'account_category_id' })
     accountCategory: AccountCategory;
+
+    @OneToMany(() => AdminAccount, (adminAccount) => adminAccount.account)
+    adminAccounts: AdminAccount[];
 }

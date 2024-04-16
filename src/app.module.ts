@@ -10,6 +10,7 @@ import { AccountCategoryModule } from './modules/account-category/account-catego
 import { RouterModule } from '@nestjs/core';
 import { AccountModule } from './modules/account/account.module';
 import { NextFunction } from 'express';
+import { AdminAccountModule } from './modules/admin-account/admin-account.module';
 
 @Module({
     imports: [
@@ -47,6 +48,7 @@ import { NextFunction } from 'express';
             },
         ]),
         AccountModule,
+        AdminAccountModule,
     ],
     controllers: [AppController],
     providers: [AppService],
