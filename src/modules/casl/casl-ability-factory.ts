@@ -3,6 +3,8 @@ import { User, UserRole } from '../user/entities/user.entity';
 import { Injectable } from '@nestjs/common';
 import { AccountCategory } from '../account-category/entities/account-category.entity';
 import { Account } from '../account/entities/account.entity';
+import { AdminAccount } from '../admin-account/entities/admin-account.entity';
+import { Customer } from '../customer/entities/customer.entity';
 export enum Action {
     ReadAll = 'readAll',
     Manage = 'manage',
@@ -15,7 +17,9 @@ export enum Action {
     AddAdmin = 'addAdmin',
 }
 
-export type Subjects = InferSubjects<typeof User | typeof AccountCategory | typeof Account | 'all'>;
+export type Subjects = InferSubjects<
+    typeof User | typeof AccountCategory | typeof Account | typeof AdminAccount | typeof Customer | 'all'
+>;
 type AppAbility = MongoAbility<[Action, Subjects]>;
 
 @Injectable()

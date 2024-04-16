@@ -17,7 +17,7 @@ export class AdminAccount {
     @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Email of the account' })
     email: string;
 
-    @Column({ type: 'text', nullable: false, comment: 'value of the account' })
+    @Column({ type: 'text', nullable: true, comment: 'Value of the account' })
     value: string;
 
     @CreateDateColumn({

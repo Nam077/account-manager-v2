@@ -29,11 +29,20 @@ export class AccountController {
         return this.accountService.findOne(user, id);
     }
 
+    @Patch('restore/:id')
+    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.accountService.restore(user, id);
+    }
+
     @Patch(':id')
     update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateAccountDto: UpdateAccountDto) {
         return this.accountService.update(user, id, updateAccountDto);
     }
 
+    @Delete('hard-delete/:id')
+    hardRemove(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.accountService.remove(user, id, true);
+    }
     @Delete(':id')
     remove(@GetCurrentUser() user: User, @Param('id') id: string) {
         return this.accountService.remove(user, id);

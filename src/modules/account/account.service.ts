@@ -6,18 +6,12 @@ import { Account } from './entities/account.entity';
 import { FindAllDto } from 'src/dto/find-all.dto';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 import { User } from '../user/entities/user.entity';
-import { Observable, forkJoin, from, map, of, switchMap, tap, throwError } from 'rxjs';
+import { Observable, catchError, forkJoin, from, map, of, switchMap, tap, throwError } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { AccountCategoryService } from '../account-category/account-category.service';
-import {
-    HttpException,
-    ForbiddenException,
-    NotFoundException,
-    BadRequestException,
-    ConflictException,
-} from '@nestjs/common';
+import { ForbiddenException, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { slugifyString } from 'src/helper/slug';
 import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
 import { updateEntity } from 'src/helper/update';
@@ -76,6 +70,7 @@ export class AccountService
                             }),
                         );
                     }),
+                    catchError((error) => throwError(() => new BadRequestException(error.message))),
                 );
             }),
         );
@@ -169,17 +164,31 @@ export class AccountService
         if (!ability.can(Action.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to delete account');
         }
-        return from(this.accountRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
+        return from(
+            this.accountRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: {
+                    adminAccounts: !hardRemove,
+                },
+            }),
+        ).pipe(
             switchMap((account) => {
                 if (!account) {
                     throw new NotFoundException('Account not found');
                 }
                 if (hardRemove) {
+                    if (!account.deletedAt) {
+                        throw new BadRequestException('Account not deleted yet');
+                    }
                     return from(this.accountRepository.remove(account)).pipe(
                         map((): ApiResponse<Account> => {
                             return { message: 'Account deleted successfully' };
                         }),
                     );
+                }
+                if (account.adminAccounts) {
+                    throw new BadRequestException('Account has admin account');
                 }
                 return from(this.accountRepository.softRemove(account)).pipe(
                     map((): ApiResponse<Account> => {

@@ -3,6 +3,7 @@ import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiResponse } from 'src/interfaces/api-response.interface';
+import { log } from 'console';
 
 /**
  * Parameters for finding data with pagination and search.
@@ -42,7 +43,13 @@ function addRelationsToQueryBuilder<T>(
     tableName: string,
     relations?: string[],
 ): void {
+    relations = relations.filter((relation) => {
+        if (relation !== '' && relation !== null) {
+            return relation;
+        }
+    });
     if (relations) {
+        log('relations', relations);
         relations.forEach((relation) => {
             let entityAlias: string;
             let relationName: string;
@@ -54,6 +61,7 @@ function addRelationsToQueryBuilder<T>(
             }
             queryBuilder.leftJoinAndSelect(`${entityAlias}.${relationName}`, relationName);
         });
+    } else {
     }
 }
 
@@ -115,11 +123,14 @@ export function findWithPaginationAndSearch<T>(
                     const method = index === 0 ? 'where' : 'orWhere';
                     qb[method](`LOWER(${nameTable}.${field}) LIKE :query`, { query: lowercaseQuery });
                 });
-                searchFieldsInRelations.forEach(({ tableName, fields }) => {
-                    fields.forEach((field) => {
-                        qb.orWhere(`LOWER(${tableName}.${field}) LIKE :query`, { query: lowercaseQuery });
+
+                if (searchFieldsInRelations) {
+                    searchFieldsInRelations.forEach(({ tableName, fields }) => {
+                        fields.forEach((field) => {
+                            qb.orWhere(`LOWER(${tableName}.${field}) LIKE :query`, { query: lowercaseQuery });
+                        });
                     });
-                });
+                }
             }),
         );
     }
@@ -129,10 +140,10 @@ export function findWithPaginationAndSearch<T>(
     const pageNew = Math.max(page, 1);
     const limitNew = limit > 0 ? limit : 10;
     queryBuilder.skip((pageNew - 1) * limitNew).take(limitNew);
-
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);
     }
+    console.log(queryBuilder.getQuery());
 
     return from(queryBuilder.getManyAndCount()).pipe(
         map(([data, total]) => {

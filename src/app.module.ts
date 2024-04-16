@@ -11,6 +11,7 @@ import { RouterModule } from '@nestjs/core';
 import { AccountModule } from './modules/account/account.module';
 import { NextFunction } from 'express';
 import { AdminAccountModule } from './modules/admin-account/admin-account.module';
+import { CustomerModule } from './modules/customer/customer.module';
 
 @Module({
     imports: [
@@ -44,11 +45,20 @@ import { AdminAccountModule } from './modules/admin-account/admin-account.module
                         path: '/',
                         module: AccountModule,
                     },
+                    {
+                        path: '/',
+                        module: AdminAccountModule,
+                    },
+                    {
+                        path: '/',
+                        module: CustomerModule,
+                    },
                 ],
             },
         ]),
         AccountModule,
         AdminAccountModule,
+        CustomerModule,
     ],
     controllers: [AppController],
     providers: [AppService],

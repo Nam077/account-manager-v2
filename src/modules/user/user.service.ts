@@ -93,7 +93,6 @@ export class UserService
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
-                const ability = this.caslAbilityFactory.createForUser(currentUser);
                 return { success: true, data: user };
             }),
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
