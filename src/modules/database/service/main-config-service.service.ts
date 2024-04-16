@@ -19,7 +19,7 @@ export class MainConfigServiceService implements TypeOrmOptionsFactory {
             database: this.configService.get<string>('DB_DATABASE'),
             entities: [User, AccountCategory, Account, AdminAccount, Customer],
             synchronize: true,
-            logging: true,
+            // logging: true,
         };
     }
 }

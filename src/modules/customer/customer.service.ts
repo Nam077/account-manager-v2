@@ -13,11 +13,12 @@ import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interfac
 import { Customer } from './entities/customer.entity';
 import { FindAllDto } from 'src/dto/find-all.dto';
 import { User } from '../user/entities/user.entity';
-import { Observable, from, map, switchMap } from 'rxjs';
+import { Observable, from, map, of, switchMap } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
+import { updateEntity } from 'src/helper/update';
 @Injectable()
 export class CustomerService
     implements
@@ -110,12 +111,32 @@ export class CustomerService
     findOneData(id: string): Observable<Customer> {
         return from(this.customerRepository.findOne({ where: { id } }));
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateCustomerDto,
-    ): Observable<ApiResponse<Customer | PaginatedData<Customer>>> {
-        throw new Error('Method not implemented.');
+    update(currentUser: User, id: string, updateDto: UpdateCustomerDto): Observable<ApiResponse<Customer>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, Customer)) {
+            throw new ForbiddenException('You are not allowed to update customer');
+        }
+        const updateData: DeepPartial<Customer> = { ...updateDto };
+        return from(this.findOneData(id)).pipe(
+            switchMap((customer) => {
+                if (!customer) {
+                    throw new NotFoundException('Customer not found');
+                }
+                if (updateDto.email && updateDto.email !== customer.email) {
+                    return from(this.checkExitsByEmail(updateDto.email)).pipe(
+                        switchMap((isExist) => {
+                            if (isExist) {
+                                throw new ConflictException('Email already exists');
+                            }
+                            return of(customer);
+                        }),
+                    );
+                } else return of(customer);
+            }),
+            switchMap((customer) => {
+                return updateEntity<Customer>(this.customerRepository, customer, updateData);
+            }),
+        );
     }
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Customer>> {
         return from(this.customerRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(

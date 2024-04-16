@@ -12,6 +12,7 @@ import { AccountModule } from './modules/account/account.module';
 import { NextFunction } from 'express';
 import { AdminAccountModule } from './modules/admin-account/admin-account.module';
 import { CustomerModule } from './modules/customer/customer.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
     imports: [
@@ -59,6 +60,7 @@ import { CustomerModule } from './modules/customer/customer.module';
         AccountModule,
         AdminAccountModule,
         CustomerModule,
+        EmailModule,
     ],
     controllers: [AppController],
     providers: [AppService],
