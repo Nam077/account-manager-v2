@@ -13,7 +13,10 @@ async function bootstrap() {
         .setDescription('Project for account management')
         .setVersion('1.0')
         .addTag('account-management')
-        .addBearerAuth()
+        .addBearerAuth({
+            type: 'http',
+            scheme: 'bearer',
+        })
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);

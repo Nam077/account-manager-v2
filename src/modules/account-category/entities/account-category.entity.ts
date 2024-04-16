@@ -1,4 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { Account } from 'src/modules/account/entities/account.entity';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+    DeleteDateColumn,
+    OneToMany,
+} from 'typeorm';
 @Entity({ name: 'account_categories' })
 export class AccountCategory {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account category table' })
@@ -27,4 +36,7 @@ export class AccountCategory {
         comment: 'Date and time when the account category was deleted',
     })
     deletedAt: Date;
+
+    @OneToMany(() => Account, (account) => account.accountCategory)
+    accounts: Account[];
 }

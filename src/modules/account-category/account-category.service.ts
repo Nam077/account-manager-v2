@@ -131,7 +131,13 @@ export class AccountCategoryService
         if (!ability.can(Action.Manage, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to delete account category');
         }
-        return from(this.accountCategoryRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
+        return from(
+            this.accountCategoryRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: { accounts: !hardRemove },
+            }),
+        ).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
                     throw new NotFoundException('Account category not found');
@@ -145,6 +151,9 @@ export class AccountCategoryService
                             message: 'Account category deleted',
                         })),
                     );
+                }
+                if (accountCategory.accounts) {
+                    throw new HttpException('Account category has accounts', HttpStatus.BAD_REQUEST);
                 }
                 return from(this.accountCategoryRepository.softRemove(accountCategory)).pipe(
                     map(() => ({
@@ -164,9 +173,13 @@ export class AccountCategoryService
                 if (!accountCategory) {
                     throw new NotFoundException('Account category not found');
                 }
-                return from(this.accountCategoryRepository.restore(accountCategory)).pipe(
+                if (!accountCategory.deletedAt) {
+                    throw new HttpException('Account category not deleted', HttpStatus.BAD_REQUEST);
+                }
+                return from(this.accountCategoryRepository.restore(accountCategory.id)).pipe(
                     map(() => ({
                         message: 'Account category restored',
+                        data: accountCategory,
                     })),
                 );
             }),

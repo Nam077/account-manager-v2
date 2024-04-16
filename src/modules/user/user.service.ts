@@ -170,7 +170,7 @@ export class UserService
                 if (!user.deletedAt) {
                     throw new BadRequestException('User not deleted yet');
                 }
-                return from(this.userRepository.restore(user));
+                return from(this.userRepository.restore(user.id));
             }),
             map(() => ({ success: true, message: 'User restored' })),
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),

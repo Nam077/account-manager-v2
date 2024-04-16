@@ -1,5 +1,5 @@
 import { ConfigModule } from '@nestjs/config';
-import { Module } from '@nestjs/common';
+import { Injectable, MiddlewareConsumer, Module, NestMiddleware } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './modules/database/database.module';
@@ -8,6 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CaslModule } from './modules/casl/casl.module';
 import { AccountCategoryModule } from './modules/account-category/account-category.module';
 import { RouterModule } from '@nestjs/core';
+import { AccountModule } from './modules/account/account.module';
+import { NextFunction } from 'express';
 
 @Module({
     imports: [
@@ -37,11 +39,29 @@ import { RouterModule } from '@nestjs/core';
                         path: '/',
                         module: AccountCategoryModule,
                     },
+                    {
+                        path: '/',
+                        module: AccountModule,
+                    },
                 ],
             },
         ]),
+        AccountModule,
     ],
     controllers: [AppController],
     providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(DefaultAuthMiddleware).forRoutes('*'); // Áp dụng cho tất cả các route, hoặc chỉ định cụ thể
+    }
+}
+@Injectable()
+export class DefaultAuthMiddleware implements NestMiddleware {
+    use(req: Request, res: Response, next: NextFunction) {
+        //    set default bearer token
+        req.headers['authorization'] =
+            `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiI5NTNhMTk5NS04ZTQ5LTQ5ZmUtODk5MS1iNGM4NjBmM2QyMDgiLCJpYXQiOjE3MTMyOTczMzEsImV4cCI6MTcxNDE2MTMzMX0.FcUCAQvnWwRAOqvRbzXVLIUqEDzHnmMI0gjprJ2-ujk`;
+        next();
+    }
+}

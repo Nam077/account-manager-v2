@@ -2,6 +2,7 @@ import { createMongoAbility, AbilityBuilder, MongoAbility, InferSubjects, Extrac
 import { User, UserRole } from '../user/entities/user.entity';
 import { Injectable } from '@nestjs/common';
 import { AccountCategory } from '../account-category/entities/account-category.entity';
+import { Account } from '../account/entities/account.entity';
 export enum Action {
     ReadAll = 'readAll',
     Manage = 'manage',
@@ -14,7 +15,7 @@ export enum Action {
     AddAdmin = 'addAdmin',
 }
 
-export type Subjects = InferSubjects<typeof User | typeof AccountCategory | 'all'>;
+export type Subjects = InferSubjects<typeof User | typeof AccountCategory | typeof Account | 'all'>;
 type AppAbility = MongoAbility<[Action, Subjects]>;
 
 @Injectable()
@@ -41,7 +42,10 @@ export class CaslAbilityFactory {
             cannot(Action.Manage, AccountCategory);
             can(Action.ReadAll, AccountCategory);
             can(Action.Read, AccountCategory);
-            ///
+            /// Account
+            cannot(Action.Manage, Account);
+            can(Action.ReadAll, Account);
+            can(Action.Read, Account);
         }
         return build({
             detectSubjectType: (item) => item.constructor as ExtractSubjectType<Subjects>,
