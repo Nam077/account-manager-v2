@@ -74,7 +74,7 @@ export class AccountCategoryService
         if (!ability.can(Action.ReadAll, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to read account category');
         }
-        const fields = ['id', 'name', 'description', 'slug'];
+        const fields: Array<keyof AccountCategory> = ['id', 'name', 'description', 'slug'];
         return findWithPaginationAndSearch<AccountCategory>(this.accountCategoryRepository, findAllDto, fields);
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {

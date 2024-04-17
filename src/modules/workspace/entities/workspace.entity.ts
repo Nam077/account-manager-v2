@@ -6,8 +6,10 @@ import {
     UpdateDateColumn,
     DeleteDateColumn,
     ManyToOne,
+    OneToMany,
 } from 'typeorm';
 import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
+import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 @Entity({ name: 'workspaces' })
 export class Workspace {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the workspace table' })
@@ -49,4 +51,7 @@ export class Workspace {
     //relations
     @ManyToOne(() => AdminAccount, (adminAccount) => adminAccount.workspaces)
     adminAccount: AdminAccount;
+
+    @OneToMany(() => WorkspaceEmail, (workspaceEmail) => workspaceEmail.workspace)
+    workspaceEmails: WorkspaceEmail[];
 }

@@ -16,6 +16,7 @@ import { EmailModule } from './modules/email/email.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { RentalTypeModule } from './modules/rental-type/rental-type.module';
 import { AccountPriceModule } from './modules/account-price/account-price.module';
+import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.module';
 
 @Module({
     imports: [
@@ -73,6 +74,10 @@ import { AccountPriceModule } from './modules/account-price/account-price.module
                         path: '/',
                         module: AccountPriceModule,
                     },
+                    {
+                        path: '/',
+                        module: WorkspaceEmailModule,
+                    },
                 ],
             },
         ]),
@@ -83,6 +88,7 @@ import { AccountPriceModule } from './modules/account-price/account-price.module
         WorkspaceModule,
         RentalTypeModule,
         AccountPriceModule,
+        WorkspaceEmailModule,
     ],
     controllers: [AppController],
     providers: [AppService],

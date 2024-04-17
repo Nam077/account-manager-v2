@@ -1,3 +1,4 @@
+import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 import { Customer } from './../../customer/entities/customer.entity';
 import {
     Entity,
@@ -8,6 +9,7 @@ import {
     DeleteDateColumn,
     JoinColumn,
     ManyToOne,
+    OneToMany,
 } from 'typeorm';
 @Entity({ name: 'emails' })
 export class Email {
@@ -53,4 +55,7 @@ export class Email {
     @ManyToOne(() => Customer, (customer) => customer.emails)
     @JoinColumn({ name: 'customer_id' })
     customer: Customer;
+
+    @OneToMany(() => WorkspaceEmail, (workspaceEmail) => workspaceEmail.email)
+    workspaceEmails: WorkspaceEmail[];
 }

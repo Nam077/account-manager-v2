@@ -76,7 +76,7 @@ const validateRelations = (searchFieldsInRelations: SearchField[], relations?: s
 export function findWithPaginationAndSearch<T>(
     repository: Repository<T>,
     findAllDto: FindAllParams,
-    fields: string[],
+    fields: Array<keyof T>,
     searchFieldsInRelations?: undefined,
     relations?: string[],
 ): Observable<ApiResponse<PaginatedData<T>>>;
@@ -102,7 +102,7 @@ export function findWithPaginationAndSearch<T>(
 export function findWithPaginationAndSearch<T>(
     repository: Repository<T>,
     findAllDto: FindAllParams,
-    fields: string[],
+    fields: Array<keyof T>,
     searchFieldsInRelations: SearchField[] = [],
     relations?: string[],
 ): Observable<ApiResponse<PaginatedData<T>>> {
@@ -121,7 +121,7 @@ export function findWithPaginationAndSearch<T>(
             new Brackets((qb) => {
                 fields.forEach((field, index) => {
                     const method = index === 0 ? 'where' : 'orWhere';
-                    qb[method](`LOWER(${nameTable}.${field}) LIKE :query`, { query: lowercaseQuery });
+                    qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, { query: lowercaseQuery });
                 });
 
                 if (searchFieldsInRelations) {

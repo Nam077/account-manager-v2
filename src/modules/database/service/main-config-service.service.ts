@@ -9,6 +9,7 @@ import { Customer } from 'src/modules/customer/entities/customer.entity';
 import { Email } from 'src/modules/email/entities/email.entity';
 import { RentalType } from 'src/modules/rental-type/entities/rental-type.entity';
 import { User } from 'src/modules/user/entities/user.entity';
+import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
 @Injectable()
 export class MainConfigServiceService implements TypeOrmOptionsFactory {
@@ -31,6 +32,7 @@ export class MainConfigServiceService implements TypeOrmOptionsFactory {
                 Workspace,
                 RentalType,
                 AccountPrice,
+                WorkspaceEmail,
             ],
             synchronize: true,
             // logging: true,

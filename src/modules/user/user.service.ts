@@ -79,7 +79,7 @@ export class UserService
         if (!ability.can(Action.ReadAll, User)) {
             throw new ForbiddenException('You are not allowed to read user');
         }
-        const fields = ['id', 'name', 'email', 'role'];
+        const fields: Array<keyof User> = ['id', 'name', 'email', 'role'];
         return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields);
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<User>> {
