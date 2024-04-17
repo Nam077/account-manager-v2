@@ -17,3 +17,6 @@ export function updateEntity<T extends { id: string }>(
         catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.BAD_REQUEST))),
     );
 }
+export interface CheckForForkJoin {
+    [key: string]: boolean;
+}

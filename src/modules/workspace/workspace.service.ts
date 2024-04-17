@@ -72,7 +72,7 @@ export class WorkspaceService
         if (!ability.can(Action.Manage, Workspace)) {
             throw new BadRequestException('You do not have permission to create workspace');
         }
-        const fields = ['id', 'description', 'maxSlots', 'adminAccountId'];
+        const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
         const realations = ['adminAccount'];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch(this.workspaceRepository, findAllDto, fields, searchFields, realations);

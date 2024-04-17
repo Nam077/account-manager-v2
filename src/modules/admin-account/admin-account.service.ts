@@ -96,7 +96,7 @@ export class AdminAccountService
         if (!ability.can(Action.ReadAll, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to read admin account');
         }
-        const fields = ['id', 'email', 'value'];
+        const fields: Array<keyof AdminAccount> = ['id', 'email', 'value'];
         const relations = ['account'];
         const searchFields: SearchField[] = [
             {

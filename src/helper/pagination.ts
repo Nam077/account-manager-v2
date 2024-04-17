@@ -84,7 +84,7 @@ export function findWithPaginationAndSearch<T>(
 export function findWithPaginationAndSearch<T>(
     repository: Repository<T>,
     findAllDto: FindAllParams,
-    fields: string[],
+    fields: Array<keyof T>,
     searchFieldsInRelations: SearchField[],
     relations: string[],
 ): Observable<ApiResponse<PaginatedData<T>>>;

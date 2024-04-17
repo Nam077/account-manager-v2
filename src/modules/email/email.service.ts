@@ -95,7 +95,7 @@ export class EmailService
                 fields: ['name', 'email'],
             },
         ];
-        const fields: string[] = ['id', 'email'];
+        const fields: Array<keyof Email> = ['id', 'email'];
         return findWithPaginationAndSearch<Email>(this.emailRepository, findAllDto, fields, searchFields, realtions);
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {

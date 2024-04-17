@@ -76,7 +76,7 @@ export class AccountService
         );
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Account>>> {
-        const fields = ['id', 'name', 'description', 'slug'];
+        const fields: Array<keyof Account> = ['id', 'name', 'description', 'slug'];
         const relations = ['accountCategory'];
         const searchRelation: SearchField[] = [
             {

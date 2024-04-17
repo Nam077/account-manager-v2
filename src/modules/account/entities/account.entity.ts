@@ -1,5 +1,6 @@
 import { AccountCategory } from 'src/modules/account-category/entities/account-category.entity';
 import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
+import { AccountPrice } from 'src/modules/account-price/entities/account-price.entity';
 import {
     Entity,
     Column,
@@ -58,4 +59,7 @@ export class Account {
 
     @OneToMany(() => AdminAccount, (adminAccount) => adminAccount.account)
     adminAccounts: AdminAccount[];
+
+    @OneToMany(() => AccountPrice, (accountPrice) => accountPrice.account)
+    accountPrices: AccountPrice[];
 }

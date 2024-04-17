@@ -89,7 +89,7 @@ export class CustomerService
         }
         const realtions = [];
         const searchFields: SearchField[] = [];
-        const fields: string[] = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
+        const fields: Array<keyof Customer> = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
         return findWithPaginationAndSearch<Customer>(
             this.customerRepository,
             findAllDto,

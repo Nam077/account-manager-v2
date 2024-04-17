@@ -1,4 +1,4 @@
-import { CaslAbilityFactory } from './../casl/casl-ability-factory';
+import { Action, CaslAbilityFactory } from './../casl/casl-ability-factory';
 import { ConflictException, HttpStatus, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
@@ -36,6 +36,10 @@ export class RentalTypeService
         return from(this.rentalTypeRepository.existsBy({ slug }));
     }
     create(currentUser: User, createDto: CreateRentalTypeDto): Observable<ApiResponse<RentalType>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Manage, RentalType)) {
+            throw new BadRequestException('You do not have permission to create rental type');
+        }
         const { name, maxSlots, description } = createDto;
         const slug = slugifyString(name);
         return from(this.checkExistBySlug(slug)).pipe(
@@ -62,7 +66,11 @@ export class RentalTypeService
         );
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<RentalType>>> {
-        const fields = ['id', 'name', 'maxSlots', 'description'];
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Manage, RentalType)) {
+            throw new BadRequestException('You do not have permission to create rental type');
+        }
+        const fields: Array<keyof RentalType> = ['id', 'name', 'maxSlots', 'description'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<RentalType>(
@@ -74,6 +82,10 @@ export class RentalTypeService
         );
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Manage, RentalType)) {
+            throw new BadRequestException('You do not have permission to create rental type');
+        }
         return from(
             this.rentalTypeRepository.findOne({
                 where: { id },
@@ -95,6 +107,10 @@ export class RentalTypeService
         return from(this.rentalTypeRepository.findOne({ where: { id } }));
     }
     update(currentUser: User, id: string, updateDto: UpdateRentalTypeDto): Observable<ApiResponse<RentalType>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Manage, RentalType)) {
+            throw new BadRequestException('You do not have permission to create rental type');
+        }
         const updateData: DeepPartial<RentalType> = { ...updateDto };
         return from(this.findOneData(id)).pipe(
             switchMap((rentalType: RentalType) => {
@@ -120,6 +136,10 @@ export class RentalTypeService
         );
     }
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<RentalType>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Manage, RentalType)) {
+            throw new BadRequestException('You do not have permission to create rental type');
+        }
         return from(
             this.rentalTypeRepository.findOne({
                 where: { id },
@@ -152,6 +172,10 @@ export class RentalTypeService
         );
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Manage, RentalType)) {
+            throw new BadRequestException('You do not have permission to create rental type');
+        }
         return from(this.rentalTypeRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((rentalType: RentalType) => {
                 if (!rentalType) {

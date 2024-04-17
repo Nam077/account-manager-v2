@@ -1,4 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { AccountPrice } from 'src/modules/account-price/entities/account-price.entity';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+    DeleteDateColumn,
+    OneToMany,
+} from 'typeorm';
 @Entity({ name: 'rental_types' })
 export class RentalType {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the rental type table' })
@@ -39,4 +48,7 @@ export class RentalType {
         name: 'deleted_at',
     })
     deletedAt: Date;
+
+    @OneToMany(() => AccountPrice, (accountPrice) => accountPrice.rentalType)
+    accountPrices: AccountPrice[];
 }

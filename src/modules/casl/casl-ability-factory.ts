@@ -7,6 +7,8 @@ import { AdminAccount } from '../admin-account/entities/admin-account.entity';
 import { Customer } from '../customer/entities/customer.entity';
 import { Email } from '../email/entities/email.entity';
 import { Workspace } from '../workspace/entities/workspace.entity';
+import { RentalType } from '../rental-type/entities/rental-type.entity';
+import { AccountPrice } from '../account-price/entities/account-price.entity';
 export enum Action {
     ReadAll = 'readAll',
     Manage = 'manage',
@@ -27,6 +29,8 @@ export type Subjects = InferSubjects<
     | typeof Customer
     | typeof Email
     | typeof Workspace
+    | typeof RentalType
+    | typeof AccountPrice
     | 'all'
 >;
 type AppAbility = MongoAbility<[Action, Subjects]>;
