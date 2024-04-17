@@ -25,16 +25,19 @@ export class Email {
     })
     @CreateDateColumn({
         comment: 'Date and time when the email was created',
+        name: 'created_at',
     })
     createdAt: Date;
 
     @UpdateDateColumn({
         comment: 'Date and time when the email was last updated',
+        name: 'updated_at',
     })
     updatedAt: Date;
 
     @DeleteDateColumn({
         comment: 'Date and time when the email was deleted',
+        name: 'deleted_at',
     })
     deletedAt: Date;
 

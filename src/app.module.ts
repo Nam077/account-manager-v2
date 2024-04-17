@@ -13,6 +13,7 @@ import { NextFunction } from 'express';
 import { AdminAccountModule } from './modules/admin-account/admin-account.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { EmailModule } from './modules/email/email.module';
+import { WorkspaceModule } from './modules/workspace/workspace.module';
 
 @Module({
     imports: [
@@ -58,6 +59,10 @@ import { EmailModule } from './modules/email/email.module';
                         path: '/',
                         module: EmailModule,
                     },
+                    {
+                        path: '/',
+                        module: WorkspaceModule,
+                    },
                 ],
             },
         ]),
@@ -65,6 +70,7 @@ import { EmailModule } from './modules/email/email.module';
         AdminAccountModule,
         CustomerModule,
         EmailModule,
+        WorkspaceModule,
     ],
     controllers: [AppController],
     providers: [AppService],

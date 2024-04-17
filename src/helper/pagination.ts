@@ -43,12 +43,12 @@ function addRelationsToQueryBuilder<T>(
     tableName: string,
     relations?: string[],
 ): void {
-    relations = relations.filter((relation) => {
-        if (relation !== '' && relation !== null) {
-            return relation;
-        }
-    });
     if (relations) {
+        relations = relations.filter((relation) => {
+            if (relation !== '' && relation !== null) {
+                return relation;
+            }
+        });
         log('relations', relations);
         relations.forEach((relation) => {
             let entityAlias: string;
@@ -143,7 +143,6 @@ export function findWithPaginationAndSearch<T>(
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);
     }
-    console.log(queryBuilder.getQuery());
 
     return from(queryBuilder.getManyAndCount()).pipe(
         map(([data, total]) => {

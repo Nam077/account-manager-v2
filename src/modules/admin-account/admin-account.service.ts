@@ -128,6 +128,9 @@ export class AdminAccountService
     findOneData(id: string): Observable<AdminAccount> {
         return from(this.adminAccountRepository.findOne({ where: { id } }));
     }
+    findOneForCreateWorkSpace(id: string): Observable<AdminAccount> {
+        return from(this.adminAccountRepository.findOne({ where: { id }, relations: { account: true } }));
+    }
     update(currentUser: User, id: string, updateDto: UpdateAdminAccountDto): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(Action.Update, AdminAccount)) {

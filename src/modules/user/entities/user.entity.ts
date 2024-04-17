@@ -23,16 +23,19 @@ export class User {
 
     @CreateDateColumn({
         comment: 'Date and time when the user was created',
+        name: 'created_at',
     })
     createdAt: Date;
 
     @UpdateDateColumn({
         comment: 'Date and time when the user was last updated',
+        name: 'updated_at',
     })
     updatedAt: Date;
 
     @DeleteDateColumn({
         comment: 'Date and time when the user was deleted',
+        name: 'deleted_at',
     })
     deletedAt: Date;
 }

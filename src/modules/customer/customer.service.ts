@@ -139,7 +139,15 @@ export class CustomerService
         );
     }
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Customer>> {
-        return from(this.customerRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
+        return from(
+            this.customerRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: {
+                    emails: !hardRemove,
+                },
+            }),
+        ).pipe(
             switchMap((customer) => {
                 if (!customer) {
                     throw new NotFoundException('Customer not found');
@@ -161,6 +169,9 @@ export class CustomerService
                             }),
                         ),
                     );
+                }
+                if (customer.emails) {
+                    throw new BadRequestException('Customer has emails');
                 }
                 return from(this.customerRepository.softRemove(customer)).pipe(
                     map(

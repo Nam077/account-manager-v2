@@ -19,7 +19,14 @@ export enum Action {
 }
 
 export type Subjects = InferSubjects<
-    typeof User | typeof AccountCategory | typeof Account | typeof AdminAccount | typeof Customer | typeof Email | 'all'
+    | typeof User
+    | typeof AccountCategory
+    | typeof Account
+    | typeof AdminAccount
+    | typeof Customer
+    | typeof Email
+    | typeof Workspace
+    | 'all'
 >;
 type AppAbility = MongoAbility<[Action, Subjects]>;
 

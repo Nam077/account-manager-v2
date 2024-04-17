@@ -27,16 +27,19 @@ export class Account {
 
     @CreateDateColumn({
         comment: 'Date and time when the account was created',
+        name: 'created_at',
     })
     createdAt: Date;
 
     @UpdateDateColumn({
         comment: 'Date and time when the account was last updated',
+        name: 'updated_at',
     })
     updatedAt: Date;
 
     @DeleteDateColumn({
         comment: 'Date and time when the account was deleted',
+        name: 'deleted_at',
     })
     deletedAt: Date;
 

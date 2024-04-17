@@ -34,12 +34,15 @@ export class Customer {
 
     @CreateDateColumn({
         comment: 'Date and time when the customer was created',
+        name: 'created_at',
     })
     @UpdateDateColumn({
         comment: 'Date and time when the customer was last updated',
+        name: 'updated_at',
     })
     @DeleteDateColumn({
         comment: 'Date and time when the customer was deleted',
+        name: 'deleted_at',
     })
     deletedAt: Date;
 
