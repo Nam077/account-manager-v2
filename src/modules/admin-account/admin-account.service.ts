@@ -180,6 +180,7 @@ export class AdminAccountService
             this.adminAccountRepository.findOne({
                 where: { id },
                 withDeleted: hardRemove,
+                relations: { workspaces: !hardRemove },
             }),
         ).pipe(
             switchMap((adminAccount) => {
@@ -202,6 +203,12 @@ export class AdminAccountService
                         ),
                     );
                 }
+                if (adminAccount.workspaces) {
+                    if (adminAccount.workspaces.length > 0) {
+                        throw new BadRequestException('Admin account has workspaces');
+                    }
+                }
+
                 return from(this.adminAccountRepository.softRemove(adminAccount)).pipe(
                     map(
                         (): ApiResponse<AdminAccount> => ({

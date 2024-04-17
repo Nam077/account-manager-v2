@@ -6,6 +6,7 @@ import { Account } from '../account/entities/account.entity';
 import { AdminAccount } from '../admin-account/entities/admin-account.entity';
 import { Customer } from '../customer/entities/customer.entity';
 import { Email } from '../email/entities/email.entity';
+import { Workspace } from '../workspace/entities/workspace.entity';
 export enum Action {
     ReadAll = 'readAll',
     Manage = 'manage',

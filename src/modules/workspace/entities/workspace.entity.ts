@@ -6,7 +6,6 @@ import {
     UpdateDateColumn,
     DeleteDateColumn,
     ManyToOne,
-    JoinColumn,
 } from 'typeorm';
 import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
 @Entity({ name: 'workspaces' })
