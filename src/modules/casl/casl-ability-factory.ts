@@ -5,6 +5,7 @@ import { AccountCategory } from '../account-category/entities/account-category.e
 import { Account } from '../account/entities/account.entity';
 import { AdminAccount } from '../admin-account/entities/admin-account.entity';
 import { Customer } from '../customer/entities/customer.entity';
+import { Email } from '../email/entities/email.entity';
 export enum Action {
     ReadAll = 'readAll',
     Manage = 'manage',
@@ -18,7 +19,7 @@ export enum Action {
 }
 
 export type Subjects = InferSubjects<
-    typeof User | typeof AccountCategory | typeof Account | typeof AdminAccount | typeof Customer | 'all'
+    typeof User | typeof AccountCategory | typeof Account | typeof AdminAccount | typeof Customer | typeof Email | 'all'
 >;
 type AppAbility = MongoAbility<[Action, Subjects]>;
 

@@ -54,6 +54,10 @@ import { EmailModule } from './modules/email/email.module';
                         path: '/',
                         module: CustomerModule,
                     },
+                    {
+                        path: '/',
+                        module: EmailModule,
+                    },
                 ],
             },
         ]),

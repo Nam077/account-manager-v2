@@ -87,7 +87,7 @@ export class CustomerService
         if (!ability.can(Action.ReadAll, Customer)) {
             throw new ForbiddenException('You are not allowed to read customer');
         }
-        const realtions = [''];
+        const realtions = [];
         const searchFields: SearchField[] = [];
         const fields: string[] = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
         return findWithPaginationAndSearch<Customer>(

@@ -1,4 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { Email } from 'src/modules/email/entities/email.entity';
+import {
+    Entity,
+    Column,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    UpdateDateColumn,
+    DeleteDateColumn,
+    OneToMany,
+} from 'typeorm';
 @Entity({ name: 'customers' })
 export class Customer {
     //id, name, email, phone, address, phone, company,description. createdAt, updatedAt, deletedAt
@@ -33,4 +42,8 @@ export class Customer {
         comment: 'Date and time when the customer was deleted',
     })
     deletedAt: Date;
+
+    // relation with email
+    @OneToMany(() => Email, (email) => email.customer)
+    emails: Email[];
 }
