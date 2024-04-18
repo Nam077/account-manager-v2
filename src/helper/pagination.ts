@@ -3,7 +3,6 @@ import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiResponse } from 'src/interfaces/api-response.interface';
-import { log } from 'console';
 
 /**
  * Parameters for finding data with pagination and search.
@@ -49,7 +48,6 @@ function addRelationsToQueryBuilder<T>(
                 return relation;
             }
         });
-        log('relations', relations);
         relations.forEach((relation) => {
             let entityAlias: string;
             let relationName: string;

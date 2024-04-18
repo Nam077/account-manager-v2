@@ -23,7 +23,7 @@ import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination'
 import { CheckForForkJoin, updateEntity } from 'src/helper/update';
 
 @Injectable()
-export class AccountPriceService
+export class AccountPriceServicez
     implements
         CrudService<
             ApiResponse<AccountPrice | AccountPrice[] | PaginatedData<AccountPrice>>,

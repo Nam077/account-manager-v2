@@ -1,12 +1,5 @@
 import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
-import {
-    BadRequestException,
-    ConflictException,
-    ForbiddenException,
-    HttpStatus,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
 import { WorkspaceEmail } from './entities/workspace-email.entity';
@@ -14,13 +7,13 @@ import { CrudService } from 'src/interfaces/crud.interface';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 import { FindAllDto } from 'src/dto/find-all.dto';
 import { User } from '../user/entities/user.entity';
-import { Observable, forkJoin, from, map, of, switchMap } from 'rxjs';
+import { Observable, forkJoin, from, map, switchMap, tap } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { EmailService } from '../email/email.service';
-import { CheckForForkJoin, updateEntity } from 'src/helper/update';
+import { updateEntity } from 'src/helper/update';
 @Injectable()
 export class WorkspaceEmailService
     implements
@@ -84,7 +77,7 @@ export class WorkspaceEmailService
             throw new BadRequestException('You do not have permission to create workspace');
         }
         const fields: Array<keyof WorkspaceEmail> = ['id', 'workspaceId', 'emailId'];
-        const realations = ['adminAccount'];
+        const realations = ['workspace', 'email'];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<WorkspaceEmail>(
             this.workspaceEmailRepository,
@@ -117,39 +110,58 @@ export class WorkspaceEmailService
                 if (!workspaceEmail) {
                     throw new NotFoundException('Workspace email not found');
                 }
-                const checkForForkJoin: CheckForForkJoin = {};
                 const tasks: Observable<any>[] = [];
                 if (updateDto.emailId && updateDto.emailId !== workspaceEmail.emailId) {
-                    tasks.push(this.emailService.findOneData(updateDto.emailId));
-                    checkForForkJoin.email = true;
-                } else tasks.push(of(null));
+                    tasks.push(
+                        this.emailService.findOneData(updateDto.emailId).pipe(
+                            tap((email) => {
+                                if (!email) {
+                                    throw new NotFoundException('Email not found');
+                                }
+                                return email;
+                            }),
+                        ),
+                    );
+                }
                 if (updateDto.workspaceId && updateDto.workspaceId !== workspaceEmail.workspaceId) {
-                    tasks.push(this.workspaceService.findOneData(updateDto.workspaceId));
-                    checkForForkJoin.workspace = true;
-                } else tasks.push(of(null));
+                    tasks.push(
+                        this.workspaceService.findOneData(updateDto.workspaceId).pipe(
+                            tap((workspace) => {
+                                if (!workspace) {
+                                    throw new NotFoundException('Workspace not found');
+                                }
+                            }),
+                        ),
+                    );
+                }
                 if (
                     (updateDto.emailId && updateDto.emailId !== workspaceEmail.emailId) ||
                     (updateDto.workspaceId && updateDto.workspaceId !== workspaceEmail.workspaceId)
                 ) {
                     const checkEmailId = updateDto.emailId || workspaceEmail.emailId;
                     const checkWorkspaceId = updateDto.workspaceId || workspaceEmail.workspaceId;
-                    tasks.push(this.checkExistByWorkspaceIdAndEmailId(checkWorkspaceId, checkEmailId));
-                    checkForForkJoin.isExist = true;
-                } else tasks.push(of(false));
-                return forkJoin(tasks).pipe(
-                    switchMap(([email, workspace, isExist]) => {
-                        if (checkForForkJoin.email && !email) {
-                            throw new NotFoundException('Email not found');
-                        }
-                        if (checkForForkJoin.workspace && !workspace) {
-                            throw new NotFoundException('Workspace not found');
-                        }
-                        if (isExist) {
-                            throw new ConflictException('Workspace email already exist');
-                        }
-                        return updateEntity<WorkspaceEmail>(this.workspaceEmailRepository, workspaceEmail, updateData);
-                    }),
-                );
+                    tasks.push(
+                        this.checkExistByWorkspaceIdAndEmailId(checkWorkspaceId, checkEmailId).pipe(
+                            tap((isExist) => {
+                                if (isExist) {
+                                    throw new ConflictException('Workspace email already exist');
+                                }
+                            }),
+                        ),
+                    );
+                }
+                if (tasks.length) {
+                    return forkJoin(tasks).pipe(
+                        switchMap(() => {
+                            return updateEntity<WorkspaceEmail>(
+                                this.workspaceEmailRepository,
+                                workspaceEmail,
+                                updateData,
+                            );
+                        }),
+                    );
+                }
+                return updateEntity<WorkspaceEmail>(this.workspaceEmailRepository, workspaceEmail, updateData);
             }),
         );
     }
