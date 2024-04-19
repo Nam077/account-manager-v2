@@ -1,7 +1,7 @@
 import {
+    BadRequestException,
     ConflictException,
     ForbiddenException,
-    HttpException,
     HttpStatus,
     Injectable,
     NotFoundException,
@@ -17,7 +17,7 @@ import { Observable, catchError, from, map, of, switchMap, throwError } from 'rx
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { slugifyString } from 'src/helper/slug';
-import { findWithPaginationAndSearch } from 'src/helper/pagination';
+import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { updateEntity } from 'src/helper/update';
 @Injectable()
@@ -25,10 +25,11 @@ export class AccountCategoryService
     implements
         CrudService<
             ApiResponse<AccountCategory | AccountCategory[] | PaginatedData<AccountCategory>>,
+            AccountCategory,
+            PaginatedData<AccountCategory>,
             CreateAccountCategoryDto,
             UpdateAccountCategoryDto,
             FindAllDto,
-            AccountCategory,
             User
         >
 {
@@ -37,17 +38,7 @@ export class AccountCategoryService
         private readonly accountCategoryRepository: Repository<AccountCategory>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
     ) {}
-    findOneBySlug(slug: string): Observable<AccountCategory> {
-        return from(this.accountCategoryRepository.findOne({ where: { slug } }));
-    }
-    checkExistBySlug(slug: string): Observable<boolean> {
-        return from(this.accountCategoryRepository.existsBy({ slug }));
-    }
-    create(currentUser: User, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Create, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to create account category');
-        }
+    createProcess(createDto: CreateAccountCategoryDto): Observable<AccountCategory> {
         const { name, description } = createDto;
         const slug = slugifyString(name);
         return from(this.checkExistBySlug(slug)).pipe(
@@ -59,14 +50,64 @@ export class AccountCategoryService
                 accountCategory.name = name;
                 accountCategory.description = description;
                 accountCategory.slug = slug;
-                return from(this.accountCategoryRepository.save(accountCategory)).pipe(
-                    map((accountCategory) => ({
-                        success: true,
-                        data: accountCategory,
-                    })),
-                );
+                return from(this.accountCategoryRepository.save(accountCategory));
             }),
-            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.BAD_REQUEST))),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    create(currentUser: User, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, AccountCategory)) {
+            throw new ForbiddenException('You are not allowed to create account category');
+        }
+        return this.createProcess(createDto).pipe(
+            map(
+                (data): ApiResponse<AccountCategory> => ({
+                    status: HttpStatus.CREATED,
+                    message: 'Account category created successfully',
+                    data,
+                }),
+            ),
+        );
+    }
+    findOneData(id: string): Observable<AccountCategory> {
+        return from(this.accountCategoryRepository.findOne({ where: { id } }));
+    }
+    findOneProcess(id: string): Observable<AccountCategory> {
+        return from(this.accountCategoryRepository.findOne({ where: { id } })).pipe(
+            map((accountCategory) => {
+                if (!accountCategory) {
+                    throw new NotFoundException('Account category not found');
+                }
+                return accountCategory;
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Read, AccountCategory)) {
+            throw new ForbiddenException('You are not allowed to read account category');
+        }
+        return this.findOneProcess(id).pipe(
+            map(
+                (data): ApiResponse<AccountCategory> => ({
+                    status: HttpStatus.OK,
+                    data,
+                }),
+            ),
+        );
+    }
+    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AccountCategory>> {
+        const fields: Array<keyof AccountCategory> = ['id', 'name', 'description', 'slug'];
+        const relations: string[] = [];
+        const searchFields: SearchField[] = [];
+        return findWithPaginationAndSearch<AccountCategory>(
+            this.accountCategoryRepository,
+            findAllDto,
+            fields,
+            searchFields,
+            relations,
         );
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
@@ -74,34 +115,85 @@ export class AccountCategoryService
         if (!ability.can(Action.ReadAll, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to read account category');
         }
-        const fields: Array<keyof AccountCategory> = ['id', 'name', 'description', 'slug'];
-        return findWithPaginationAndSearch<AccountCategory>(this.accountCategoryRepository, findAllDto, fields);
+        return this.findAllProcess(findAllDto).pipe(
+            map((data) => ({
+                status: HttpStatus.OK,
+                data,
+                message: 'Account category found',
+            })),
+        );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
-        return from(this.accountCategoryRepository.findOne({ where: { id } })).pipe(
-            map((accountCategory) => {
+    removeProcess(id: string, hardRemove?: boolean): Observable<AccountCategory> {
+        return from(
+            this.accountCategoryRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: { accounts: !hardRemove },
+            }),
+        ).pipe(
+            switchMap((accountCategory) => {
                 if (!accountCategory) {
                     throw new NotFoundException('Account category not found');
                 }
-                return {
-                    message: 'Account category found',
-                    data: accountCategory,
-                };
+                if (hardRemove) {
+                    if (!accountCategory.deletedAt) {
+                        throw new BadRequestException('Account category not deleted');
+                    }
+                    return from(this.accountCategoryRepository.remove(accountCategory));
+                }
+                if (accountCategory.accounts) {
+                    throw new BadRequestException('Account category has accounts');
+                }
+                return from(this.accountCategoryRepository.softRemove(accountCategory));
             }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    findOneData(id: string): Observable<AccountCategory> {
-        return from(this.accountCategoryRepository.findOne({ where: { id } }));
-    }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateAccountCategoryDto,
-    ): Observable<ApiResponse<AccountCategory>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to update account category');
+        if (!ability.can(Action.Delete, AccountCategory)) {
+            throw new ForbiddenException('You are not allowed to delete account category');
         }
+        return this.removeProcess(id, hardRemove).pipe(
+            map(
+                (data): ApiResponse<AccountCategory> => ({
+                    status: HttpStatus.OK,
+                    data,
+                }),
+            ),
+        );
+    }
+    restoreProcess(id: string): Observable<AccountCategory> {
+        return from(this.accountCategoryRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+            switchMap((accountCategory) => {
+                if (!accountCategory) {
+                    throw new NotFoundException('Account category not found');
+                }
+                if (!accountCategory.deletedAt) {
+                    throw new BadRequestException('Account category not deleted yet');
+                }
+                return from(this.accountCategoryRepository.restore(accountCategory.id)).pipe(
+                    map(() => accountCategory),
+                );
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    restore(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Restore, AccountCategory)) {
+            throw new ForbiddenException('You are not allowed to restore account category');
+        }
+        return this.restoreProcess(id).pipe(
+            map(
+                (data): ApiResponse<AccountCategory> => ({
+                    status: HttpStatus.OK,
+                    data,
+                }),
+            ),
+        );
+    }
+    updateProcess(id: string, updateDto: UpdateAccountCategoryDto): Observable<AccountCategory> {
         const updateData: DeepPartial<AccountCategory> = { ...updateDto };
         return from(this.findOneData(id)).pipe(
             switchMap((accountCategory) => {
@@ -126,63 +218,28 @@ export class AccountCategoryService
             }),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<AccountCategory>> {
+    update(
+        currentUser: User,
+        id: string,
+        updateDto: UpdateAccountCategoryDto,
+    ): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to delete account category');
+        if (!ability.can(Action.Update, AccountCategory)) {
+            throw new ForbiddenException('You are not allowed to update account category');
         }
-        return from(
-            this.accountCategoryRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-                relations: { accounts: !hardRemove },
-            }),
-        ).pipe(
-            switchMap((accountCategory) => {
-                if (!accountCategory) {
-                    throw new NotFoundException('Account category not found');
-                }
-                if (hardRemove) {
-                    if (!accountCategory.deletedAt) {
-                        throw new HttpException('Account category not deleted', HttpStatus.BAD_REQUEST);
-                    }
-                    return from(this.accountCategoryRepository.remove(accountCategory)).pipe(
-                        map(() => ({
-                            message: 'Account category deleted',
-                        })),
-                    );
-                }
-                if (accountCategory.accounts) {
-                    throw new HttpException('Account category has accounts', HttpStatus.BAD_REQUEST);
-                }
-                return from(this.accountCategoryRepository.softRemove(accountCategory)).pipe(
-                    map(() => ({
-                        message: 'Account category deleted',
-                    })),
-                );
-            }),
+        return this.updateProcess(id, updateDto).pipe(
+            map(
+                (data): ApiResponse<AccountCategory> => ({
+                    status: HttpStatus.OK,
+                    data,
+                }),
+            ),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to restore account category');
-        }
-        return from(this.accountCategoryRepository.findOne({ where: { id }, withDeleted: true })).pipe(
-            switchMap((accountCategory) => {
-                if (!accountCategory) {
-                    throw new NotFoundException('Account category not found');
-                }
-                if (!accountCategory.deletedAt) {
-                    throw new HttpException('Account category not deleted', HttpStatus.BAD_REQUEST);
-                }
-                return from(this.accountCategoryRepository.restore(accountCategory.id)).pipe(
-                    map(() => ({
-                        message: 'Account category restored',
-                        data: accountCategory,
-                    })),
-                );
-            }),
-        );
+    findOneBySlug(slug: string): Observable<AccountCategory> {
+        return from(this.accountCategoryRepository.findOne({ where: { slug } }));
+    }
+    checkExistBySlug(slug: string): Observable<boolean> {
+        return from(this.accountCategoryRepository.existsBy({ slug }));
     }
 }

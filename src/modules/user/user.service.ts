@@ -15,7 +15,7 @@ import { User, UserRole } from './entities/user.entity';
 import { Observable, catchError, from, map, of, switchMap, tap, throwError, forkJoin } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
-import { findWithPaginationAndSearch } from 'src/helper/pagination';
+import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
 import { updateEntity } from 'src/helper/update';
 import { CrudService } from 'src/interfaces/crud.interface';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
@@ -27,11 +27,12 @@ import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 export class UserService
     implements
         CrudService<
-            ApiResponse<User | User | PaginatedData<User>>,
+            ApiResponse<User | User[] | PaginatedData<User>>,
+            User,
+            PaginatedData<User>,
             CreateUserDto,
             UpdateUserDto,
             FindAllDto,
-            User,
             User
         >
 {
@@ -39,22 +40,8 @@ export class UserService
         @InjectRepository(User) private readonly userRepository: Repository<User>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
     ) {}
-
-    checkExistByEmail(email: string): Observable<boolean> {
-        return from(this.userRepository.existsBy({ email }));
-    }
-
-    create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User>> {
+    createProcess(createDto: CreateUserDto): Observable<User> {
         const { email, name, password, role } = createDto;
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, User)) {
-            throw new ForbiddenException('You are not allowed to create user');
-        }
-        if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
-            if (!ability.can(Action.AddAdmin, User)) {
-                throw new ForbiddenException('You are not allowed to add admin');
-            }
-        }
         return from(this.checkExistByEmail(email)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
@@ -70,19 +57,27 @@ export class UserService
                 user.role = role;
                 return this.userRepository.save(user);
             }),
-            map((user) => ({ success: true, data: user })),
-            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.BAD_REQUEST))),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<User>>> {
+    create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, User)) {
-            throw new ForbiddenException('You are not allowed to read user');
+        if (!ability.can(Action.Manage, User)) {
+            throw new ForbiddenException('You are not allowed to create user');
         }
-        const fields: Array<keyof User> = ['id', 'name', 'email', 'role'];
-        return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields);
+        const { role } = currentUser;
+        if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+            if (!ability.can(Action.AddAdmin, User)) {
+                throw new ForbiddenException('You are not allowed to add admin');
+            }
+        }
+        return this.createProcess(createDto).pipe(
+            map((user) => {
+                return { status: HttpStatus.CREATED, data: user };
+            }),
+        );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<User>> {
+    findOneProcess(id: string): Observable<User> {
         return from(
             this.userRepository.findOne({
                 where: { id },
@@ -93,22 +88,116 @@ export class UserService
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
-                return { success: true, data: user };
+                return user;
             }),
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
-    update(currentUser: User, id: string, updateDto: UpdateUserDto): Observable<ApiResponse<User>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+        return this.findOneProcess(id).pipe(
+            map((user) => {
+                const ability = this.caslAbilityFactory.createForUser(currentUser);
+                if (!ability.can(Action.Read, user)) {
+                    throw new ForbiddenException('You are not allowed to read this user');
+                }
+                return { status: HttpStatus.OK, data: user };
+            }),
+        );
+    }
+    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<User>> {
+        const fields: Array<keyof User> = ['id', 'name', 'email', 'role'];
+        const relations: string[] = [];
+        const searchFields: SearchField[] = [];
+        return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields, searchFields, relations);
+    }
+    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.ReadAll, User)) {
+            throw new ForbiddenException('You are not allowed to read users');
+        }
+        return this.findAllProcess(findAllDto).pipe(
+            map((data) => {
+                return { status: HttpStatus.OK, data, message: 'Users fetched successfully' };
+            }),
+        );
+    }
+    removeProcess(id: string, hardRemove?: boolean): Observable<User> {
+        return from(this.userRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
+            switchMap((user) => {
+                if (!user) {
+                    throw new NotFoundException('User not found');
+                }
+                if (hardRemove && !user.deletedAt) {
+                    throw new BadRequestException('User not deleted yet');
+                    return this.userRepository.remove(user);
+                }
+                return this.userRepository.softRemove(user);
+            }),
+            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
+        );
+    }
+    remove(
+        currentUser: User,
+        id: string,
+        hardRemove?: boolean,
+    ): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        return this.findOneData(id).pipe(
+            switchMap((user) => {
+                if (!user) {
+                    throw new NotFoundException('User not found');
+                }
+                if (!ability.can(Action.Delete, user)) {
+                    throw new ForbiddenException('You are not allowed to delete this user');
+                }
+                return this.removeProcess(id, hardRemove).pipe(
+                    map((data) => {
+                        return { status: HttpStatus.OK, data, message: 'User deleted successfully' };
+                    }),
+                );
+            }),
+        );
+    }
+    restoreProcess(id: string): Observable<User> {
+        return from(this.userRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+            switchMap((user) => {
+                if (!user) {
+                    throw new NotFoundException('User not found');
+                }
+                if (!user.deletedAt) {
+                    throw new BadRequestException('User not deleted yet');
+                }
+                return from(this.userRepository.restore(user.id)).pipe(map(() => user));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    restore(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        return this.findOneData(id).pipe(
+            switchMap((user) => {
+                if (!user) {
+                    throw new NotFoundException('User not found');
+                }
+                if (!ability.can(Action.Restore, user)) {
+                    throw new ForbiddenException('You are not allowed to restore this user');
+                }
+                return this.restoreProcess(id).pipe(
+                    map((data) => {
+                        return { status: HttpStatus.OK, data, message: 'User restored successfully' };
+                    }),
+                );
+            }),
+        );
+    }
+    updateProcess(id: string, updateDto: UpdateUserDto): Observable<User> {
         const updateData: DeepPartial<User> = { ...updateDto };
         return from(this.findOneData(id)).pipe(
             switchMap((user) => {
                 if (!user) {
                     return throwError(() => new NotFoundException('User not found'));
                 }
-                const ability = this.caslAbilityFactory.createForUser(currentUser);
-                if (!ability.can(Action.Update, user)) {
-                    throw new ForbiddenException('You are not allowed to update user');
-                }
+
                 const tasks: Observable<any>[] = [];
                 if (updateDto.email && updateDto.email !== user.email) {
                     tasks.push(
@@ -120,61 +209,43 @@ export class UserService
                             }),
                         ),
                     );
-                }
+                } else tasks.push(of(null));
                 if (updateDto.password) {
                     tasks.push(
                         BycryptService.hash(updateDto.password).pipe(tap((hash) => (updateData.password = hash))),
                     );
-                }
-                if (tasks.length > 0) {
-                    return forkJoin(tasks).pipe(map(() => user));
-                }
-                return of(user);
+                } else tasks.push(of(null));
+                return forkJoin(tasks).pipe(switchMap(() => updateEntity<User>(this.userRepository, user, updateData)));
             }),
-            switchMap((user) => updateEntity<User>(this.userRepository, user, updateData)),
-            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.BAD_REQUEST))),
         );
     }
-
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        return from(this.userRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
-            switchMap((user) => {
-                if (!ability.can(Action.Delete, user)) {
-                    throw new ForbiddenException('You are not allowed to remove user');
-                }
-                if (!user) {
-                    throw new NotFoundException('User not found');
-                }
-                if (hardRemove && !user.deletedAt) {
-                    throw new BadRequestException('User not deleted yet');
-                }
-                return hardRemove ? from(this.userRepository.remove(user)) : from(this.userRepository.softRemove(user));
-            }),
-            map(() => ({ success: true, message: `User ${hardRemove ? 'permanently ' : ''}removed` })),
-            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
-        );
-    }
-
-    restore(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User>>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, User)) {
-            throw new ForbiddenException('You are not allowed to restore user');
-        }
-        return from(this.userRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+    update(
+        currentUser: User,
+        id: string,
+        updateDto: UpdateUserDto,
+    ): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+        return this.findOneData(id).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
-                if (!user.deletedAt) {
-                    throw new BadRequestException('User not deleted yet');
+                const ability = this.caslAbilityFactory.createForUser(currentUser);
+                if (!ability.can(Action.Update, user)) {
+                    throw new ForbiddenException('You are not allowed to update this user');
                 }
-                return from(this.userRepository.restore(user.id));
+                return this.updateProcess(id, updateDto).pipe(
+                    map((data) => {
+                        return { status: HttpStatus.OK, data, message: 'User updated successfully' };
+                    }),
+                );
             }),
-            map(() => ({ success: true, message: 'User restored' })),
-            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
+
+    checkExistByEmail(email: string): Observable<boolean> {
+        return from(this.userRepository.existsBy({ email }));
+    }
+
     findOneData(id: string): Observable<User> {
         return from(
             this.userRepository.findOne({

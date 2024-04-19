@@ -1,8 +1,7 @@
 import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { ApiResponse } from 'src/interfaces/api-response.interface';
+import { from, Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 
 /**
  * Parameters for finding data with pagination and search.
@@ -77,7 +76,7 @@ export function findWithPaginationAndSearch<T>(
     fields: Array<keyof T>,
     searchFieldsInRelations?: undefined,
     relations?: string[],
-): Observable<ApiResponse<PaginatedData<T>>>;
+): Observable<PaginatedData<T>>;
 
 export function findWithPaginationAndSearch<T>(
     repository: Repository<T>,
@@ -85,12 +84,11 @@ export function findWithPaginationAndSearch<T>(
     fields: Array<keyof T>,
     searchFieldsInRelations: SearchField[],
     relations: string[],
-): Observable<ApiResponse<PaginatedData<T>>>;
+): Observable<PaginatedData<T>>;
 
 /**
  * Finds data with pagination and search.
  * @param repository - The repository to query.
- * @param nameTable - The name of the table.
  * @param findAllDto - The parameters for finding data.
  * @param fields - The fields to search in.
  * @param searchFieldsInRelations - The fields to search in relations.
@@ -103,7 +101,7 @@ export function findWithPaginationAndSearch<T>(
     fields: Array<keyof T>,
     searchFieldsInRelations: SearchField[] = [],
     relations?: string[],
-): Observable<ApiResponse<PaginatedData<T>>> {
+): Observable<PaginatedData<T>> {
     if (!validateRelations(searchFieldsInRelations, relations)) {
         throw new HttpException(
             'Missing required relations for the specified search fields in relations.',
@@ -144,7 +142,7 @@ export function findWithPaginationAndSearch<T>(
 
     return from(queryBuilder.getManyAndCount()).pipe(
         map(([data, total]) => {
-            const paginatedData: PaginatedData<T> = {
+            return {
                 currentPage: pageNew,
                 items: data,
                 perPage: data.length,
@@ -152,11 +150,7 @@ export function findWithPaginationAndSearch<T>(
                 totalPages: Math.ceil(total / limitNew),
                 nextPage: pageNew * limitNew < total ? pageNew + 1 : undefined,
             };
-            const apiResponse: ApiResponse<PaginatedData<T>> = {
-                data: paginatedData,
-                message: 'Success',
-            };
-            return apiResponse;
         }),
+        catchError((error) => throwError(() => new BadRequestException(error.message))),
     );
 }

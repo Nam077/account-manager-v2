@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CrudService } from 'src/interfaces/crud.interface';
@@ -20,10 +20,11 @@ export class AccountService
     implements
         CrudService<
             ApiResponse<Account | Account[] | PaginatedData<Account>>,
+            Account,
+            PaginatedData<Account>,
             CreateAccountDto,
             UpdateAccountDto,
             FindAllDto,
-            Account,
             User
         >
 {
@@ -33,21 +34,8 @@ export class AccountService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly accountCategoryService: AccountCategoryService,
     ) {}
-
-    checkExistBySlug(slug: string): Observable<boolean> {
-        return from(this.accountRepository.existsBy({ slug }));
-    }
-
-    async findOneBySlug(slug: string): Promise<Account> {
-        return this.accountRepository.findOne({ where: { slug } });
-    }
-
-    create(currentUser: User, createDto: CreateAccountDto): Observable<ApiResponse<Account>> {
+    createProcess(createDto: CreateAccountDto): Observable<Account> {
         const { name, description, accountCategoryId } = createDto;
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
-            throw new ForbiddenException('You are not allowed to create account');
-        }
         const slug = slugifyString(name);
         return from(this.checkExistBySlug(slug)).pipe(
             switchMap((isExist) => {
@@ -64,18 +52,49 @@ export class AccountService
                         account.description = description;
                         account.accountCategory = accountCategory;
                         account.slug = slug;
-                        return from(this.accountRepository.save(account)).pipe(
-                            map((account): ApiResponse<Account> => {
-                                return { message: 'Account created successfully', data: account };
-                            }),
-                        );
+                        return from(this.accountRepository.save(account));
                     }),
                     catchError((error) => throwError(() => new BadRequestException(error.message))),
                 );
             }),
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Account>>> {
+    create(
+        currentUser: User,
+        createDto: CreateAccountDto,
+    ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, Account)) {
+            throw new ForbiddenException('You are not allowed to create account');
+        }
+        return this.createProcess(createDto).pipe(
+            map((data) => ({
+                status: HttpStatus.CREATED,
+                message: 'Account created successfully',
+                data,
+            })),
+        );
+    }
+    findOneData(id: string): Observable<Account> {
+        return from(this.accountRepository.findOne({ where: { id } }));
+    }
+    findOneProcess(id: string): Observable<Account> {
+        return from(this.accountRepository.findOne({ where: { id } }));
+    }
+    findOne(currentUser: User, id: string): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, Account)) {
+            throw new ForbiddenException('You are not allowed to read account');
+        }
+        return this.findOneProcess(id).pipe(
+            map((data) => ({
+                message: 'Account found',
+                data,
+                status: HttpStatus.OK,
+            })),
+        );
+    }
+    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Account>> {
         const fields: Array<keyof Account> = ['id', 'name', 'description', 'slug'];
         const relations = ['accountCategory'];
         const searchRelation: SearchField[] = [
@@ -92,32 +111,100 @@ export class AccountService
             relations,
         );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Account>> {
-        return from(this.accountRepository.findOne({ where: { id } })).pipe(
-            map((account) => {
+    findAll(
+        currentUser: User,
+        findAllDto: FindAllDto,
+    ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.ReadAll, Account)) {
+            throw new ForbiddenException('You are not allowed to read account');
+        }
+        return this.findAllProcess(findAllDto).pipe(
+            map((data) => ({
+                message: 'Accounts found',
+                data,
+                status: HttpStatus.OK,
+            })),
+        );
+    }
+    removeProcess(id: string, hardRemove?: boolean): Observable<Account> {
+        return from(
+            this.accountRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: {
+                    adminAccounts: !hardRemove,
+                },
+            }),
+        ).pipe(
+            switchMap((account) => {
                 if (!account) {
                     throw new NotFoundException('Account not found');
                 }
-                return {
-                    message: 'Account found',
-                    data: account,
-                };
+                if (hardRemove) {
+                    if (!account.deletedAt) {
+                        throw new BadRequestException('Account not deleted yet');
+                    }
+                    return from(this.accountRepository.remove(account));
+                }
+                if (account.adminAccounts) {
+                    throw new BadRequestException('Account has admin account');
+                }
+                return from(this.accountRepository.softRemove(account));
             }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    findOneData(id: string): Observable<Account> {
-        return from(this.accountRepository.findOne({ where: { id } }));
+    remove(
+        currentUser: User,
+        id: string,
+        hardRemove?: boolean,
+    ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, Account)) {
+            throw new ForbiddenException('You are not allowed to delete account');
+        }
+        return this.removeProcess(id, hardRemove).pipe(
+            map((data) => ({
+                message: 'Account deleted successfully',
+                data,
+                status: HttpStatus.OK,
+            })),
+        );
     }
-    update(currentUser: User, id: string, updateDto: UpdateAccountDto): Observable<ApiResponse<Account>> {
+    restoreProcess(id: string): Observable<Account> {
+        return from(this.accountRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+            switchMap((account) => {
+                if (!account) {
+                    throw new NotFoundException('Account not found');
+                }
+                if (!account.deletedAt) {
+                    throw new BadRequestException('Account not deleted yet');
+                }
+                return from(this.accountRepository.restore(account.id)).pipe(map(() => account));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    restore(currentUser: User, id: string): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Manage, Account)) {
+            throw new ForbiddenException('You are not allowed to restore account');
+        }
+        return this.restoreProcess(id).pipe(
+            map((data) => ({
+                message: 'Account restored successfully',
+                data,
+                status: HttpStatus.OK,
+            })),
+        );
+    }
+    updateProcess(id: string, updateDto: UpdateAccountDto): Observable<Account> {
         const updateData: DeepPartial<Account> = { ...updateDto };
         return from(this.findOneData(id)).pipe(
             switchMap((account) => {
                 if (!account) {
                     throw new NotFoundException('Account not found');
-                }
-                const ability = this.caslAbilityFactory.createForUser(currentUser);
-                if (!ability.can(Action.Update, account)) {
-                    throw new ForbiddenException('You are not allowed to update account');
                 }
                 const tasks: Observable<any>[] = [];
                 if (updateDto.name && updateDto.name !== account.name) {
@@ -149,8 +236,6 @@ export class AccountService
                 } else {
                     tasks.push(of(null));
                 }
-                console.log('tasks', tasks);
-
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<Account>(this.accountRepository, account, updateData);
@@ -159,64 +244,29 @@ export class AccountService
             }),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Account>> {
+    update(
+        currentUser: User,
+        id: string,
+        updateDto: UpdateAccountDto,
+    ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(Action.Manage, Account)) {
-            throw new ForbiddenException('You are not allowed to delete account');
+            throw new ForbiddenException('You are not allowed to update account');
         }
-        return from(
-            this.accountRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-                relations: {
-                    adminAccounts: !hardRemove,
-                },
-            }),
-        ).pipe(
-            switchMap((account) => {
-                if (!account) {
-                    throw new NotFoundException('Account not found');
-                }
-                if (hardRemove) {
-                    if (!account.deletedAt) {
-                        throw new BadRequestException('Account not deleted yet');
-                    }
-                    return from(this.accountRepository.remove(account)).pipe(
-                        map((): ApiResponse<Account> => {
-                            return { message: 'Account deleted successfully' };
-                        }),
-                    );
-                }
-                if (account.adminAccounts) {
-                    throw new BadRequestException('Account has admin account');
-                }
-                return from(this.accountRepository.softRemove(account)).pipe(
-                    map((): ApiResponse<Account> => {
-                        return { message: 'Account soft deleted successfully' };
-                    }),
-                );
-            }),
+        return this.updateProcess(id, updateDto).pipe(
+            map((data) => ({
+                message: 'Account updated successfully',
+                data,
+                status: HttpStatus.OK,
+            })),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Account>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
-            throw new ForbiddenException('You are not allowed to restore account');
-        }
-        return from(this.accountRepository.findOne({ where: { id }, withDeleted: true })).pipe(
-            switchMap((account) => {
-                if (!account) {
-                    throw new NotFoundException('Account not found');
-                }
-                if (!account.deletedAt) {
-                    throw new BadRequestException('Account not deleted yet');
-                }
-                return from(this.accountRepository.restore(account.id)).pipe(
-                    map((): ApiResponse<Account> => {
-                        return { message: 'Account restored successfully' };
-                    }),
-                );
-            }),
-        );
+
+    checkExistBySlug(slug: string): Observable<boolean> {
+        return from(this.accountRepository.existsBy({ slug }));
+    }
+
+    async findOneBySlug(slug: string): Promise<Account> {
+        return this.accountRepository.findOne({ where: { slug } });
     }
 }
