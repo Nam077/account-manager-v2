@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    HttpStatus,
+    Injectable,
+    NotFoundException,
+    ForbiddenException,
+} from '@nestjs/common';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { CrudService } from 'src/interfaces/crud.interface';
@@ -6,10 +13,10 @@ import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interfac
 import { Workspace } from './entities/workspace.entity';
 import { FindAllDto } from 'src/dto/find-all.dto';
 import { User } from '../user/entities/user.entity';
-import { Observable, from, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, from, map, of, switchMap, tap, throwError } from 'rxjs';
 import { AdminAccountService } from '../admin-account/admin-account.service';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
 import { updateEntity } from 'src/helper/update';
@@ -18,11 +25,12 @@ import { updateEntity } from 'src/helper/update';
 export class WorkspaceService
     implements
         CrudService<
-            ApiResponse<Workspace | Workspace | PaginatedData<Workspace>>,
+            ApiResponse<Workspace | Workspace[] | PaginatedData<Workspace>>,
+            Workspace,
+            PaginatedData<Workspace>,
             CreateWorkspaceDto,
             UpdateWorkspaceDto,
             FindAllDto,
-            Workspace,
             User
         >
 {
@@ -31,18 +39,7 @@ export class WorkspaceService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly adminAccountService: AdminAccountService,
     ) {}
-
-    checkExistByAdminAccountId(adminAccountId: string): Observable<boolean> {
-        return from(this.workspaceRepository.existsBy({ adminAccountId }));
-    }
-    create(
-        currentUser: User,
-        createDto: CreateWorkspaceDto,
-    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace>>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Workspace)) {
-            throw new BadRequestException('You do not have permission to create workspace');
-        }
+    createProcess(createDto: CreateWorkspaceDto): Observable<Workspace> {
         const { adminAccountId, description, maxSlots } = createDto;
         return from(this.checkExistByAdminAccountId(adminAccountId)).pipe(
             switchMap((isExist) => {
@@ -59,92 +56,75 @@ export class WorkspaceService
                 workspace.adminAccountId = adminAccountId;
                 workspace.description = description;
                 workspace.maxSlots = maxSlots;
-                return from(this.workspaceRepository.save(workspace)).pipe(
-                    map((data): ApiResponse<Workspace> => {
-                        return { status: HttpStatus.CREATED, data, message: 'Workspace created successfully' };
-                    }),
-                );
+                return from(this.workspaceRepository.save(workspace));
             }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<Workspace | PaginatedData<Workspace>>> {
+    create(currentUser: User, createDto: CreateWorkspaceDto): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Workspace)) {
-            throw new BadRequestException('You do not have permission to create workspace');
+        if (ability.cannot(Action.Create, Workspace)) {
+            throw new BadRequestException('You are not allowed to create workspace');
         }
-        const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
-        const realations = ['adminAccount'];
-        const searchFields: SearchField[] = [];
-        return findWithPaginationAndSearch(this.workspaceRepository, findAllDto, fields, searchFields, realations);
+        return this.createProcess(createDto).pipe(map((data) => ({ data, status: HttpStatus.CREATED })));
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Workspace | PaginatedData<Workspace>>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Workspace)) {
-            throw new BadRequestException('You do not have permission to create workspace');
-        }
+    findOneData(id: string): Observable<Workspace> {
         return from(
             this.workspaceRepository.findOne({
                 where: { id },
             }),
-        ).pipe(
-            map((data) => {
-                if (!data) {
-                    throw new NotFoundException('Workspace not found');
-                }
-                return { status: HttpStatus.OK, data };
-            }),
         );
     }
-    findOneData(id: string): Observable<Workspace> {
-        return from(this.workspaceRepository.findOne({ where: { id } }));
-    }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateWorkspaceDto,
-    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace>>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Workspace)) {
-            throw new BadRequestException('You do not have permission to create workspace');
-        }
-        return from(this.findOneData(id)).pipe(
+    findOneProcess(id: string): Observable<Workspace> {
+        return this.findOneData(id).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException('Workspace not found');
                 }
-                if (updateDto.adminAccountId && updateDto.adminAccountId && workspace.adminAccountId) {
-                    return from(this.adminAccountService.findOneData(updateDto.adminAccountId)).pipe(
-                        switchMap((adminAccount) => {
-                            if (!adminAccount) {
-                                throw new NotFoundException('Admin account not found');
-                            }
-                            return from(this.checkExistByAdminAccountId(updateDto.adminAccountId)).pipe(
-                                switchMap((isExist) => {
-                                    if (isExist) {
-                                        throw new ConflictException('Workspace already exist');
-                                    }
-                                    return of(workspace);
-                                }),
-                            );
-                        }),
-                    );
-                } else {
-                    return of(workspace);
-                }
+                return of(workspace);
             }),
-            switchMap((workspace) => updateEntity<Workspace>(this.workspaceRepository, workspace, updateDto)),
         );
     }
-    remove(
+    findOne(
         currentUser: User,
         id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace>>> {
+    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Workspace)) {
-            throw new BadRequestException('You do not have permission to create workspace');
+        if (ability.cannot(Action.Read, Workspace)) {
+            throw new ForbiddenException('You are not allowed to access this resource');
         }
-        return from(this.workspaceRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
+        return this.findOneProcess(id).pipe(map((data) => ({ data, status: HttpStatus.OK })));
+    }
+    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Workspace>> {
+        const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
+        const realations = ['adminAccount'];
+        const searchFields: SearchField[] = [];
+        return findWithPaginationAndSearch<Workspace>(
+            this.workspaceRepository,
+            findAllDto,
+            fields,
+            searchFields,
+            realations,
+        );
+    }
+    findAll(
+        currentUser: User,
+        findAllDto: FindAllDto,
+    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.ReadAll, Workspace)) {
+            throw new ForbiddenException('You are not allowed to access this resource');
+        }
+        return this.findAllProcess(findAllDto).pipe(map((data) => ({ data, status: HttpStatus.OK })));
+    }
+    removeProcess(id: string, hardRemove?: boolean): Observable<Workspace> {
+        return from(
+            this.workspaceRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: { workspaceEmails: !hardRemove },
+            }),
+        ).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException('Workspace not found');
@@ -153,25 +133,30 @@ export class WorkspaceService
                     if (!workspace.deletedAt) {
                         throw new BadRequestException('Workspace not deleted');
                     }
-                    return from(this.workspaceRepository.remove(workspace)).pipe(
-                        map(() => {
-                            return { status: HttpStatus.OK, message: 'Workspace deleted successfully' };
-                        }),
-                    );
+                    return from(this.workspaceRepository.remove(workspace));
                 }
-                return from(this.workspaceRepository.remove(workspace)).pipe(
-                    map(() => {
-                        return { status: HttpStatus.OK, message: 'Workspace deleted successfully' };
-                    }),
-                );
+                if (workspace.workspaceEmails) {
+                    throw new BadRequestException('Workspace has workspace emails');
+                }
+                return from(this.workspaceRepository.softRemove(workspace));
             }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Workspace | PaginatedData<Workspace>>> {
+    remove(
+        currentUser: User,
+        id: string,
+        hardRemove?: boolean,
+    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Workspace)) {
-            throw new BadRequestException('You do not have permission to create workspace');
+        if (ability.cannot(Action.Delete, Workspace)) {
+            throw new ForbiddenException('You are not allowed to delete this resource');
         }
+        return this.removeProcess(id, hardRemove).pipe(
+            map((data) => ({ data, status: HttpStatus.OK, message: 'Workspace deleted' })),
+        );
+    }
+    restoreProcess(id: string): Observable<Workspace> {
         return from(this.workspaceRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
@@ -180,12 +165,66 @@ export class WorkspaceService
                 if (!workspace.deletedAt) {
                     throw new BadRequestException('Workspace not deleted');
                 }
-                return from(this.workspaceRepository.restore(workspace)).pipe(
-                    map(() => {
-                        return { status: HttpStatus.OK, message: 'Workspace restored successfully' };
+                return from(this.workspaceRepository.restore(workspace.id)).pipe(map(() => workspace));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    restore(
+        currentUser: User,
+        id: string,
+    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Restore, Workspace)) {
+            throw new ForbiddenException('You are not allowed to restore this resource');
+        }
+        return this.restoreProcess(id).pipe(
+            map((data) => ({ data, status: HttpStatus.OK, message: 'Workspace restored' })),
+        );
+    }
+    updateProcess(id: string, updateDto: UpdateWorkspaceDto): Observable<Workspace> {
+        const updateData: DeepPartial<Workspace> = { ...updateDto };
+        return from(this.findOneData(id)).pipe(
+            switchMap((workspace) => {
+                if (!workspace) {
+                    throw new NotFoundException('Workspace not found');
+                }
+                const tasks: Observable<any>[] = [];
+                if (updateDto.adminAccountId && updateDto.adminAccountId !== workspace.adminAccountId) {
+                    tasks.push(
+                        this.adminAccountService.findOneData(updateDto.adminAccountId).pipe(
+                            tap((adminAccount) => {
+                                if (!adminAccount) {
+                                    throw new NotFoundException('Admin account not found');
+                                }
+                                delete workspace.adminAccount;
+                            }),
+                        ),
+                    );
+                } else tasks.push(of(null));
+                return forkJoin(tasks).pipe(
+                    switchMap(() => {
+                        return from(updateEntity<Workspace>(this.workspaceRepository, workspace, updateData));
                     }),
                 );
             }),
         );
+    }
+    update(
+        currentUser: User,
+        id: string,
+        updateDto: UpdateWorkspaceDto,
+    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Update, Workspace)) {
+            throw new ForbiddenException('You are not allowed to update this resource');
+        }
+        return this.updateProcess(id, updateDto).pipe(
+            map((data) => ({ data, status: HttpStatus.OK, message: 'Workspace updated' })),
+        );
+    }
+
+    checkExistByAdminAccountId(adminAccountId: string): Observable<boolean> {
+        return from(this.workspaceRepository.existsBy({ adminAccountId }));
     }
 }

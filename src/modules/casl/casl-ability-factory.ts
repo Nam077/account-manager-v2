@@ -52,6 +52,8 @@ export class CaslAbilityFactory {
             cannot(Action.Manage, User, { role: UserRole.SUPER_ADMIN });
             cannot(Action.Update, User, { role: UserRole.SUPER_ADMIN });
             cannot(Action.AddAdmin, User, { role: UserRole.ADMIN });
+            cannot(Action.Delete, User, { role: UserRole.SUPER_ADMIN });
+            cannot(Action.Delete, User, { role: UserRole.ADMIN });
         }
         if (user.role === UserRole.USER) {
             can(Action.Update, User, { id: user.id });

@@ -13,7 +13,7 @@ import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interfac
 import { Email } from './entities/email.entity';
 import { FindAllDto } from 'src/dto/find-all.dto';
 import { User } from '../user/entities/user.entity';
-import { Observable, forkJoin, from, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, forkJoin, from, map, of, switchMap, tap, throwError } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
@@ -25,10 +25,11 @@ export class EmailService
     implements
         CrudService<
             ApiResponse<Email | Email[] | PaginatedData<Email>>,
+            Email,
+            PaginatedData<Email>,
             CreateEmailDto,
             UpdateEmailDto,
             FindAllDto,
-            Email,
             User
         >
 {
@@ -37,21 +38,7 @@ export class EmailService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly customerService: CustomerService,
     ) {}
-    findOneByEmailAndCustomerId(email: string, customerId: string): Observable<Email> {
-        return from(
-            this.emailRepository.findOne({
-                where: {
-                    email,
-                    customerId,
-                },
-            }),
-        );
-    }
-    checkExistByEmailAndCustomerId(email: string, customerId: string): Observable<boolean> {
-        return from(this.emailRepository.existsBy({ email, customerId }));
-    }
-
-    create(currentUser: User, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
+    createProcess(createDto: CreateEmailDto): Observable<Email> {
         const { email, customerId } = createDto;
         return from(this.customerService.findOneData(customerId)).pipe(
             switchMap((customer) => {
@@ -68,26 +55,55 @@ export class EmailService
                 emailCreate.email = email;
                 emailCreate.customerId = customerId;
                 const newEmail = this.emailRepository.create(emailCreate);
-                return from(this.emailRepository.save(newEmail)).pipe(
-                    map((email): ApiResponse<Email> => {
-                        return {
-                            message: 'Email created successfully',
-                            data: email,
-                            status: HttpStatus.CREATED,
-                        };
-                    }),
-                );
+                return from(this.emailRepository.save(newEmail));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    create(currentUser: User, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Create, Email)) {
+            throw new ForbiddenException('You do not have permission to create email');
+        }
+        return this.createProcess(createDto).pipe(
+            map(
+                (data): ApiResponse<Email> => ({
+                    status: HttpStatus.CREATED,
+                    message: 'Email created successfully',
+                    data,
+                }),
+            ),
+        );
+    }
+    findOneData(id: string): Observable<Email> {
+        return from(this.emailRepository.findOne({ where: { id } }));
+    }
+    findOneProcess(id: string): Observable<Email> {
+        return from(this.emailRepository.findOne({ where: { id } })).pipe(
+            map((email) => {
+                if (!email) {
+                    throw new NotFoundException('Email not found');
+                }
+                return email;
             }),
         );
     }
-    findAll(
-        currentUser: User,
-        findAllDto: FindAllDto,
-    ): Observable<ApiResponse<Email | PaginatedData<Email> | Email[]>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, Email)) {
-            throw new ForbiddenException('You are not allowed to read customer');
+        if (!ability.can(Action.Read, Email)) {
+            throw new ForbiddenException('You do not have permission to read email');
         }
+        return this.findOneProcess(id).pipe(
+            map(
+                (data): ApiResponse<Email> => ({
+                    status: HttpStatus.OK,
+                    message: 'Email found',
+                    data,
+                }),
+            ),
+        );
+    }
+    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Email>> {
         const realtions = ['customer'];
         const searchFields: SearchField[] = [
             {
@@ -98,72 +114,22 @@ export class EmailService
         const fields: Array<keyof Email> = ['id', 'email'];
         return findWithPaginationAndSearch<Email>(this.emailRepository, findAllDto, fields, searchFields, realtions);
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {
-        return from(this.emailRepository.findOne({ where: { id } })).pipe(
-            map((email) => {
-                if (!email) {
-                    throw new NotFoundException('Email not found');
-                }
-                return {
-                    data: email,
+    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Email>>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.ReadAll, Email)) {
+            throw new ForbiddenException('You do not have permission to read email');
+        }
+        return this.findAllProcess(findAllDto).pipe(
+            map(
+                (data): ApiResponse<PaginatedData<Email>> => ({
                     status: HttpStatus.OK,
-                };
-            }),
+                    message: 'Emails found',
+                    data,
+                }),
+            ),
         );
     }
-    findOneData(id: string): Observable<Email> {
-        return from(this.emailRepository.findOne({ where: { id } }));
-    }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateEmailDto,
-    ): Observable<ApiResponse<Email | PaginatedData<Email> | Email[]>> {
-        const updateData: DeepPartial<Email> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
-            switchMap((email) => {
-                if (!email) {
-                    throw new NotFoundException('Email not found');
-                }
-                const ability = this.caslAbilityFactory.createForUser(currentUser);
-                if (!ability.can(Action.Update, email)) {
-                    throw new ForbiddenException('You are not allowed to update email');
-                }
-                const tasks: Observable<any>[] = [];
-
-                if (updateDto.customerId && updateDto.customerId !== email.customerId) {
-                    tasks.push(this.customerService.findOneData(updateDto.customerId));
-                } else {
-                    tasks.push(of(null));
-                }
-                if (
-                    (updateDto.customerId && updateDto.customerId !== email.customerId) ||
-                    (updateDto.email && updateDto.email !== email.email)
-                ) {
-                    const checkEmail = updateDto.email || email.email;
-                    const checkCustomerId = updateDto.customerId || email.customerId;
-                    tasks.push(this.checkExistByEmailAndCustomerId(checkEmail, checkCustomerId));
-                } else {
-                    tasks.push(of(false));
-                }
-                return forkJoin(tasks).pipe(
-                    switchMap(([customer, isExist]) => {
-                        if (customer === null && updateDto.customerId && updateDto.customerId !== email.customerId) {
-                            throw new NotFoundException('Customer not found');
-                        }
-                        if (isExist) {
-                            throw new ConflictException('Email already exists');
-                        }
-                        if (customer) {
-                            delete email.customer;
-                        }
-                        return updateEntity<Email>(this.emailRepository, email, updateData);
-                    }),
-                );
-            }),
-        );
-    }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
+    removeProcess(id: string, hardRemove?: boolean): Observable<Email> {
         return from(
             this.emailRepository.findOne({
                 where: { id },
@@ -178,41 +144,128 @@ export class EmailService
                     if (!email.deletedAt) {
                         throw new BadRequestException('Email not deleted yet');
                     }
-                    return from(this.emailRepository.remove(email)).pipe(
-                        map(() => {
-                            return {
-                                message: 'Email deleted successfully',
-                                status: HttpStatus.OK,
-                            };
-                        }),
-                    );
+                    return from(this.emailRepository.remove(email));
                 }
-                return from(this.emailRepository.softRemove(email)).pipe(
-                    map(() => {
-                        return {
-                            message: 'Email deleted successfully',
-                            status: HttpStatus.OK,
-                        };
-                    }),
-                );
+                return from(this.emailRepository.softRemove(email));
             }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Email | PaginatedData<Email> | Email[]>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Delete, Email)) {
+            throw new ForbiddenException('You do not have permission to delete email');
+        }
+        return this.removeProcess(id, hardRemove).pipe(
+            map(
+                (data): ApiResponse<Email> => ({
+                    status: HttpStatus.OK,
+                    message: 'Email deleted successfully',
+                    data,
+                }),
+            ),
+        );
+    }
+    restoreProcess(id: string): Observable<Email> {
         return from(this.emailRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((email) => {
                 if (!email) {
                     throw new NotFoundException('Email not found');
                 }
-                return from(this.emailRepository.restore(email.id)).pipe(
-                    map(() => {
-                        return {
-                            message: 'Email restored successfully',
-                            status: HttpStatus.OK,
-                        };
+                if (!email.deletedAt) {
+                    throw new BadRequestException('Email not deleted yet');
+                }
+                return from(this.emailRepository.restore(email.id)).pipe(map(() => email));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    restore(currentUser: User, id: string): Observable<ApiResponse<Email>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Restore, Email)) {
+            throw new ForbiddenException('You do not have permission to restore email');
+        }
+        return this.restoreProcess(id).pipe(
+            map(
+                (data): ApiResponse<Email> => ({
+                    status: HttpStatus.OK,
+                    message: 'Email restored successfully',
+                    data,
+                }),
+            ),
+        );
+    }
+    updateProcess(id: string, updateDto: UpdateEmailDto): Observable<Email> {
+        const updateData: DeepPartial<Email> = { ...updateDto };
+        return from(this.findOneData(id)).pipe(
+            switchMap((email) => {
+                if (!email) {
+                    throw new NotFoundException('Email not found');
+                }
+                const tasks: Observable<any>[] = [];
+
+                if (updateDto.customerId && updateDto.customerId !== email.customerId) {
+                    tasks.push(
+                        this.customerService.findOneData(updateDto.customerId).pipe(
+                            tap((customer) => {
+                                if (!customer) {
+                                    throw new NotFoundException('Customer not found');
+                                }
+                                delete email.customer;
+                            }),
+                        ),
+                    );
+                } else tasks.push(of(null));
+                if (
+                    (updateDto.customerId && updateDto.customerId !== email.customerId) ||
+                    (updateDto.email && updateDto.email !== email.email)
+                ) {
+                    const checkEmail = updateDto.email || email.email;
+                    const checkCustomerId = updateDto.customerId || email.customerId;
+                    tasks.push(
+                        this.checkExistByEmailAndCustomerId(checkEmail, checkCustomerId).pipe(
+                            tap((isExist) => {
+                                if (isExist) {
+                                    throw new ConflictException('Email already exists');
+                                }
+                            }),
+                        ),
+                    );
+                } else tasks.push(of(null));
+                return forkJoin(tasks).pipe(
+                    switchMap(() => {
+                        return updateEntity<Email>(this.emailRepository, email, updateData);
                     }),
                 );
             }),
         );
+    }
+    update(currentUser: User, id: string, updateDto: UpdateEmailDto): Observable<ApiResponse<Email>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(Action.Update, Email)) {
+            throw new ForbiddenException('You do not have permission to update email');
+        }
+        return this.updateProcess(id, updateDto).pipe(
+            map(
+                (data): ApiResponse<Email> => ({
+                    status: HttpStatus.OK,
+                    message: 'Email updated successfully',
+                    data,
+                }),
+            ),
+        );
+    }
+    findOneByEmailAndCustomerId(email: string, customerId: string): Observable<Email> {
+        return from(
+            this.emailRepository.findOne({
+                where: {
+                    email,
+                    customerId,
+                },
+            }),
+        );
+    }
+    checkExistByEmailAndCustomerId(email: string, customerId: string): Observable<boolean> {
+        return from(this.emailRepository.existsBy({ email, customerId }));
     }
 }

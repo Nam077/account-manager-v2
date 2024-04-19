@@ -7,7 +7,7 @@ import { FindAllDto } from 'src/dto/find-all.dto';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 import { User } from '../user/entities/user.entity';
 import { RentalType } from './entities/rental-type.entity';
-import { Observable, from, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, throwError, tap, forkJoin, from } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository } from 'typeorm';
 import { slugifyString } from 'src/helper/slug';
@@ -19,10 +19,11 @@ export class RentalTypeService
     implements
         CrudService<
             ApiResponse<RentalType | RentalType[] | PaginatedData<RentalType>>,
+            RentalType,
+            PaginatedData<RentalType>,
             CreateRentalTypeDto,
             UpdateRentalTypeDto,
             FindAllDto,
-            RentalType,
             User
         >
 {
@@ -31,15 +32,7 @@ export class RentalTypeService
         private readonly rentalTypeRepository: Repository<RentalType>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
     ) {}
-
-    checkExistBySlug(slug: string): Observable<boolean> {
-        return from(this.rentalTypeRepository.existsBy({ slug }));
-    }
-    create(currentUser: User, createDto: CreateRentalTypeDto): Observable<ApiResponse<RentalType>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Manage, RentalType)) {
-            throw new BadRequestException('You do not have permission to create rental type');
-        }
+    createProcess(createDto: CreateRentalTypeDto): Observable<RentalType> {
         const { name, maxSlots, description } = createDto;
         const slug = slugifyString(name);
         return from(this.checkExistBySlug(slug)).pipe(
@@ -53,23 +46,50 @@ export class RentalTypeService
                 rentalType.description = description;
                 rentalType.slug = slug;
                 const rentalTypeCreated = this.rentalTypeRepository.create(rentalType);
-                return from(this.rentalTypeRepository.save(rentalTypeCreated)).pipe(
-                    map(
-                        (data): ApiResponse<RentalType> => ({
-                            status: HttpStatus.CREATED,
-                            message: 'Rental type created successfully',
-                            data,
-                        }),
-                    ),
-                );
+                return from(this.rentalTypeRepository.save(rentalTypeCreated));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    create(currentUser: User, createDto: CreateRentalTypeDto): Observable<ApiResponse<RentalType>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Create, RentalType)) {
+            throw new BadRequestException('You do not have permission to create a rental type');
+        }
+        return this.createProcess(createDto).pipe(
+            map((rentalType) => {
+                return { status: HttpStatus.CREATED, data: rentalType, message: 'Rental type created successfully' };
             }),
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<RentalType>>> {
+    findOneData(id: string): Observable<RentalType> {
+        return from(this.rentalTypeRepository.findOne({ where: { id } }));
+    }
+    findOneProcess(id: string): Observable<RentalType> {
+        return from(this.rentalTypeRepository.findOne({ where: { id } })).pipe(
+            map((rentalType) => {
+                if (!rentalType) {
+                    throw new NotFoundException('Rental type not found');
+                }
+                return rentalType;
+            }),
+        );
+    }
+    findOne(
+        currentUser: User,
+        id: string,
+    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Manage, RentalType)) {
-            throw new BadRequestException('You do not have permission to create rental type');
+        if (ability.cannot(Action.Read, RentalType)) {
+            throw new BadRequestException('You do not have permission to read a rental type');
         }
+        return this.findOneProcess(id).pipe(
+            map((rentalType) => {
+                return { status: HttpStatus.OK, data: rentalType, message: 'Rental type found' };
+            }),
+        );
+    }
+    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<RentalType>> {
         const fields: Array<keyof RentalType> = ['id', 'name', 'maxSlots', 'description'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -81,65 +101,21 @@ export class RentalTypeService
             relations,
         );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
+    findAll(
+        currentUser: User,
+        findAllDto: FindAllDto,
+    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Manage, RentalType)) {
-            throw new BadRequestException('You do not have permission to create rental type');
+        if (ability.cannot(Action.ReadAll, RentalType)) {
+            throw new BadRequestException('You do not have permission to read all rental types');
         }
-        return from(
-            this.rentalTypeRepository.findOne({
-                where: { id },
-            }),
-        ).pipe(
-            map((rentalType: RentalType): ApiResponse<RentalType> => {
-                if (!rentalType) {
-                    throw new NotFoundException('Rental type not found');
-                }
-                return {
-                    status: HttpStatus.OK,
-                    message: 'Rental type found',
-                    data: rentalType,
-                };
+        return this.findAllProcess(findAllDto).pipe(
+            map((rentalTypes) => {
+                return { status: HttpStatus.OK, data: rentalTypes, message: 'Rental types found' };
             }),
         );
     }
-    findOneData(id: string): Observable<RentalType> {
-        return from(this.rentalTypeRepository.findOne({ where: { id } }));
-    }
-    update(currentUser: User, id: string, updateDto: UpdateRentalTypeDto): Observable<ApiResponse<RentalType>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Manage, RentalType)) {
-            throw new BadRequestException('You do not have permission to create rental type');
-        }
-        const updateData: DeepPartial<RentalType> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
-            switchMap((rentalType: RentalType) => {
-                if (!rentalType) {
-                    throw new NotFoundException('Rental type not found');
-                }
-                if (updateDto.name && rentalType.name !== updateDto.name) {
-                    const slug = slugifyString(updateDto.name);
-                    return from(this.checkExistBySlug(slug)).pipe(
-                        switchMap((exist) => {
-                            if (exist) {
-                                throw new ConflictException('Rental type already exists');
-                            }
-                            updateData.slug = slug;
-                            return of(rentalType);
-                        }),
-                    );
-                } else return of(rentalType);
-            }),
-            switchMap((rentalType: RentalType) => {
-                return updateEntity<RentalType>(this.rentalTypeRepository, rentalType, updateData);
-            }),
-        );
-    }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<RentalType>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Manage, RentalType)) {
-            throw new BadRequestException('You do not have permission to create rental type');
-        }
+    removeProcess(id: string, hardRemove?: boolean): Observable<RentalType> {
         return from(
             this.rentalTypeRepository.findOne({
                 where: { id },
@@ -154,28 +130,34 @@ export class RentalTypeService
                     if (!rentalType.deletedAt) {
                         throw new NotFoundException('Rental type not found');
                     }
-                    return from(this.rentalTypeRepository.remove(rentalType)).pipe(
-                        map(() => ({
-                            status: HttpStatus.OK,
-                            message: 'Rental type removed successfully',
-                        })),
-                    );
+                    return from(this.rentalTypeRepository.remove(rentalType));
                 }
 
-                return from(this.rentalTypeRepository.softRemove(rentalType)).pipe(
-                    map(() => ({
-                        status: HttpStatus.OK,
-                        message: 'Rental type removed successfully',
-                    })),
-                );
+                return from(this.rentalTypeRepository.softRemove(rentalType));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    remove(
+        currentUser: User,
+        id: string,
+        hardRemove?: boolean,
+    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Delete, RentalType)) {
+            throw new BadRequestException('You do not have permission to delete a rental type');
+        }
+        return this.removeProcess(id, hardRemove).pipe(
+            map((rentalType) => {
+                return {
+                    status: HttpStatus.OK,
+                    data: rentalType,
+                    message: `Rental type ${hardRemove ? 'hard deleted' : 'soft deleted'} successfully`,
+                };
             }),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Manage, RentalType)) {
-            throw new BadRequestException('You do not have permission to create rental type');
-        }
+    restoreProcess(id: string): Observable<RentalType> {
         return from(this.rentalTypeRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((rentalType: RentalType) => {
                 if (!rentalType) {
@@ -184,13 +166,71 @@ export class RentalTypeService
                 if (!rentalType.deletedAt) {
                     throw new BadRequestException('Rental type not deleted');
                 }
-                return from(this.rentalTypeRepository.restore(rentalType.id)).pipe(
-                    map(() => ({
-                        status: HttpStatus.OK,
-                        message: 'Rental type restored successfully',
-                    })),
+                return from(this.rentalTypeRepository.restore(rentalType.id)).pipe(map(() => rentalType));
+            }),
+            catchError((error) => throwError(() => new BadRequestException(error.message))),
+        );
+    }
+    restore(
+        currentUser: User,
+        id: string,
+    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Restore, RentalType)) {
+            throw new BadRequestException('You do not have permission to restore a rental type');
+        }
+        return this.restoreProcess(id).pipe(
+            map((rentalType) => {
+                return { status: HttpStatus.OK, data: rentalType, message: 'Rental type restored successfully' };
+            }),
+        );
+    }
+    updateProcess(id: string, updateDto: UpdateRentalTypeDto): Observable<RentalType> {
+        const updateData: DeepPartial<RentalType> = { ...updateDto };
+        return this.findOneData(id).pipe(
+            switchMap((rentalType: RentalType) => {
+                if (!rentalType) {
+                    throw new NotFoundException('Rental type not found');
+                }
+                const tasks: Observable<any>[] = [];
+                if (updateData.name && rentalType.name !== updateData.name) {
+                    const slug = slugifyString(updateData.name);
+                    tasks.push(
+                        this.checkExistBySlug(slug).pipe(
+                            tap((exist) => {
+                                if (exist) {
+                                    throw new ConflictException('Rental type already exists');
+                                }
+                                updateData.slug = slug;
+                            }),
+                        ),
+                    );
+                } else tasks.push(of(null));
+                return forkJoin(tasks).pipe(
+                    switchMap(() => {
+                        return updateEntity<RentalType>(this.rentalTypeRepository, rentalType, updateData);
+                    }),
                 );
             }),
         );
+    }
+    update(
+        currentUser: User,
+        id: string,
+        updateDto: UpdateRentalTypeDto,
+    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(Action.Update, RentalType)) {
+            throw new BadRequestException('You do not have permission to update a rental type');
+        }
+        return this.updateProcess(id, updateDto).pipe(
+            map((rentalType) => {
+                return { status: HttpStatus.OK, data: rentalType, message: 'Rental type updated successfully' };
+            }),
+        );
+    }
+
+    checkExistBySlug(slug: string): Observable<boolean> {
+        return from(this.rentalTypeRepository.existsBy({ slug }));
     }
 }
