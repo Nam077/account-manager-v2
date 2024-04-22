@@ -1,12 +1,12 @@
 import { Account } from 'src/modules/account/entities/account.entity';
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
     CreateDateColumn,
-    UpdateDateColumn,
     DeleteDateColumn,
+    Entity,
     OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 @Entity({ name: 'account_categories' })
 export class AccountCategory {

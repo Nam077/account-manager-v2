@@ -1,5 +1,6 @@
-import { IsOptionalCustom } from 'src/decorator/validator';
 import { PartialType } from '@nestjs/swagger';
+import { IsOptionalCustom } from 'src/decorator/validator';
+
 import { CreateCustomerDto } from './create-customer.dto';
 export class UpdateCustomerDto extends PartialType(CreateCustomerDto) {
     @IsOptionalCustom()

@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { GeoIpI } from 'src/decorator/ip.decorator';
-import { LoginDto } from './dto/login.dto';
-import { JwtPayload } from './strategies/auth-strategy/auth-strategy';
-import { Observable, from, of, switchMap } from 'rxjs';
-import { User } from '../user/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from '../user/user.service';
-import { JwtGenerate } from './jwt-generate';
 import { log } from 'console';
+import { from, Observable, of, switchMap } from 'rxjs';
+import { GeoIpI } from 'src/decorator/ip.decorator';
+
+import { User } from '../user/entities/user.entity';
+import { UserService } from '../user/user.service';
+import { LoginDto } from './dto/login.dto';
+import { JwtGenerate } from './jwt-generate';
+import { JwtPayload } from './strategies/auth-strategy/auth-strategy';
 
 @Injectable()
 export class AuthService {

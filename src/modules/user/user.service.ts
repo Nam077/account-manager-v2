@@ -8,21 +8,22 @@ import {
     NotFoundException,
     UnauthorizedException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { FindAllDto } from 'src/dto/find-all.dto';
+import BcryptService from 'src/helper/hash';
+import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
+import { updateEntity } from 'src/helper/update';
+import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
+import { CrudService } from 'src/interfaces/crud.interface';
+import { DeepPartial, Repository } from 'typeorm';
+
+import { LoginDto } from '../auth/dto/login.dto';
+import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
+import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserRole } from './entities/user.entity';
-import { Observable, catchError, from, map, of, switchMap, tap, throwError, forkJoin } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
-import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
-import { updateEntity } from 'src/helper/update';
-import { CrudService } from 'src/interfaces/crud.interface';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import BcryptService from 'src/helper/hash';
-import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
-import { LoginDto } from '../auth/dto/login.dto';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { FindAllDto } from 'src/dto/find-all.dto';
 @Injectable()
 export class UserService
     implements
@@ -110,7 +111,7 @@ export class UserService
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields, searchFields, relations);
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(Action.ReadAll, User)) {
             throw new ForbiddenException('You are not allowed to read users');

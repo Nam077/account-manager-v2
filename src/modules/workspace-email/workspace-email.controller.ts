@@ -1,12 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
-import { WorkspaceEmailService } from './workspace-email.service';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { GetCurrentUser } from 'src/decorator/auth.decorator';
+import { FindAllDto } from 'src/dto/find-all.dto';
+
+import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { User } from '../user/entities/user.entity';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
-import { GetCurrentUser } from 'src/decorator/auth.decorator';
-import { User } from '../user/entities/user.entity';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { WorkspaceEmailService } from './workspace-email.service';
 @ApiTags('Workspace Email')
 @ApiBearerAuth()
 @UseGuards(AuthJwtGuard)

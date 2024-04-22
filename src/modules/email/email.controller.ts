@@ -1,12 +1,13 @@
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { GetCurrentUser } from 'src/decorator/auth.decorator';
 import { FindAllDto } from 'src/dto/find-all.dto';
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
-import { EmailService } from './email.service';
+
+import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { User } from '../user/entities/user.entity';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
-import { GetCurrentUser } from 'src/decorator/auth.decorator';
-import { User } from '../user/entities/user.entity';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { EmailService } from './email.service';
 @ApiBearerAuth()
 @ApiTags('Email')
 @UseGuards(AuthJwtGuard)

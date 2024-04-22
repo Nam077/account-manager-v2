@@ -1,4 +1,3 @@
-import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
 import {
     BadRequestException,
     ConflictException,
@@ -7,20 +6,22 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { FindAllDto } from 'src/dto/find-all.dto';
+import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
+import { updateEntity } from 'src/helper/update';
+import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
+import { CrudService } from 'src/interfaces/crud.interface';
+import { DeepPartial, Repository } from 'typeorm';
+
+import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { EmailService } from '../email/email.service';
+import { User } from '../user/entities/user.entity';
+import { WorkspaceService } from '../workspace/workspace.service';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
 import { WorkspaceEmail, WorkspaceEmailStatus } from './entities/workspace-email.entity';
-import { CrudService } from 'src/interfaces/crud.interface';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { User } from '../user/entities/user.entity';
-import { Observable, catchError, forkJoin, from, map, of, switchMap, tap, throwError } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { WorkspaceService } from '../workspace/workspace.service';
-import { EmailService } from '../email/email.service';
-import { updateEntity } from 'src/helper/update';
 @Injectable()
 export class WorkspaceEmailService
     implements

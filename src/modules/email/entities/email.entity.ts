@@ -1,16 +1,17 @@
 import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
-import { Customer } from './../../customer/entities/customer.entity';
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
     CreateDateColumn,
-    UpdateDateColumn,
     DeleteDateColumn,
+    Entity,
     JoinColumn,
     ManyToOne,
     OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
+
+import { Customer } from './../../customer/entities/customer.entity';
 @Entity({ name: 'emails' })
 export class Email {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the email table' })

@@ -1,12 +1,12 @@
 import { AccountPrice } from 'src/modules/account-price/entities/account-price.entity';
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
     CreateDateColumn,
-    UpdateDateColumn,
     DeleteDateColumn,
+    Entity,
     OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 @Entity({ name: 'rental_types' })
 export class RentalType {

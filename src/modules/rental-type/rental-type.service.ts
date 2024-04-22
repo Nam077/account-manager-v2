@@ -1,18 +1,19 @@
+import { BadRequestException, ConflictException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { FindAllDto } from 'src/dto/find-all.dto';
+import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
+import { slugifyString } from 'src/helper/slug';
+import { updateEntity } from 'src/helper/update';
+import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
+import { CrudService } from 'src/interfaces/crud.interface';
+import { DeepPartial, Repository } from 'typeorm';
+
+import { User } from '../user/entities/user.entity';
 import { Action, CaslAbilityFactory } from './../casl/casl-ability-factory';
-import { ConflictException, HttpStatus, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
-import { CrudService } from 'src/interfaces/crud.interface';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import { User } from '../user/entities/user.entity';
 import { RentalType } from './entities/rental-type.entity';
-import { Observable, catchError, map, of, switchMap, throwError, tap, forkJoin, from } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
-import { slugifyString } from 'src/helper/slug';
-import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
-import { updateEntity } from 'src/helper/update';
 
 @Injectable()
 export class RentalTypeService

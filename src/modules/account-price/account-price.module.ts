@@ -1,11 +1,12 @@
-import { RentalTypeModule } from './../rental-type/rental-type.module';
 import { Module } from '@nestjs/common';
-import { AccountPriceService } from './account-price.service';
-import { AccountPriceController } from './account-price.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountPrice } from './entities/account-price.entity';
-import { CaslModule } from '../casl/casl.module';
+
 import { AccountModule } from '../account/account.module';
+import { CaslModule } from '../casl/casl.module';
+import { RentalTypeModule } from './../rental-type/rental-type.module';
+import { AccountPriceController } from './account-price.controller';
+import { AccountPriceService } from './account-price.service';
+import { AccountPrice } from './entities/account-price.entity';
 
 @Module({
     imports: [TypeOrmModule.forFeature([AccountPrice]), CaslModule, AccountModule, RentalTypeModule],

@@ -6,20 +6,21 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { catchError, from, map, Observable, of, switchMap, throwError } from 'rxjs';
+import { FindAllDto } from 'src/dto/find-all.dto';
+import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
+import { slugifyString } from 'src/helper/slug';
+import { updateEntity } from 'src/helper/update';
+import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
+import { CrudService } from 'src/interfaces/crud.interface';
+import { DeepPartial, Repository } from 'typeorm';
+
+import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { User } from '../user/entities/user.entity';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
-import { CrudService } from 'src/interfaces/crud.interface';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 import { AccountCategory } from './entities/account-category.entity';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { User } from '../user/entities/user.entity';
-import { Observable, catchError, from, map, of, switchMap, throwError } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
-import { slugifyString } from 'src/helper/slug';
-import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { updateEntity } from 'src/helper/update';
 @Injectable()
 export class AccountCategoryService
     implements

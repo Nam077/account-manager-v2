@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { Observable, from, of, switchMap, catchError, throwError } from 'rxjs';
+import { catchError, from, Observable, of, switchMap, throwError } from 'rxjs';
 import { DeepPartial, FindOptionsWhere, Repository } from 'typeorm';
 
 export function updateEntity<T extends { id: string }>(

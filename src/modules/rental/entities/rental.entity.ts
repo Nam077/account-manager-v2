@@ -5,14 +5,14 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
-    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
-import { Customer } from '../../customer/entities/customer.entity';
+
 import { AccountPrice } from '../../account-price/entities/account-price.entity';
-import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
+import { Customer } from '../../customer/entities/customer.entity';
 import { Email } from '../../email/entities/email.entity';
+import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
 export enum RentalStatus {
     ACTIVE = 'active',
     INACTIVE = 'inactive',

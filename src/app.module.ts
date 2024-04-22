@@ -1,23 +1,24 @@
-import { ConfigModule } from '@nestjs/config';
 import { Injectable, MiddlewareConsumer, Module, NestMiddleware } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { RouterModule } from '@nestjs/core';
+import { NextFunction } from 'express';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DatabaseModule } from './modules/database/database.module';
-import { UserModule } from './modules/user/user.module';
+import { AccountModule } from './modules/account/account.module';
+import { AccountCategoryModule } from './modules/account-category/account-category.module';
+import { AccountPriceModule } from './modules/account-price/account-price.module';
+import { AdminAccountModule } from './modules/admin-account/admin-account.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CaslModule } from './modules/casl/casl.module';
-import { AccountCategoryModule } from './modules/account-category/account-category.module';
-import { RouterModule } from '@nestjs/core';
-import { AccountModule } from './modules/account/account.module';
-import { NextFunction } from 'express';
-import { AdminAccountModule } from './modules/admin-account/admin-account.module';
 import { CustomerModule } from './modules/customer/customer.module';
+import { DatabaseModule } from './modules/database/database.module';
 import { EmailModule } from './modules/email/email.module';
-import { WorkspaceModule } from './modules/workspace/workspace.module';
-import { RentalTypeModule } from './modules/rental-type/rental-type.module';
-import { AccountPriceModule } from './modules/account-price/account-price.module';
-import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.module';
 import { RentalModule } from './modules/rental/rental.module';
+import { RentalTypeModule } from './modules/rental-type/rental-type.module';
+import { UserModule } from './modules/user/user.module';
+import { WorkspaceModule } from './modules/workspace/workspace.module';
+import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.module';
 
 @Module({
     imports: [

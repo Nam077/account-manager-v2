@@ -1,6 +1,6 @@
 // src/common/decorators/geoip.decorator.ts
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { lookup, Lookup } from 'geoip-lite';
+import { Lookup, lookup } from 'geoip-lite';
 
 export interface GeoIpI {
     ip: string;

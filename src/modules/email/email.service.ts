@@ -6,20 +6,21 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { CreateEmailDto } from './dto/create-email.dto';
-import { UpdateEmailDto } from './dto/update-email.dto';
-import { CrudService } from 'src/interfaces/crud.interface';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import { Email } from './entities/email.entity';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { User } from '../user/entities/user.entity';
-import { Observable, catchError, forkJoin, from, map, of, switchMap, tap, throwError } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { FindAllDto } from 'src/dto/find-all.dto';
+import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
+import { updateEntity } from 'src/helper/update';
+import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
+import { CrudService } from 'src/interfaces/crud.interface';
 import { DeepPartial, Repository } from 'typeorm';
+
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
-import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
-import { updateEntity } from 'src/helper/update';
+import { User } from '../user/entities/user.entity';
+import { CreateEmailDto } from './dto/create-email.dto';
+import { UpdateEmailDto } from './dto/update-email.dto';
+import { Email } from './entities/email.entity';
 @Injectable()
 export class EmailService
     implements

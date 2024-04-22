@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsUUID, IsNumber, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsUUID, Min } from 'class-validator';
 
 export class CreateAccountPriceDto {
     @ApiProperty({ description: 'Price of the account', example: 100 })

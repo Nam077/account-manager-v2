@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsString, IsInt, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 import { ToCapitalize } from 'src/decorator/validator';
 
 export class CreateRentalTypeDto {

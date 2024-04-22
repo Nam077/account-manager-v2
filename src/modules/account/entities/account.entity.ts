@@ -1,16 +1,16 @@
 import { AccountCategory } from 'src/modules/account-category/entities/account-category.entity';
-import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
 import { AccountPrice } from 'src/modules/account-price/entities/account-price.entity';
+import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
     CreateDateColumn,
-    UpdateDateColumn,
     DeleteDateColumn,
-    ManyToOne,
+    Entity,
     JoinColumn,
+    ManyToOne,
     OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 @Entity({ name: 'accounts' })
 export class Account {
