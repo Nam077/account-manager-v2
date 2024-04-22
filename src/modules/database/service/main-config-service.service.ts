@@ -1,18 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
-import { Account } from 'src/modules/account/entities/account.entity';
-import { AccountCategory } from 'src/modules/account-category/entities/account-category.entity';
-import { AccountPrice } from 'src/modules/account-price/entities/account-price.entity';
-import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
-import { Customer } from 'src/modules/customer/entities/customer.entity';
-import { Email } from 'src/modules/email/entities/email.entity';
-import { RentalType } from 'src/modules/rental-type/entities/rental-type.entity';
-import { User } from 'src/modules/user/entities/user.entity';
-import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
-import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 
+import { Account } from '../../account/entities/account.entity';
+import { AccountCategory } from '../../account-category/entities/account-category.entity';
+import { AccountPrice } from '../../account-price/entities/account-price.entity';
+import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
+import { Customer } from '../../customer/entities/customer.entity';
+import { Email } from '../../email/entities/email.entity';
+import { RefreshToken } from '../../refresh-token/entities/refresh-token.entity';
 import { Rental } from '../../rental/entities/rental.entity';
+import { RentalType } from '../../rental-type/entities/rental-type.entity';
+import { User } from '../../user/entities/user.entity';
+import { Workspace } from '../../workspace/entities/workspace.entity';
+import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
+
 @Injectable()
 export class MainConfigServiceService implements TypeOrmOptionsFactory {
     constructor(private configService: ConfigService) {}
@@ -36,6 +38,7 @@ export class MainConfigServiceService implements TypeOrmOptionsFactory {
                 AccountPrice,
                 WorkspaceEmail,
                 Rental,
+                RefreshToken,
             ],
             synchronize: true,
             // logging: true,

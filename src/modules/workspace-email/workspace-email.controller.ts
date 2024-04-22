@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { GetCurrentUser } from 'src/decorator/auth.decorator';
-import { FindAllDto } from 'src/dto/find-all.dto';
 
+import { GetCurrentUser } from '../../decorator/auth.decorator';
+import { FindAllDto } from '../../dto/find-all.dto';
 import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
 import { User } from '../user/entities/user.entity';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';

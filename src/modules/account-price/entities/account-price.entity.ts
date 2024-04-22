@@ -1,5 +1,3 @@
-import { Account } from 'src/modules/account/entities/account.entity';
-import { RentalType } from 'src/modules/rental-type/entities/rental-type.entity';
 import {
     Column,
     CreateDateColumn,
@@ -12,7 +10,9 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { Account } from '../../account/entities/account.entity';
 import { Rental } from '../../rental/entities/rental.entity';
+import { RentalType } from '../../rental-type/entities/rental-type.entity';
 @Entity({ name: 'account_prices' })
 export class AccountPrice {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account price table' })

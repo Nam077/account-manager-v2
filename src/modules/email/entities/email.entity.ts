@@ -1,4 +1,3 @@
-import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 import {
     Column,
     CreateDateColumn,
@@ -11,7 +10,9 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
-import { Customer } from './../../customer/entities/customer.entity';
+import { Customer } from '../../customer/entities/customer.entity';
+import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
+
 @Entity({ name: 'emails' })
 export class Email {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the email table' })

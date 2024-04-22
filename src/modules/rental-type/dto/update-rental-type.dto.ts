@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsOptionalCustom } from 'src/decorator/validator';
 
+import { IsOptionalCustom } from '../../../decorator/validator';
 import { CreateRentalTypeDto } from './create-rental-type.dto';
 
 export class UpdateRentalTypeDto extends PartialType(CreateRentalTypeDto) {

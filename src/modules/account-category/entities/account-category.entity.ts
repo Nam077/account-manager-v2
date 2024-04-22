@@ -1,4 +1,3 @@
-import { Account } from 'src/modules/account/entities/account.entity';
 import {
     Column,
     CreateDateColumn,
@@ -8,6 +7,8 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+
+import { Account } from '../../account/entities/account.entity';
 @Entity({ name: 'account_categories' })
 export class AccountCategory {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account category table' })

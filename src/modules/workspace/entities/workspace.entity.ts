@@ -1,5 +1,3 @@
-import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
-import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 import {
     Column,
     CreateDateColumn,
@@ -11,6 +9,9 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+
+import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
+import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
 @Entity({ name: 'workspaces' })
 export class Workspace {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the workspace table' })

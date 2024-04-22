@@ -1,4 +1,4 @@
-import { Injectable, MiddlewareConsumer, Module, NestMiddleware } from '@nestjs/common';
+import { Injectable, Module, NestMiddleware } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { NextFunction } from 'express';
@@ -14,6 +14,7 @@ import { CaslModule } from './modules/casl/casl.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { EmailModule } from './modules/email/email.module';
+import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 import { RentalModule } from './modules/rental/rental.module';
 import { RentalTypeModule } from './modules/rental-type/rental-type.module';
 import { UserModule } from './modules/user/user.module';
@@ -84,6 +85,10 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
                         path: '/',
                         module: RentalModule,
                     },
+                    {
+                        path: '/',
+                        module: RefreshTokenModule,
+                    },
                 ],
             },
         ]),
@@ -96,14 +101,15 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
         AccountPriceModule,
         WorkspaceEmailModule,
         RentalModule,
+        RefreshTokenModule,
     ],
     controllers: [AppController],
     providers: [AppService],
 })
 export class AppModule {
-    configure(consumer: MiddlewareConsumer) {
-        consumer.apply(DefaultAuthMiddleware).forRoutes('*'); 
-    }
+    // configure(consumer: MiddlewareConsumer) {
+    //     consumer.apply(DefaultAuthMiddleware).forRoutes('*');
+    // }
 }
 @Injectable()
 export class DefaultAuthMiddleware implements NestMiddleware {

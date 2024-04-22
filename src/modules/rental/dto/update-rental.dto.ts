@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsOptionalCustom } from 'src/decorator/validator';
 
+import { IsOptionalCustom } from '../../../decorator/validator';
 import { RentalStatus } from '../entities/rental.entity';
 import { CreateRentalDto } from './create-rental.dto';
 

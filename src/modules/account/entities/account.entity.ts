@@ -1,6 +1,3 @@
-import { AccountCategory } from 'src/modules/account-category/entities/account-category.entity';
-import { AccountPrice } from 'src/modules/account-price/entities/account-price.entity';
-import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
 import {
     Column,
     CreateDateColumn,
@@ -12,6 +9,10 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+
+import { AccountCategory } from '../../account-category/entities/account-category.entity';
+import { AccountPrice } from '../../account-price/entities/account-price.entity';
+import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
 @Entity({ name: 'accounts' })
 export class Account {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account table' })

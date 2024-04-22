@@ -1,4 +1,3 @@
-import { Email } from 'src/modules/email/entities/email.entity';
 import {
     Column,
     CreateDateColumn,
@@ -9,6 +8,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { Email } from '../../email/entities/email.entity';
 import { Rental } from '../../rental/entities/rental.entity';
 @Entity({ name: 'customers' })
 export class Customer {

@@ -1,4 +1,15 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
+
+import { RefreshToken } from '../../refresh-token/entities/refresh-token.entity';
+
 export enum UserRole {
     ADMIN = 'admin',
     USER = 'user',
@@ -38,4 +49,7 @@ export class User {
         name: 'deleted_at',
     })
     deletedAt: Date;
+
+    @OneToMany(() => RefreshToken, (refreshToken) => refreshToken.user)
+    refreshTokens: RefreshToken[];
 }

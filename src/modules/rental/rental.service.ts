@@ -1,8 +1,6 @@
 import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { log } from 'console';
-import { forkJoin, from, Observable, of, tap } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
 import { FindAllDto } from '../../dto/find-all.dto';
@@ -346,7 +344,6 @@ export class RentalService
             workspaceId: string;
         },
     ): Observable<string> {
-        log('removeWorkSpaceEmailAndCreateNew');
         return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
             switchMap(() => {
                 return this.workspaceEmailService.createProcessAndGetId({
@@ -567,7 +564,6 @@ export class RentalService
                         } else return of(updateData);
                     }),
                     switchMap((updateData) => {
-                        log(updateData);
                         return updateEntity<Rental>(this.rentalRepository, rental, updateData);
                     }),
                 );
@@ -594,7 +590,6 @@ export class RentalService
         );
     }
     removeWorkspaceEmail(rental: Rental): Observable<boolean> {
-        log('removeWorkspaceEmail');
         if (rental.workspaceEmailId) {
             return this.workspaceEmailService.removeNoCheckRealtion(rental.workspaceEmailId).pipe(
                 map(() => {

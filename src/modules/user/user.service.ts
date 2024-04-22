@@ -10,16 +10,16 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import BcryptService from 'src/helper/hash';
-import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
-import { updateEntity } from 'src/helper/update';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import { CrudService } from 'src/interfaces/crud.interface';
 import { DeepPartial, Repository } from 'typeorm';
 
+import { FindAllDto } from '../../dto/find-all.dto';
+import BcryptService from '../../helper/hash';
+import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
+import { updateEntity } from '../../helper/update';
+import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
+import { CrudService } from '../../interfaces/crud.interface';
+import { JwtPayload } from '../../interfaces/jwt-payload';
 import { LoginDto } from '../auth/dto/login.dto';
-import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -128,8 +128,10 @@ export class UserService
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
-                if (hardRemove && !user.deletedAt) {
-                    throw new BadRequestException('User not deleted yet');
+                if (hardRemove) {
+                    if (!user.deletedAt) {
+                        throw new BadRequestException('User not deleted yet');
+                    }
                     return this.userRepository.remove(user);
                 }
                 return this.userRepository.softRemove(user);
