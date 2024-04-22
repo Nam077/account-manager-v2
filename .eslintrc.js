@@ -14,8 +14,6 @@ module.exports = {
   ],
   extends: [
     "plugin:@typescript-eslint/recommended",
-    'plugin:@typescript-eslint/strict-type-checked',
-    'plugin:@typescript-eslint/stylistic-type-checked',
     "plugin:prettier/recommended",
   ],
   root: true,
@@ -83,10 +81,6 @@ module.exports = {
     ],
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
-    "prefer-arrow-callback": "error"
   },
-  parserOptions: {
-    sourceType: "module",
-    ecmaVersion: "latest",
-  },
+
 };

@@ -7,6 +7,7 @@ import { DeepPartial, Repository } from 'typeorm';
 
 import { FindAllDto } from '../../dto/find-all.dto';
 import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
+import { CheckForForkJoin, updateEntity } from '../../helper/update';
 import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
 import { CrudService } from '../../interfaces/crud.interface';
 import { AccountPriceService } from '../account-price/account-price.service';
@@ -15,9 +16,8 @@ import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { WorkspaceEmailStatus } from '../workspace-email/entities/workspace-email.entity';
 import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
-import { CheckForForkJoin, updateEntity } from './../../helper/update';
-import { WorkspaceEmailStatus } from './../workspace-email/entities/workspace-email.entity';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
@@ -46,6 +46,7 @@ export class RentalService
         private readonly caslAbilityFactory: CaslAbilityFactory,
     ) {}
     checkAccount(accountId: string, accountId2: string) {
+        if (!accountId2) return;
         if (accountId !== accountId2) {
             throw new BadRequestException('Account does not belong to account price');
         }
@@ -239,14 +240,17 @@ export class RentalService
         );
     }
     setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental: Rental) {
-        return this.updateWorkSpaceEmailToNull(rental.id).pipe(
-            switchMap((isDelete) => {
-                if (isDelete) {
-                    return this.removeWorkspaceEmail(rental);
-                }
-                return of(false);
-            }),
-        );
+        if (rental.workspaceEmailId) {
+            return this.updateWorkSpaceEmailToNull(rental.id).pipe(
+                switchMap((isDelete) => {
+                    if (isDelete) {
+                        return this.removeWorkspaceEmail(rental);
+                    }
+                    return of(false);
+                }),
+            );
+        }
+        return of(true);
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<Rental> {
         return from(this.rentalRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
@@ -412,24 +416,117 @@ export class RentalService
                     );
                 } else tasks.push(of(null));
 
-                if (workspaceId && rental.workspaceEmail?.workspaceId !== workspaceId) {
-                    tasks.push(
-                        this.workspaceService.findOneData(rental.workspaceEmailId).pipe(
-                            map((workspace) => {
-                                if (!workspace) {
-                                    throw new NotFoundException('Workspace not found');
-                                }
-                                checkForForkJoin.workspace = true;
-                                return workspace;
-                            }),
-                        ),
-                    );
+                if ((workspaceId || workspaceId === null) && rental.workspaceEmail?.workspaceId !== workspaceId) {
+                    if (workspaceId === null) {
+                        checkForForkJoin.workspace = true;
+                        tasks.push(of(null));
+                    } else
+                        tasks.push(
+                            this.workspaceService.findOneData(workspaceId).pipe(
+                                map((workspace) => {
+                                    if (!workspace) {
+                                        throw new NotFoundException('Workspace not found');
+                                    }
+                                    checkForForkJoin.workspace = true;
+                                    return workspace;
+                                }),
+                            ),
+                        );
                 } else tasks.push(of(null));
+
                 return forkJoin(tasks).pipe(
                     switchMap(([accountPrice, email, workspace]) => {
-                        log(checkForForkJoin);
+                        console.log(checkForForkJoin);
 
-                        if (checkForForkJoin.accountPrice) {
+                        if (checkForForkJoin.accountPrice && checkForForkJoin.email && checkForForkJoin.workspace) {
+                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
+                            if (workspaceId === null) {
+                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
+                                    switchMap(() => {
+                                        delete rental.workspaceEmail;
+                                        delete rental.accountPrice;
+                                        updateData.emailId = emailId;
+                                        updateData.accountPriceId = accountPriceId;
+                                        return of(updateData);
+                                    }),
+                                );
+                            }
+                            this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
+                            return this.updateEmailWorkspaceId(rental, emailId, true, workspaceId).pipe(
+                                map((workspaceEmailId) => {
+                                    delete rental.email;
+                                    delete rental.workspaceEmail;
+                                    delete rental.accountPrice;
+                                    updateData.emailId = emailId;
+                                    updateData.accountPriceId = accountPriceId;
+                                    updateData.workspaceEmailId = workspaceEmailId;
+                                    return updateData;
+                                }),
+                            );
+                        } else if (checkForForkJoin.accountPrice && checkForForkJoin.email) {
+                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
+                            this.checkAccount(
+                                accountPrice.accountId,
+                                rental.workspaceEmail.workspace.adminAccount.accountId,
+                            );
+                            return this.updateEmailWorkspaceId(rental, emailId).pipe(
+                                map((workspaceEmailId) => {
+                                    delete rental.email;
+                                    delete rental.workspaceEmail;
+                                    updateData.workspaceEmailId = workspaceEmailId;
+                                    updateData.emailId = emailId;
+                                    updateData.accountPriceId = accountPriceId;
+                                    return updateData;
+                                }),
+                            );
+                        } else if (checkForForkJoin.accountPrice && checkForForkJoin.workspace) {
+                            if (workspaceId === null) {
+                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
+                                    switchMap(() => {
+                                        delete rental.workspaceEmail;
+                                        delete rental.accountPrice;
+                                        updateData.emailId = emailId;
+                                        updateData.accountPriceId = accountPriceId;
+                                        return of(updateData);
+                                    }),
+                                );
+                            }
+                            this.checkAccount(workspace.adminAccount.accountId, accountPrice.accountId);
+                            return this.updateEmailWorkspaceId(rental, rental.emailId, true, workspaceId).pipe(
+                                map((workspaceEmailId) => {
+                                    delete rental.workspaceEmail;
+                                    delete rental.accountPrice;
+                                    updateData.accountPriceId = accountPriceId;
+                                    updateData.workspaceEmailId = workspaceEmailId;
+                                    return updateData;
+                                }),
+                            );
+                        } else if (checkForForkJoin.email && checkForForkJoin.workspace) {
+                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
+                            if (workspaceId === null) {
+                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
+                                    switchMap(() => {
+                                        delete rental.workspaceEmail;
+                                        delete rental.email;
+                                        updateData.emailId = emailId;
+                                        return of(updateData);
+                                    }),
+                                );
+                            }
+                            this.checkAccount(
+                                workspace.adminAccount.accountId,
+                                rental.workspaceEmail?.workspace.adminAccount.accountId,
+                            );
+                            return this.updateEmailWorkspaceId(rental, emailId, true, workspaceId).pipe(
+                                map((workspaceEmailId) => {
+                                    delete rental.email;
+                                    delete rental.workspaceEmail;
+                                    updateData.emailId = emailId;
+                                    updateData.workspaceEmailId = workspaceEmailId;
+                                    return updateData;
+                                }),
+                            );
+                        } else if (checkForForkJoin.accountPrice) {
                             if (rental.workspaceEmailId) {
                                 this.checkAccount(
                                     accountPrice.accountId,
@@ -444,77 +541,25 @@ export class RentalService
                             return this.updateEmailWorkspaceId(rental, emailId).pipe(
                                 map((workspaceEmailId) => {
                                     delete rental.email;
-                                    delete updateData.workspaceEmail;
+                                    delete rental.workspaceEmail;
                                     updateData.workspaceEmailId = workspaceEmailId;
                                     updateData.emailId = emailId;
                                     return updateData;
                                 }),
                             );
                         } else if (checkForForkJoin.workspace) {
+                            if (workspaceId === null) {
+                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
+                                    switchMap(() => {
+                                        delete rental.workspaceEmail;
+                                        return of(updateData);
+                                    }),
+                                );
+                            }
                             this.checkAccount(workspace.adminAccount.accountId, rental.accountPrice.accountId);
                             return this.updateEmailWorkspaceId(rental, rental.emailId, true, workspaceId).pipe(
                                 map((workspaceEmailId) => {
-                                    delete updateData.workspaceEmail;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (checkForForkJoin.accountPrice && checkForForkJoin.email) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
-                            this.checkAccount(
-                                accountPrice.accountId,
-                                rental.workspaceEmail.workspace.adminAccount.accountId,
-                            );
-                            return this.updateEmailWorkspaceId(rental, emailId).pipe(
-                                map((workspaceEmailId) => {
-                                    delete rental.email;
-                                    delete updateData.workspaceEmail;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    updateData.emailId = emailId;
-                                    updateData.accountPriceId = accountPriceId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (checkForForkJoin.accountPrice && checkForForkJoin.workspace) {
-                            this.checkAccount(workspace.adminAccount.accountId, accountPrice.accountId);
-                            return this.updateEmailWorkspaceId(rental, rental.emailId, true, workspaceId).pipe(
-                                map((workspaceEmailId) => {
                                     delete rental.workspaceEmail;
-                                    delete rental.accountPrice;
-                                    updateData.accountPriceId = accountPriceId;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (checkForForkJoin.email && checkForForkJoin.workspace) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
-                            this.checkAccount(
-                                workspace.adminAccount.accountId,
-                                rental.workspaceEmail.workspace.adminAccount.accountId,
-                            );
-                            return this.updateEmailWorkspaceId(rental, emailId, true, workspaceId).pipe(
-                                map((workspaceEmailId) => {
-                                    delete rental.email;
-                                    delete rental.workspaceEmail;
-                                    updateData.emailId = emailId;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (
-                            checkForForkJoin.accountPrice &&
-                            checkForForkJoin.email &&
-                            checkForForkJoin.workspace
-                        ) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
-                            this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
-                            return this.updateEmailWorkspaceId(rental, emailId, true, workspaceId).pipe(
-                                map((workspaceEmailId) => {
-                                    delete rental.email;
-                                    delete rental.workspaceEmail;
-                                    delete rental.accountPrice;
-                                    updateData.emailId = emailId;
-                                    updateData.accountPriceId = accountPriceId;
                                     updateData.workspaceEmailId = workspaceEmailId;
                                     return updateData;
                                 }),
