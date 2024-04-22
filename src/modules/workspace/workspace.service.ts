@@ -72,6 +72,23 @@ export class WorkspaceService
         return from(
             this.workspaceRepository.findOne({
                 where: { id },
+                relations: { adminAccount: true },
+            }),
+        );
+    }
+    findOneWithAdminAccount(id: string): Observable<Workspace> {
+        return from(
+            this.workspaceRepository.findOne({
+                where: { id },
+                relations: { adminAccount: { account: true } },
+            }),
+        );
+    }
+    findOneWithWorkspaceEmails(id: string): Observable<Workspace> {
+        return from(
+            this.workspaceRepository.findOne({
+                where: { id },
+                relations: { workspaceEmails: true },
             }),
         );
     }

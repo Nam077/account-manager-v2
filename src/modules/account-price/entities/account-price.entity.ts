@@ -7,9 +7,11 @@ import {
     DeleteDateColumn,
     ManyToOne,
     JoinColumn,
+    OneToMany,
 } from 'typeorm';
 import { Account } from 'src/modules/account/entities/account.entity';
 import { RentalType } from 'src/modules/rental-type/entities/rental-type.entity';
+import { Rental } from '../../rental/entities/rental.entity';
 @Entity({ name: 'account_prices' })
 export class AccountPrice {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account price table' })
@@ -50,4 +52,7 @@ export class AccountPrice {
     @ManyToOne(() => RentalType, (rentalType) => rentalType.accountPrices)
     @JoinColumn({ name: 'rental_type_id' })
     rentalType: RentalType;
+
+    @OneToMany(() => Rental, (rental) => rental.accountPrice)
+    rentals: Rental[];
 }

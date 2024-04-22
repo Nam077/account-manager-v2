@@ -11,6 +11,7 @@ import { RentalType } from 'src/modules/rental-type/entities/rental-type.entity'
 import { User } from 'src/modules/user/entities/user.entity';
 import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
 import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
+import { Rental } from '../../rental/entities/rental.entity';
 @Injectable()
 export class MainConfigServiceService implements TypeOrmOptionsFactory {
     constructor(private configService: ConfigService) {}
@@ -33,6 +34,7 @@ export class MainConfigServiceService implements TypeOrmOptionsFactory {
                 RentalType,
                 AccountPrice,
                 WorkspaceEmail,
+                Rental,
             ],
             synchronize: true,
             // logging: true,

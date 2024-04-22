@@ -8,6 +8,7 @@ import {
     DeleteDateColumn,
     OneToMany,
 } from 'typeorm';
+import { Rental } from '../../rental/entities/rental.entity';
 @Entity({ name: 'customers' })
 export class Customer {
     //id, name, email, phone, address, phone, company,description. createdAt, updatedAt, deletedAt
@@ -49,4 +50,7 @@ export class Customer {
     // relation with email
     @OneToMany(() => Email, (email) => email.customer)
     emails: Email[];
+
+    @OneToMany(() => Rental, (rental) => rental.customer)
+    rentals: Rental[];
 }

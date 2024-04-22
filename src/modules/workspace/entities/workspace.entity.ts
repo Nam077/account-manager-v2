@@ -7,6 +7,7 @@ import {
     DeleteDateColumn,
     ManyToOne,
     OneToMany,
+    JoinColumn,
 } from 'typeorm';
 import { AdminAccount } from 'src/modules/admin-account/entities/admin-account.entity';
 import { WorkspaceEmail } from 'src/modules/workspace-email/entities/workspace-email.entity';
@@ -50,6 +51,7 @@ export class Workspace {
 
     //relations
     @ManyToOne(() => AdminAccount, (adminAccount) => adminAccount.workspaces)
+    @JoinColumn({ name: 'admin_account_id' })
     adminAccount: AdminAccount;
 
     @OneToMany(() => WorkspaceEmail, (workspaceEmail) => workspaceEmail.workspace)

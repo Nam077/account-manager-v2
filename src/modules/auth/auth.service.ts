@@ -6,7 +6,6 @@ import { Observable, from, of, switchMap } from 'rxjs';
 import { User } from '../user/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt';
 import { JwtGenerate } from './jwt-generate';
 import { log } from 'console';
 
@@ -18,6 +17,7 @@ export class AuthService {
         private readonly jwtGenerate: JwtGenerate,
     ) {}
     login(loginDto: LoginDto, ipGeo: GeoIpI) {
+        log(ipGeo);
         return from(this.userService.login(loginDto)).pipe(
             switchMap((user) => {
                 const token = this.jwtGenerate.generateToken(user);
