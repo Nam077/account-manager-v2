@@ -7,10 +7,15 @@ import {
     DeleteDateColumn,
     ManyToOne,
     JoinColumn,
+    OneToMany,
 } from 'typeorm';
 import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
 import { Email } from 'src/modules/email/entities/email.entity';
-
+import { Rental } from '../../rental/entities/rental.entity';
+export enum WorkspaceEmailStatus {
+    ACTIVE = 'active',
+    INACTIVE = 'inactive',
+}
 @Entity({ name: 'workspace_emails' })
 export class WorkspaceEmail {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the workspace email table' })
@@ -21,6 +26,14 @@ export class WorkspaceEmail {
 
     @Column({ type: 'uuid', nullable: false, comment: 'Email id', name: 'email_id' })
     emailId: string;
+
+    @Column({
+        type: 'enum',
+        enum: WorkspaceEmailStatus,
+        default: WorkspaceEmailStatus.ACTIVE,
+        comment: 'Status of the workspace email',
+    })
+    status: WorkspaceEmailStatus;
 
     @CreateDateColumn({
         comment: 'Date and time when the workspace email was created',
@@ -48,4 +61,7 @@ export class WorkspaceEmail {
     @ManyToOne(() => Email, (email) => email.workspaceEmails)
     @JoinColumn({ name: 'email_id' })
     email: Email;
+
+    @OneToMany(() => Rental, (rental) => rental.workspaceEmail)
+    rentals: Rental[];
 }

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
-import { WorkspaceEmail } from './entities/workspace-email.entity';
+import { WorkspaceEmail, WorkspaceEmailStatus } from './entities/workspace-email.entity';
 import { CrudService } from 'src/interfaces/crud.interface';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
 import { FindAllDto } from 'src/dto/find-all.dto';
@@ -42,10 +42,13 @@ export class WorkspaceEmailService
     ) {}
     createProcess(createDto: CreateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const { emailId, workspaceId } = createDto;
-        return from(this.workspaceService.findOneData(workspaceId)).pipe(
+        return from(this.workspaceService.findOneWithWorkspaceEmails(workspaceId)).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException('Workspace not found');
+                }
+                if (workspace.workspaceEmails && workspace.workspaceEmails.length === workspace.maxSlots) {
+                    throw new BadRequestException('Workspace is full');
                 }
                 return from(this.emailService.findOneData(emailId));
             }),
@@ -66,6 +69,9 @@ export class WorkspaceEmailService
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
+    }
+    createProcessAndGetId(createDto: CreateWorkspaceEmailDto): Observable<string> {
+        return this.createProcess(createDto).pipe(map((workspaceEmail) => workspaceEmail.id));
     }
     create(currentUser: User, createDto: CreateWorkspaceEmailDto): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -152,7 +158,13 @@ export class WorkspaceEmailService
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<WorkspaceEmail> {
         return from(
-            this.workspaceEmailRepository.findOne({ where: { id }, withDeleted: hardRemove, relations: {} }),
+            this.workspaceEmailRepository.findOne({
+                where: { id },
+                withDeleted: hardRemove,
+                relations: {
+                    rentals: true,
+                },
+            }),
         ).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
@@ -164,7 +176,21 @@ export class WorkspaceEmailService
                     }
                     return from(this.workspaceEmailRepository.remove(workspaceEmail));
                 }
+                if (workspaceEmail.rentals) {
+                    throw new BadRequestException('Workspace email is in use');
+                }
+
                 return from(this.workspaceEmailRepository.softRemove(workspaceEmail));
+            }),
+        );
+    }
+    removeNoCheckRealtion(id: string): Observable<WorkspaceEmail> {
+        return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
+            switchMap((workspaceEmail) => {
+                if (!workspaceEmail) {
+                    throw new NotFoundException('Workspace email not found');
+                }
+                return from(this.workspaceEmailRepository.remove(workspaceEmail));
             }),
         );
     }
@@ -245,10 +271,16 @@ export class WorkspaceEmailService
                 } else tasks.push(of(null));
                 if (updateDto.workspaceId && updateDto.workspaceId !== workspaceEmail.workspaceId) {
                     tasks.push(
-                        this.workspaceService.findOneData(updateDto.workspaceId).pipe(
+                        this.workspaceService.findOneWithWorkspaceEmails(updateDto.workspaceId).pipe(
                             tap((workspace) => {
                                 if (!workspace) {
                                     throw new NotFoundException('Workspace not found');
+                                }
+                                if (
+                                    workspace.workspaceEmails &&
+                                    workspace.workspaceEmails.length === workspace.maxSlots
+                                ) {
+                                    throw new BadRequestException('Workspace is full');
                                 }
                             }),
                         ),
@@ -275,6 +307,17 @@ export class WorkspaceEmailService
                         return updateEntity<WorkspaceEmail>(this.workspaceEmailRepository, workspaceEmail, updateData);
                     }),
                 );
+            }),
+        );
+    }
+    updateStatusProcess(id: string, status: WorkspaceEmailStatus): Observable<WorkspaceEmail> {
+        return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
+            switchMap((workspaceEmail) => {
+                if (!workspaceEmail) {
+                    throw new NotFoundException('Workspace email not found');
+                }
+                workspaceEmail.status = status;
+                return from(this.workspaceEmailRepository.save(workspaceEmail));
             }),
         );
     }

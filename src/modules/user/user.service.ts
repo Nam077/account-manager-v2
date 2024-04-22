@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { FindAllDto } from 'src/dto/find-all.dto';
 import { User, UserRole } from './entities/user.entity';
 import { Observable, catchError, from, map, of, switchMap, tap, throwError, forkJoin } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,10 +18,11 @@ import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination'
 import { updateEntity } from 'src/helper/update';
 import { CrudService } from 'src/interfaces/crud.interface';
 import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import BycryptService from 'src/helper/hash';
+import BcryptService from 'src/helper/hash';
 import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
 import { LoginDto } from '../auth/dto/login.dto';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { FindAllDto } from 'src/dto/find-all.dto';
 @Injectable()
 export class UserService
     implements
@@ -47,7 +47,7 @@ export class UserService
                 if (isExist) {
                     throw new ConflictException('Email already exists');
                 }
-                return BycryptService.hash(password);
+                return BcryptService.hash(password);
             }),
             switchMap((hash) => {
                 const user = new User();
@@ -212,7 +212,7 @@ export class UserService
                 } else tasks.push(of(null));
                 if (updateDto.password) {
                     tasks.push(
-                        BycryptService.hash(updateDto.password).pipe(tap((hash) => (updateData.password = hash))),
+                        BcryptService.hash(updateDto.password).pipe(tap((hash) => (updateData.password = hash))),
                     );
                 } else tasks.push(of(null));
                 return forkJoin(tasks).pipe(switchMap(() => updateEntity<User>(this.userRepository, user, updateData)));
@@ -268,7 +268,7 @@ export class UserService
                 if (!user) {
                     throw new UnauthorizedException('Invalid credentials');
                 }
-                return BycryptService.compare(loginDto.password, user.password).pipe(
+                return BcryptService.compare(loginDto.password, user.password).pipe(
                     switchMap((isMatch) => {
                         if (!isMatch) {
                             throw new UnauthorizedException('Invalid credentials');

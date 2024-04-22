@@ -10,6 +10,7 @@ import { Workspace } from '../workspace/entities/workspace.entity';
 import { RentalType } from '../rental-type/entities/rental-type.entity';
 import { AccountPrice } from '../account-price/entities/account-price.entity';
 import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
+import { Rental } from '../rental/entities/rental.entity';
 export enum Action {
     ReadAll = 'readAll',
     Manage = 'manage',
@@ -33,6 +34,7 @@ export type Subjects = InferSubjects<
     | typeof RentalType
     | typeof AccountPrice
     | typeof WorkspaceEmail
+    | typeof Rental
     | 'all'
 >;
 type AppAbility = MongoAbility<[Action, Subjects]>;

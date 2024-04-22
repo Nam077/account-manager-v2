@@ -79,6 +79,10 @@ import { RentalModule } from './modules/rental/rental.module';
                         path: '/',
                         module: WorkspaceEmailModule,
                     },
+                    {
+                        path: '/',
+                        module: RentalModule,
+                    },
                 ],
             },
         ]),
