@@ -1,13 +1,14 @@
 import { Email } from 'src/modules/email/entities/email.entity';
 import {
-    Entity,
     Column,
-    PrimaryGeneratedColumn,
     CreateDateColumn,
-    UpdateDateColumn,
     DeleteDateColumn,
+    Entity,
     OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
+
 import { Rental } from '../../rental/entities/rental.entity';
 @Entity({ name: 'customers' })
 export class Customer {

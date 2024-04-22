@@ -1,33 +1,26 @@
+import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { log } from 'console';
+import { forkJoin, from, Observable, of, tap } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
+import { DeepPartial, Repository } from 'typeorm';
+
+import { FindAllDto } from '../../dto/find-all.dto';
+import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
+import { CrudService } from '../../interfaces/crud.interface';
+import { AccountPriceService } from '../account-price/account-price.service';
+import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CustomerService } from '../customer/customer.service';
+import { EmailService } from '../email/email.service';
+import { User } from '../user/entities/user.entity';
+import { WorkspaceService } from '../workspace/workspace.service';
+import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
 import { CheckForForkJoin, updateEntity } from './../../helper/update';
-import { WorkspaceEmail, WorkspaceEmailStatus } from './../workspace-email/entities/workspace-email.entity';
-import {
-    BadRequestException,
-    ForbiddenException,
-    HttpException,
-    HttpStatus,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+import { WorkspaceEmailStatus } from './../workspace-email/entities/workspace-email.entity';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
-import { CrudService } from '../../interfaces/crud.interface';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { FindAllDto } from '../../dto/find-all.dto';
-import { User } from '../user/entities/user.entity';
 import { Rental } from './entities/rental.entity';
-import { Observable, forkJoin, from, of, tap } from 'rxjs';
-import { DeepPartial, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { WorkspaceService } from '../workspace/workspace.service';
-import { CustomerService } from '../customer/customer.service';
-import { AccountPriceService } from '../account-price/account-price.service';
-import { EmailService } from '../email/email.service';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { map, switchMap } from 'rxjs/operators';
-import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
-import { log } from 'console';
-import { SearchField, findWithPaginationAndSearch } from 'src/helper/pagination';
-import e from 'express';
 
 @Injectable()
 export class RentalService

@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
-import { RentalService } from './rental.service';
-import { RentalController } from './rental.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Rental } from './entities/rental.entity';
-import { CustomerModule } from '../customer/customer.module';
-import { WorkspaceModule } from '../workspace/workspace.module';
+
 import { AccountPriceModule } from '../account-price/account-price.module';
-import { EmailModule } from '../email/email.module';
 import { CaslModule } from '../casl/casl.module';
+import { CustomerModule } from '../customer/customer.module';
+import { EmailModule } from '../email/email.module';
+import { WorkspaceModule } from '../workspace/workspace.module';
 import { WorkspaceEmailModule } from '../workspace-email/workspace-email.module';
+import { Rental } from './entities/rental.entity';
+import { RentalController } from './rental.controller';
+import { RentalService } from './rental.service';
 
 @Module({
     imports: [

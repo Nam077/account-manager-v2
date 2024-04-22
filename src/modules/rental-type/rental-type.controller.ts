@@ -1,12 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
-import { RentalTypeService } from './rental-type.service';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { GetCurrentUser } from 'src/decorator/auth.decorator';
+import { FindAllDto } from 'src/dto/find-all.dto';
+
+import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { User } from '../user/entities/user.entity';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
-import { GetCurrentUser } from 'src/decorator/auth.decorator';
-import { User } from '../user/entities/user.entity';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { RentalTypeService } from './rental-type.service';
 @ApiTags('Rental Type')
 @ApiBearerAuth()
 @UseGuards(AuthJwtGuard)

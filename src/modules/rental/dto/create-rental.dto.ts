@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsDate, IsDecimal, IsBoolean, IsString, IsOptional, Length, IsNumber, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDate, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+
 import { RentalStatus } from '../entities/rental.entity';
 
 export class CreateRentalDto {

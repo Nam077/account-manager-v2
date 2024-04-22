@@ -1,6 +1,7 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreateWorkspaceEmailDto } from './create-workspace-email.dto';
 import { IsOptionalCustom } from 'src/decorator/validator';
+
+import { CreateWorkspaceEmailDto } from './create-workspace-email.dto';
 
 export class UpdateWorkspaceEmailDto extends PartialType(CreateWorkspaceEmailDto) {
     @IsOptionalCustom()

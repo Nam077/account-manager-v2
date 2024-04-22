@@ -1,9 +1,10 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { EmailService } from './email.service';
-import { EmailController } from './email.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { CaslModule } from '../casl/casl.module';
 import { CustomerModule } from '../customer/customer.module';
+import { EmailController } from './email.controller';
+import { EmailService } from './email.service';
 import { Email } from './entities/email.entity';
 
 @Module({

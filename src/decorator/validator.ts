@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
 import { ValidateIf, ValidationOptions } from 'class-validator';
-import { toUpperCase, toLowerCase, toCapitalize } from './string';
+
+import { toCapitalize, toLowerCase, toUpperCase } from './string';
 export function IsOptionalCustom(options?: ValidationOptions): PropertyDecorator {
     return function optionalDecorator(prototype: object, propertyKey: string | symbol): void {
         ValidateIf((object) => object[propertyKey] !== undefined, options)(prototype, propertyKey);

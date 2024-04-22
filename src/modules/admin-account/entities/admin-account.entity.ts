@@ -1,16 +1,16 @@
-import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-    DeleteDateColumn,
-    ManyToOne,
-    JoinColumn,
-    OneToMany,
-} from 'typeorm';
 import { Account } from 'src/modules/account/entities/account.entity';
 import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
+import {
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
 @Entity({ name: 'admin_accounts' })
 export class AdminAccount {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account table' })

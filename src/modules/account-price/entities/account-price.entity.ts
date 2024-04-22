@@ -1,16 +1,17 @@
-import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-    DeleteDateColumn,
-    ManyToOne,
-    JoinColumn,
-    OneToMany,
-} from 'typeorm';
 import { Account } from 'src/modules/account/entities/account.entity';
 import { RentalType } from 'src/modules/rental-type/entities/rental-type.entity';
+import {
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
+
 import { Rental } from '../../rental/entities/rental.entity';
 @Entity({ name: 'account_prices' })
 export class AccountPrice {

@@ -1,16 +1,17 @@
-import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    CreateDateColumn,
-    UpdateDateColumn,
-    DeleteDateColumn,
-    ManyToOne,
-    JoinColumn,
-    OneToMany,
-} from 'typeorm';
-import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
 import { Email } from 'src/modules/email/entities/email.entity';
+import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
+import {
+    Column,
+    CreateDateColumn,
+    DeleteDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
+
 import { Rental } from '../../rental/entities/rental.entity';
 export enum WorkspaceEmailStatus {
     ACTIVE = 'active',
