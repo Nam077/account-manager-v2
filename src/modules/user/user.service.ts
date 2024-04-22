@@ -23,7 +23,7 @@ import { JwtPayload } from '../auth/strategies/auth-strategy/auth-strategy';
 import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserRole } from './entities/user.entity';
+import { User } from './entities/user.entity';
 @Injectable()
 export class UserService
     implements
@@ -62,16 +62,16 @@ export class UserService
         );
     }
     create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
-        const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, User)) {
-            throw new ForbiddenException('You are not allowed to create user');
-        }
-        const { role } = currentUser;
-        if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
-            if (!ability.can(Action.AddAdmin, User)) {
-                throw new ForbiddenException('You are not allowed to add admin');
-            }
-        }
+        // const ability = this.caslAbilityFactory.createForUser(currentUser);
+        // if (!ability.can(Action.Manage, User)) {
+        //     throw new ForbiddenException('You are not allowed to create user');
+        // }
+        // const { role } = currentUser;
+        // if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+        //     if (!ability.can(Action.AddAdmin, User)) {
+        //         throw new ForbiddenException('You are not allowed to add admin');
+        //     }
+        // }
         return this.createProcess(createDto).pipe(
             map((user) => {
                 return { status: HttpStatus.CREATED, data: user };

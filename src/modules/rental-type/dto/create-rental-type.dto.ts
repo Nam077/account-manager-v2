@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
-import { ToCapitalize } from 'src/decorator/validator';
+
+import { ToCapitalize } from '../../../decorator/validator';
 
 export class CreateRentalTypeDto {
     @ApiProperty({ description: 'Name of the rental type', example: 'Rental Type Name' })

@@ -36,11 +36,11 @@ export interface SearchField {
  * @param tableName - The name of the table.
  * @param relations - The relations to add.
  */
-function addRelationsToQueryBuilder<T>(
+const addRelationsToQueryBuilder = <T>(
     queryBuilder: SelectQueryBuilder<T>,
     tableName: string,
     relations?: string[],
-): void {
+): void => {
     if (relations) {
         relations = relations.filter((relation) => {
             if (relation !== '' && relation !== null) {
@@ -60,7 +60,7 @@ function addRelationsToQueryBuilder<T>(
         });
     } else {
     }
-}
+};
 
 const validateRelations = (searchFieldsInRelations: SearchField[], relations?: string[]): boolean => {
     if (searchFieldsInRelations.length > 0) {
@@ -69,22 +69,6 @@ const validateRelations = (searchFieldsInRelations: SearchField[], relations?: s
     }
     return true;
 };
-
-export function findWithPaginationAndSearch<T>(
-    repository: Repository<T>,
-    findAllDto: FindAllParams,
-    fields: Array<keyof T>,
-    searchFieldsInRelations?: undefined,
-    relations?: string[],
-): Observable<PaginatedData<T>>;
-
-export function findWithPaginationAndSearch<T>(
-    repository: Repository<T>,
-    findAllDto: FindAllParams,
-    fields: Array<keyof T>,
-    searchFieldsInRelations: SearchField[],
-    relations: string[],
-): Observable<PaginatedData<T>>;
 
 /**
  * Finds data with pagination and search.
@@ -95,13 +79,13 @@ export function findWithPaginationAndSearch<T>(
  * @param relations
  * @returns An observable of ApiResponse containing the paginated data.
  */
-export function findWithPaginationAndSearch<T>(
+export const findWithPaginationAndSearch = <T>(
     repository: Repository<T>,
     findAllDto: FindAllParams,
     fields: Array<keyof T>,
     searchFieldsInRelations: SearchField[] = [],
     relations?: string[],
-): Observable<PaginatedData<T>> {
+): Observable<PaginatedData<T>> => {
     if (!validateRelations(searchFieldsInRelations, relations)) {
         throw new HttpException(
             'Missing required relations for the specified search fields in relations.',
@@ -153,4 +137,4 @@ export function findWithPaginationAndSearch<T>(
         }),
         catchError((error) => throwError(() => new BadRequestException(error.message))),
     );
-}
+};

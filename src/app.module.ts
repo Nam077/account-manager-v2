@@ -102,7 +102,7 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(DefaultAuthMiddleware).forRoutes('*'); // Áp dụng cho tất cả các route, hoặc chỉ định cụ thể
+        consumer.apply(DefaultAuthMiddleware).forRoutes('*'); 
     }
 }
 @Injectable()
@@ -110,7 +110,7 @@ export class DefaultAuthMiddleware implements NestMiddleware {
     use(req: Request, res: Response, next: NextFunction) {
         //    set default bearer token
         req.headers['authorization'] =
-            `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiI5NTNhMTk5NS04ZTQ5LTQ5ZmUtODk5MS1iNGM4NjBmM2QyMDgiLCJpYXQiOjE3MTMyOTczMzEsImV4cCI6MTcxNDE2MTMzMX0.FcUCAQvnWwRAOqvRbzXVLIUqEDzHnmMI0gjprJ2-ujk`;
+            `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiJkMDg3NDY2MC05Mjc2LTRiMWUtOTQ2MC1jNjNkMGRiMDUzMzgiLCJpYXQiOjE3MTM3NTg2NDEsImV4cCI6MTcxNDYyMjY0MX0.5MgNxaqLH98xVIMSe3Q_TnvxoQzBiWqozVBQYk6ssk8`;
         next();
     }
 }

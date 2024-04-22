@@ -35,6 +35,7 @@ export class RentalTypeService
     ) {}
     createProcess(createDto: CreateRentalTypeDto): Observable<RentalType> {
         const { name, maxSlots, description } = createDto;
+        console.log('name', name);
         const slug = slugifyString(name);
         return from(this.checkExistBySlug(slug)).pipe(
             switchMap((exist) => {

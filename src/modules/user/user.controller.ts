@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { GetCurrentUser } from 'src/decorator/auth.decorator';
 import { FindAllDto } from 'src/dto/find-all.dto';
 
+import { GetCurrentUser } from '../../decorator/auth.decorator';
 import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -17,7 +17,7 @@ export class UserController {
     constructor(private readonly userService: UserService) {}
 
     @Post()
-    create(@GetCurrentUser() user: User, @Body() createUserDto: CreateUserDto) {
+    create(@GetCurrentUser() user: any, @Body() createUserDto: CreateUserDto) {
         return this.userService.create(user, createUserDto);
     }
 

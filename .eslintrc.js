@@ -10,9 +10,12 @@ module.exports = {
     "prettier",
     "simple-import-sort",
     "unused-imports",
+    "prefer-arrow"
   ],
   extends: [
     "plugin:@typescript-eslint/recommended",
+    'plugin:@typescript-eslint/strict-type-checked',
+    'plugin:@typescript-eslint/stylistic-type-checked',
     "plugin:prettier/recommended",
   ],
   root: true,
@@ -22,6 +25,23 @@ module.exports = {
   },
   ignorePatterns: [".eslintrc.js"],
   rules: {
+    "prefer-arrow/prefer-arrow-functions": [
+      "error",
+      {
+        "disallowPrototype": true,
+        "singleReturnOnly": false,
+        "classPropertiesAllowed": false
+      }
+    ],
+    "prefer-arrow-callback": [
+      "error",
+      { "allowNamedFunctions": true }
+    ],
+    "func-style": [
+      "error",
+      "expression",
+      { "allowArrowFunctions": true }
+    ],
     "no-unused-vars": "off", // or "@typescript-eslint/no-unused-vars": "off",
     "unused-imports/no-unused-imports": "error",
     "unused-imports/no-unused-vars": [
@@ -63,6 +83,7 @@ module.exports = {
     ],
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
+    "prefer-arrow-callback": "error"
   },
   parserOptions: {
     sourceType: "module",
