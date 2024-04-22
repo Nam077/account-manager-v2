@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 
-async function bootstrap() {
+const bootstrap = async () => {
     const app = await NestFactory.create(AppModule, {});
 
     app.useGlobalPipes(
@@ -27,7 +27,8 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document);
 
     await app.listen(3000);
-}
+};
+
 (async () => {
     await bootstrap();
 })();
