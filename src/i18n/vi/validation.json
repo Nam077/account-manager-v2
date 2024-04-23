@@ -1,0 +1,17 @@
+{
+    "account": {
+        "name": {
+            "required": "Tên tài khoản là bắt buộc.",
+            "isString": "Tên tài khoản phải là chuỗi ký tự.",
+            "length": "Tên tài khoản phải có độ dài từ 1 đến 255 ký tự."
+        },
+        "description": {
+            "required": "Mô tả tài khoản là bắt buộc.",
+            "isString": "Mô tả tài khoản phải là chuỗi ký tự."
+        },
+        "accountCategoryId": {
+            "required": "ID của danh mục tài khoản là bắt buộc.",
+            "isUUID": "ID của danh mục tài khoản phải là một UUID hợp lệ."
+        }
+    }
+}

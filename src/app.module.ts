@@ -1,7 +1,9 @@
-import { Injectable, Module, NestMiddleware } from '@nestjs/common';
+import { Injectable, MiddlewareConsumer, Module, NestMiddleware } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { NextFunction } from 'express';
+import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import { join } from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -26,6 +28,18 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: `.env.${process.env.NODE_ENV || 'development'}.local`,
+        }),
+        I18nModule.forRoot({
+            fallbackLanguage: 'en',
+            loaderOptions: {
+                path: join(__dirname, '/i18n/'),
+                watch: true,
+            },
+            resolvers: [
+                { use: QueryResolver, options: ['lang'] },
+                AcceptLanguageResolver,
+                new HeaderResolver(['x-lang']),
+            ],
         }),
         AppModule,
         DatabaseModule,
@@ -107,16 +121,16 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
     providers: [AppService],
 })
 export class AppModule {
-    // configure(consumer: MiddlewareConsumer) {
-    //     consumer.apply(DefaultAuthMiddleware).forRoutes('*');
-    // }
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(DefaultAuthMiddleware).forRoutes('*');
+    }
 }
 @Injectable()
 export class DefaultAuthMiddleware implements NestMiddleware {
     use(req: Request, res: Response, next: NextFunction) {
         //    set default bearer token
         req.headers['authorization'] =
-            `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiJkMDg3NDY2MC05Mjc2LTRiMWUtOTQ2MC1jNjNkMGRiMDUzMzgiLCJpYXQiOjE3MTM3NTg2NDEsImV4cCI6MTcxNDYyMjY0MX0.5MgNxaqLH98xVIMSe3Q_TnvxoQzBiWqozVBQYk6ssk8`;
+            `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiJkMDg3NDY2MC05Mjc2LTRiMWUtOTQ2MC1jNjNkMGRiMDUzMzgiLCJpYXQiOjE3MTM4NTEwNDgsImV4cCI6MTcxNDcxNTA0OH0.cgzDO_36zlOoIRKdZPp4g0C058-jTejdnyUu5Z5KiQ0`;
         next();
     }
 }

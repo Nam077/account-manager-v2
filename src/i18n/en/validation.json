@@ -1,0 +1,17 @@
+{
+    "account": {
+        "name": {
+            "required": "Account name is required.",
+            "isString": "Account name must be a string.",
+            "length": "Account name must be between 1 and 255 characters long."
+        },
+        "description": {
+            "required": "Account description is required.",
+            "isString": "Account description must be a string."
+        },
+        "accountCategoryId": {
+            "required": "Account category ID is required.",
+            "isUUID": "Account category ID must be a valid UUID."
+        }
+    }
+}
