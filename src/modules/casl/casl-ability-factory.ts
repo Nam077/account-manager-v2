@@ -1,6 +1,8 @@
 import { AbilityBuilder, createMongoAbility, ExtractSubjectType, InferSubjects, MongoAbility } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 
+import { ActionCasl } from '../../common/enum/action-casl.enum';
+import { UserRole } from '../../common/enum/user-role.enum';
 import { Account } from '../account/entities/account.entity';
 import { AccountCategory } from '../account-category/entities/account-category.entity';
 import { AccountPrice } from '../account-price/entities/account-price.entity';
@@ -9,20 +11,9 @@ import { Customer } from '../customer/entities/customer.entity';
 import { Email } from '../email/entities/email.entity';
 import { Rental } from '../rental/entities/rental.entity';
 import { RentalType } from '../rental-type/entities/rental-type.entity';
-import { User, UserRole } from '../user/entities/user.entity';
+import { User } from '../user/entities/user.entity';
 import { Workspace } from '../workspace/entities/workspace.entity';
 import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
-export enum Action {
-    ReadAll = 'readAll',
-    Manage = 'manage',
-    Create = 'create',
-    Read = 'read',
-    Update = 'update',
-    Delete = 'delete',
-    HardDelete = 'hardDelete',
-    Restore = 'restore',
-    AddAdmin = 'addAdmin',
-}
 
 export type Subjects = InferSubjects<
     | typeof User
@@ -38,38 +29,38 @@ export type Subjects = InferSubjects<
     | typeof Rental
     | 'all'
 >;
-type AppAbility = MongoAbility<[Action, Subjects]>;
+type AppAbility = MongoAbility<[ActionCasl, Subjects]>;
 
 @Injectable()
 export class CaslAbilityFactory {
     createForUser(user: User) {
         const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
         if (user.role === UserRole.SUPER_ADMIN) {
-            can(Action.Manage, 'all');
-            cannot(Action.Delete, User, { role: UserRole.SUPER_ADMIN });
-            can(Action.Update, User, { id: user.id });
-            cannot(Action.Update, User, { role: UserRole.SUPER_ADMIN, id: { $ne: user.id } });
+            can(ActionCasl.Manage, 'all');
+            cannot(ActionCasl.Delete, User, { role: UserRole.SUPER_ADMIN });
+            can(ActionCasl.Update, User, { id: user.id });
+            cannot(ActionCasl.Update, User, { role: UserRole.SUPER_ADMIN, id: { $ne: user.id } });
         }
         if (user.role === UserRole.ADMIN) {
-            can(Action.Manage, 'all');
-            cannot(Action.Manage, User, { role: UserRole.SUPER_ADMIN });
-            cannot(Action.Update, User, { role: UserRole.SUPER_ADMIN });
-            cannot(Action.AddAdmin, User, { role: UserRole.ADMIN });
-            cannot(Action.Delete, User, { role: UserRole.SUPER_ADMIN });
-            cannot(Action.Delete, User, { role: UserRole.ADMIN });
+            can(ActionCasl.Manage, 'all');
+            cannot(ActionCasl.Manage, User, { role: UserRole.SUPER_ADMIN });
+            cannot(ActionCasl.Update, User, { role: UserRole.SUPER_ADMIN });
+            cannot(ActionCasl.AddAdmin, User, { role: UserRole.ADMIN });
+            cannot(ActionCasl.Delete, User, { role: UserRole.SUPER_ADMIN });
+            cannot(ActionCasl.Delete, User, { role: UserRole.ADMIN });
         }
         if (user.role === UserRole.USER) {
-            can(Action.Update, User, { id: user.id });
-            cannot(Action.Manage, User);
-            cannot(Action.ReadAll, User);
+            can(ActionCasl.Update, User, { id: user.id });
+            cannot(ActionCasl.Manage, User);
+            cannot(ActionCasl.ReadAll, User);
             /// Account Category
-            cannot(Action.Manage, AccountCategory);
-            can(Action.ReadAll, AccountCategory);
-            can(Action.Read, AccountCategory);
+            cannot(ActionCasl.Manage, AccountCategory);
+            can(ActionCasl.ReadAll, AccountCategory);
+            can(ActionCasl.Read, AccountCategory);
             /// Account
-            cannot(Action.Manage, Account);
-            can(Action.ReadAll, Account);
-            can(Action.Read, Account);
+            cannot(ActionCasl.Manage, Account);
+            can(ActionCasl.ReadAll, Account);
+            can(ActionCasl.Read, Account);
         }
         return build({
             detectSubjectType: (item) => item.constructor as ExtractSubjectType<Subjects>,

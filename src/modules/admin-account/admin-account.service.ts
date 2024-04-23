@@ -8,19 +8,25 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
-import { FindAllDto } from 'src/dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from 'src/helper/pagination';
-import { updateEntity } from 'src/helper/update';
-import { ApiResponse, PaginatedData } from 'src/interfaces/api-response.interface';
-import { CrudService } from 'src/interfaces/crud.interface';
 import { DeepPartial, Repository } from 'typeorm';
 
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+} from '../../common';
 import { AccountService } from '../account/account.service';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
 import { AdminAccount } from './entities/admin-account.entity';
+
 @Injectable()
 export class AdminAccountService
     implements
@@ -66,7 +72,7 @@ export class AdminAccountService
     }
     create(currentUser: User, createDto: CreateAdminAccountDto): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Create, AdminAccount)) {
+        if (!ability.can(ActionCasl.Create, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to create admin account');
         }
 
@@ -96,7 +102,7 @@ export class AdminAccountService
         id: string,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Read, AdminAccount)) {
+        if (!ability.can(ActionCasl.Read, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to read admin account');
         }
         return this.findOneProcess(id).pipe(
@@ -126,7 +132,7 @@ export class AdminAccountService
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AdminAccount>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, AdminAccount)) {
+        if (!ability.can(ActionCasl.ReadAll, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to read admin account');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -171,7 +177,7 @@ export class AdminAccountService
         hardRemove?: boolean,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Delete, AdminAccount)) {
+        if (!ability.can(ActionCasl.Delete, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to delete admin account');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -200,7 +206,7 @@ export class AdminAccountService
         id: string,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Restore, AdminAccount)) {
+        if (!ability.can(ActionCasl.Restore, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to restore admin account');
         }
         return this.restoreProcess(id).pipe(
@@ -261,7 +267,7 @@ export class AdminAccountService
         updateDto: UpdateAdminAccountDto,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Update, AdminAccount)) {
+        if (!ability.can(ActionCasl.Update, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to update admin account');
         }
         return this.updateProcess(id, updateDto).pipe(

@@ -1,21 +1,33 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    ForbiddenException,
+    HttpStatus,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { slugifyString } from '../../helper/slug';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    slugifyString,
+    updateEntity,
+} from '../../common';
 import { AccountCategoryService } from '../account-category/account-category.service';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './entities/account.entity';
+
 @Injectable()
 export class AccountService
     implements
@@ -35,6 +47,16 @@ export class AccountService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly accountCategoryService: AccountCategoryService,
     ) {}
+
+    /**
+     * Creates a new account based on the provided data.
+     * @author Nam077
+     * @param {CreateAccountDto} createDto - The data required to create an account.
+     * @return {Observable<Account>} An observable that emits the created account.
+     * @throws {ConflictException} If the account already exists.
+     * @throws {NotFoundException} If the account category does not exist.
+     * @throws {BadRequestException} If there is an error while creating the account.
+     */
     createProcess(createDto: CreateAccountDto): Observable<Account> {
         const { name, description, accountCategoryId } = createDto;
         const slug = slugifyString(name);
@@ -60,12 +82,20 @@ export class AccountService
             }),
         );
     }
+    /**
+     * Creates a new account based on the provided data.
+     * @author Nam077
+     * @param currentUser The user who is creating the account
+     * @param createDto The data required to create an account
+     * @return An observable that emits the created account
+     * @throws {ForbiddenException} If the user is not allowed to create an account
+     */
     create(
         currentUser: User,
         createDto: CreateAccountDto,
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
+        if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to create account');
         }
         return this.createProcess(createDto).pipe(
@@ -76,15 +106,39 @@ export class AccountService
             })),
         );
     }
+
+    /**
+     * Retrieves an Observable of an Account based on the provided id.
+     * @author Nam077
+     * @param {string} id - The id of the Account to retrieve.
+     * @return {Observable<Account>} An Observable of the Account with the provided id.
+     */
     findOneData(id: string): Observable<Account> {
         return from(this.accountRepository.findOne({ where: { id } }));
     }
+
+    /**
+     * Finds an account by its ID.
+     * @author Nam077
+     * @param id - The ID of the account to find.
+     * @returns An Observable that emits the found account.
+     * @throws {ForbiddenException} If the user is not allowed to read the account
+     */
     findOneProcess(id: string): Observable<Account> {
         return from(this.accountRepository.findOne({ where: { id } }));
     }
+
+    /**
+     * Finds an account by its ID. If the user is not allowed to read the account, a ForbiddenException is thrown.
+     * @author Nam077
+     * @param currentUser - The user who is trying to read the account
+     * @param id - The ID of the account to find
+     * @returns An Observable that emits the found account
+     * @throws {ForbiddenException} If the user is not allowed to read the account
+     */
     findOne(currentUser: User, id: string): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
+        if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to read account');
         }
         return this.findOneProcess(id).pipe(
@@ -95,6 +149,13 @@ export class AccountService
             })),
         );
     }
+    /**
+     * Retrieves all accounts based on the provided data.
+     * @author Nam077
+     * @param {FindAllDto} findAllDto - The data required to retrieve all accounts.
+     * @return {Observable<PaginatedData<Account>} An observable that emits the paginated data of accounts.
+     */
+
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Account>> {
         const fields: Array<keyof Account> = ['id', 'name', 'description', 'slug'];
         const relations = ['accountCategory'];
@@ -117,7 +178,7 @@ export class AccountService
         findAllDto: FindAllDto,
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, Account)) {
+        if (!ability.can(ActionCasl.ReadAll, Account)) {
             throw new ForbiddenException('You are not allowed to read account');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -162,7 +223,7 @@ export class AccountService
         hardRemove?: boolean,
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
+        if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to delete account');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -189,7 +250,7 @@ export class AccountService
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
+        if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to restore account');
         }
         return this.restoreProcess(id).pipe(
@@ -251,7 +312,7 @@ export class AccountService
         updateDto: UpdateAccountDto,
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, Account)) {
+        if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to update account');
         }
         return this.updateProcess(id, updateDto).pipe(

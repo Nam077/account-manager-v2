@@ -1,9 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../decorator/auth.decorator';
-import { FindAllDto } from '../../dto/find-all.dto';
-import { AuthJwtGuard } from '../auth/guard/auth-jwt.guard';
+import { FindAllDto, GetCurrentUser } from '../../common';
+import { AuthJwtGuard } from '../../common/guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';

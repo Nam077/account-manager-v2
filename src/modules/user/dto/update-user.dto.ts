@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsOptionalCustom } from 'src/decorator/validator';
+import { IsOptionalCustom } from 'src/common/decorator/validator.decorator';
 
-import { UserRole } from '../entities/user.entity';
+import { UserRole } from '../../../common/enum/user-role.enum';
 import { CreateUserDto } from './create-user.dto';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {

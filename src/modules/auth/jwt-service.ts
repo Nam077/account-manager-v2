@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-import { timeNowToTimestamp } from '../../helper/time';
+import { timeNowToTimestamp } from '../../common';
 import { User } from '../user/entities/user.entity';
 
 @Injectable()

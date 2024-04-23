@@ -10,17 +10,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+} from '../../common';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { User } from '../user/entities/user.entity';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Email } from './entities/email.entity';
+
 @Injectable()
 export class EmailService
     implements
@@ -63,7 +69,7 @@ export class EmailService
     }
     create(currentUser: User, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Create, Email)) {
+        if (!ability.can(ActionCasl.Create, Email)) {
             throw new ForbiddenException('You do not have permission to create email');
         }
         return this.createProcess(createDto).pipe(
@@ -91,7 +97,7 @@ export class EmailService
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Read, Email)) {
+        if (!ability.can(ActionCasl.Read, Email)) {
             throw new ForbiddenException('You do not have permission to read email');
         }
         return this.findOneProcess(id).pipe(
@@ -105,7 +111,7 @@ export class EmailService
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Email>> {
-        const realtions = ['customer'];
+        const relations = ['customer'];
         const searchFields: SearchField[] = [
             {
                 tableName: 'customer',
@@ -113,11 +119,11 @@ export class EmailService
             },
         ];
         const fields: Array<keyof Email> = ['id', 'email'];
-        return findWithPaginationAndSearch<Email>(this.emailRepository, findAllDto, fields, searchFields, realtions);
+        return findWithPaginationAndSearch<Email>(this.emailRepository, findAllDto, fields, searchFields, relations);
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Email>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, Email)) {
+        if (!ability.can(ActionCasl.ReadAll, Email)) {
             throw new ForbiddenException('You do not have permission to read email');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -154,7 +160,7 @@ export class EmailService
     }
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Delete, Email)) {
+        if (!ability.can(ActionCasl.Delete, Email)) {
             throw new ForbiddenException('You do not have permission to delete email');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -183,7 +189,7 @@ export class EmailService
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Restore, Email)) {
+        if (!ability.can(ActionCasl.Restore, Email)) {
             throw new ForbiddenException('You do not have permission to restore email');
         }
         return this.restoreProcess(id).pipe(
@@ -243,7 +249,7 @@ export class EmailService
     }
     update(currentUser: User, id: string, updateDto: UpdateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Update, Email)) {
+        if (!ability.can(ActionCasl.Update, Email)) {
             throw new ForbiddenException('You do not have permission to update email');
         }
         return this.updateProcess(id, updateDto).pipe(

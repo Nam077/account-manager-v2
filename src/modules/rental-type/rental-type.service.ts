@@ -3,14 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { slugifyString } from '../../helper/slug';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    slugifyString,
+    updateEntity,
+} from '../../common';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
-import { Action, CaslAbilityFactory } from './../casl/casl-ability-factory';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
 import { RentalType } from './entities/rental-type.entity';
@@ -55,7 +60,7 @@ export class RentalTypeService
     }
     create(currentUser: User, createDto: CreateRentalTypeDto): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Create, RentalType)) {
+        if (ability.cannot(ActionCasl.Create, RentalType)) {
             throw new BadRequestException('You do not have permission to create a rental type');
         }
         return this.createProcess(createDto).pipe(
@@ -82,7 +87,7 @@ export class RentalTypeService
         id: string,
     ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Read, RentalType)) {
+        if (ability.cannot(ActionCasl.Read, RentalType)) {
             throw new BadRequestException('You do not have permission to read a rental type');
         }
         return this.findOneProcess(id).pipe(
@@ -108,7 +113,7 @@ export class RentalTypeService
         findAllDto: FindAllDto,
     ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.ReadAll, RentalType)) {
+        if (ability.cannot(ActionCasl.ReadAll, RentalType)) {
             throw new BadRequestException('You do not have permission to read all rental types');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -146,7 +151,7 @@ export class RentalTypeService
         hardRemove?: boolean,
     ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Delete, RentalType)) {
+        if (ability.cannot(ActionCasl.Delete, RentalType)) {
             throw new BadRequestException('You do not have permission to delete a rental type');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -178,7 +183,7 @@ export class RentalTypeService
         id: string,
     ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Restore, RentalType)) {
+        if (ability.cannot(ActionCasl.Restore, RentalType)) {
             throw new BadRequestException('You do not have permission to restore a rental type');
         }
         return this.restoreProcess(id).pipe(
@@ -222,7 +227,7 @@ export class RentalTypeService
         updateDto: UpdateRentalTypeDto,
     ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Update, RentalType)) {
+        if (ability.cannot(ActionCasl.Update, RentalType)) {
             throw new BadRequestException('You do not have permission to update a rental type');
         }
         return this.updateProcess(id, updateDto).pipe(

@@ -3,18 +3,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { CheckForForkJoin, updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
+import {
+    ActionCasl,
+    ApiResponse,
+    CheckForForkJoin,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+    WorkspaceEmailStatus,
+} from '../../common';
 import { AccountPriceService } from '../account-price/account-price.service';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
-import { WorkspaceEmailStatus } from '../workspace-email/entities/workspace-email.entity';
 import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
@@ -148,7 +154,7 @@ export class RentalService
     }
     create(currentUser: User, createDto: CreateRentalDto): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Create, Rental)) {
+        if (ability.cannot(ActionCasl.Create, Rental)) {
             throw new ForbiddenException('You are not allowed to create rental');
         }
         return this.createProcess(createDto).pipe(
@@ -188,7 +194,7 @@ export class RentalService
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Read, Rental)) {
+        if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException('You are not allowed to read rental');
         }
         return this.findOneProcess(id).pipe(
@@ -225,7 +231,7 @@ export class RentalService
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Rental>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Read, Rental)) {
+        if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException('You are not allowed to read rental');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -278,7 +284,7 @@ export class RentalService
         hardRemove?: boolean,
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Delete, Rental)) {
+        if (ability.cannot(ActionCasl.Delete, Rental)) {
             throw new ForbiddenException('You are not allowed to delete rental');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -324,7 +330,7 @@ export class RentalService
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Restore, Rental)) {
+        if (ability.cannot(ActionCasl.Restore, Rental)) {
             throw new ForbiddenException('You are not allowed to restore rental');
         }
         return this.restoreProcess(id).pipe(
@@ -605,7 +611,7 @@ export class RentalService
         updateDto: UpdateRentalDto,
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> | any {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Update, Rental)) {
+        if (ability.cannot(ActionCasl.Update, Rental)) {
             throw new ForbiddenException('You are not allowed to update rental');
         }
 

@@ -8,13 +8,9 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { UserRole } from '../../../common/enum';
 import { RefreshToken } from '../../refresh-token/entities/refresh-token.entity';
 
-export enum UserRole {
-    ADMIN = 'admin',
-    USER = 'user',
-    SUPER_ADMIN = 'super_admin',
-}
 @Entity({ name: 'users' })
 export class User {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the user table' })

@@ -12,18 +12,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import BcryptService from '../../helper/hash';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
-import { JwtPayload } from '../../interfaces/jwt-payload';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    JwtPayload,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+} from '../../common';
+import { BcryptServiceInstance } from '../../common/helper/hash';
 import { LoginDto } from '../auth/dto/login.dto';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+
 @Injectable()
 export class UserService
     implements
@@ -48,7 +54,7 @@ export class UserService
                 if (isExist) {
                     throw new ConflictException('Email already exists');
                 }
-                return BcryptService.hash(password);
+                return BcryptServiceInstance.hash(password);
             }),
             switchMap((hash) => {
                 const user = new User();
@@ -63,12 +69,12 @@ export class UserService
     }
     create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
         // const ability = this.caslAbilityFactory.createForUser(currentUser);
-        // if (!ability.can(Action.Manage, User)) {
+        // if (!ability.can(ActionCasl.Manage, User)) {
         //     throw new ForbiddenException('You are not allowed to create user');
         // }
         // const { role } = currentUser;
         // if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
-        //     if (!ability.can(Action.AddAdmin, User)) {
+        //     if (!ability.can(ActionCasl.AddAdmin, User)) {
         //         throw new ForbiddenException('You are not allowed to add admin');
         //     }
         // }
@@ -98,7 +104,7 @@ export class UserService
         return this.findOneProcess(id).pipe(
             map((user) => {
                 const ability = this.caslAbilityFactory.createForUser(currentUser);
-                if (!ability.can(Action.Read, user)) {
+                if (!ability.can(ActionCasl.Read, user)) {
                     throw new ForbiddenException('You are not allowed to read this user');
                 }
                 return { status: HttpStatus.OK, data: user };
@@ -113,7 +119,7 @@ export class UserService
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, User)) {
+        if (!ability.can(ActionCasl.ReadAll, User)) {
             throw new ForbiddenException('You are not allowed to read users');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -150,7 +156,7 @@ export class UserService
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
-                if (!ability.can(Action.Delete, user)) {
+                if (!ability.can(ActionCasl.Delete, user)) {
                     throw new ForbiddenException('You are not allowed to delete this user');
                 }
                 return this.removeProcess(id, hardRemove).pipe(
@@ -182,7 +188,7 @@ export class UserService
                 if (!user) {
                     throw new NotFoundException('User not found');
                 }
-                if (!ability.can(Action.Restore, user)) {
+                if (!ability.can(ActionCasl.Restore, user)) {
                     throw new ForbiddenException('You are not allowed to restore this user');
                 }
                 return this.restoreProcess(id).pipe(
@@ -215,7 +221,9 @@ export class UserService
                 } else tasks.push(of(null));
                 if (updateDto.password) {
                     tasks.push(
-                        BcryptService.hash(updateDto.password).pipe(tap((hash) => (updateData.password = hash))),
+                        BcryptServiceInstance.hash(updateDto.password).pipe(
+                            tap((hash) => (updateData.password = hash)),
+                        ),
                     );
                 } else tasks.push(of(null));
                 return forkJoin(tasks).pipe(switchMap(() => updateEntity<User>(this.userRepository, user, updateData)));
@@ -233,7 +241,7 @@ export class UserService
                     throw new NotFoundException('User not found');
                 }
                 const ability = this.caslAbilityFactory.createForUser(currentUser);
-                if (!ability.can(Action.Update, user)) {
+                if (!ability.can(ActionCasl.Update, user)) {
                     throw new ForbiddenException('You are not allowed to update this user');
                 }
                 return this.updateProcess(id, updateDto).pipe(
@@ -271,7 +279,7 @@ export class UserService
                 if (!user) {
                     throw new UnauthorizedException('Invalid credentials');
                 }
-                return BcryptService.compare(loginDto.password, user.password).pipe(
+                return BcryptServiceInstance.compare(loginDto.password, user.password).pipe(
                     switchMap((isMatch) => {
                         if (!isMatch) {
                             throw new UnauthorizedException('Invalid credentials');

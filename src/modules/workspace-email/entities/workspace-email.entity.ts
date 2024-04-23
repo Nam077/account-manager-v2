@@ -10,13 +10,11 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { WorkspaceEmailStatus } from '../../../common/enum/workspace-email-status.enum';
 import { Email } from '../../email/entities/email.entity';
 import { Rental } from '../../rental/entities/rental.entity';
 import { Workspace } from '../../workspace/entities/workspace.entity';
-export enum WorkspaceEmailStatus {
-    ACTIVE = 'active',
-    INACTIVE = 'inactive',
-}
+
 @Entity({ name: 'workspace_emails' })
 export class WorkspaceEmail {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the workspace email table' })

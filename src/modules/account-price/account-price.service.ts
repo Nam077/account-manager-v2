@@ -10,13 +10,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+} from '../../common';
 import { AccountService } from '../account/account.service';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { RentalTypeService } from '../rental-type/rental-type.service';
 import { User } from '../user/entities/user.entity';
 import { CreateAccountPriceDto } from './dto/create-account-price.dto';
@@ -76,7 +81,7 @@ export class AccountPriceService
         createDto: CreateAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Create, AccountPrice)) {
+        if (!ability.can(ActionCasl.Create, AccountPrice)) {
             throw new ForbiddenException('You are not allowed to create account price');
         }
         return this.createProcess(createDto).pipe(
@@ -116,7 +121,7 @@ export class AccountPriceService
         id: string,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Read, AccountPrice)) {
+        if (!ability.can(ActionCasl.Read, AccountPrice)) {
             throw new ForbiddenException('You are not allowed to read account price');
         }
         return this.findOneProcess(id).pipe(
@@ -146,7 +151,7 @@ export class AccountPriceService
         findAllDto: FindAllDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, AccountPrice)) {
+        if (!ability.can(ActionCasl.ReadAll, AccountPrice)) {
             throw new ForbiddenException('You are not allowed to read account price');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -188,7 +193,7 @@ export class AccountPriceService
         hardRemove?: boolean,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Delete, AccountPrice)) {
+        if (!ability.can(ActionCasl.Delete, AccountPrice)) {
             throw new ForbiddenException('You are not allowed to delete account price');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -223,7 +228,7 @@ export class AccountPriceService
         id: string,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Delete, AccountPrice)) {
+        if (!ability.can(ActionCasl.Delete, AccountPrice)) {
             throw new ForbiddenException('You are not allowed to restore account price');
         }
         return this.restoreProcess(id).pipe(
@@ -299,7 +304,7 @@ export class AccountPriceService
         updateDto: UpdateAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Update, AccountPrice)) {
+        if (!ability.can(ActionCasl.Update, AccountPrice)) {
             throw new ForbiddenException('You are not allowed to update account price');
         }
         return this.updateProcess(id, updateDto).pipe(

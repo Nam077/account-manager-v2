@@ -10,16 +10,22 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, from, map, Observable, of, switchMap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+} from '../../common';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Customer } from './entities/customer.entity';
+
 @Injectable()
 export class CustomerService
     implements
@@ -66,7 +72,7 @@ export class CustomerService
     }
     create(currentUser: User, createDto: CreateCustomerDto): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Create, Customer)) {
+        if (!ability.can(ActionCasl.Create, Customer)) {
             throw new ForbiddenException('You are not allowed to create customer');
         }
         return this.createProcess(createDto).pipe(
@@ -94,7 +100,7 @@ export class CustomerService
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Read, Customer)) {
+        if (!ability.can(ActionCasl.Read, Customer)) {
             throw new ForbiddenException('You are not allowed to read customer');
         }
         return this.findOneProcess(id).pipe(
@@ -107,7 +113,7 @@ export class CustomerService
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Customer>> {
-        const realtions = [];
+        const relations = [];
         const searchFields: SearchField[] = [];
         const fields: Array<keyof Customer> = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
         return findWithPaginationAndSearch<Customer>(
@@ -115,7 +121,7 @@ export class CustomerService
             findAllDto,
             fields,
             searchFields,
-            realtions,
+            relations,
         );
     }
     findAll(
@@ -123,7 +129,7 @@ export class CustomerService
         findAllDto: FindAllDto,
     ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, Customer)) {
+        if (!ability.can(ActionCasl.ReadAll, Customer)) {
             throw new ForbiddenException('You are not allowed to read customer');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -167,7 +173,7 @@ export class CustomerService
         hardRemove?: boolean,
     ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Delete, Customer)) {
+        if (!ability.can(ActionCasl.Delete, Customer)) {
             throw new ForbiddenException('You are not allowed to delete customer');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -194,7 +200,7 @@ export class CustomerService
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Restore, Customer)) {
+        if (!ability.can(ActionCasl.Restore, Customer)) {
             throw new ForbiddenException('You are not allowed to restore customer');
         }
         return this.restoreProcess(id).pipe(
@@ -233,7 +239,7 @@ export class CustomerService
         updateDto: UpdateCustomerDto,
     ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Update, Customer)) {
+        if (!ability.can(ActionCasl.Update, Customer)) {
             throw new ForbiddenException('You are not allowed to update customer');
         }
         return this.updateProcess(id, updateDto).pipe(

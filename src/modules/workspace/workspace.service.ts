@@ -10,13 +10,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+} from '../../common';
 import { AdminAccountService } from '../admin-account/admin-account.service';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
@@ -64,7 +69,7 @@ export class WorkspaceService
     }
     create(currentUser: User, createDto: CreateWorkspaceDto): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Create, Workspace)) {
+        if (ability.cannot(ActionCasl.Create, Workspace)) {
             throw new BadRequestException('You are not allowed to create workspace');
         }
         return this.createProcess(createDto).pipe(map((data) => ({ data, status: HttpStatus.CREATED })));
@@ -108,21 +113,21 @@ export class WorkspaceService
         id: string,
     ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Read, Workspace)) {
+        if (ability.cannot(ActionCasl.Read, Workspace)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.findOneProcess(id).pipe(map((data) => ({ data, status: HttpStatus.OK })));
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Workspace>> {
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
-        const realations = ['adminAccount'];
+        const relations = ['adminAccount'];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<Workspace>(
             this.workspaceRepository,
             findAllDto,
             fields,
             searchFields,
-            realations,
+            relations,
         );
     }
     findAll(
@@ -130,7 +135,7 @@ export class WorkspaceService
         findAllDto: FindAllDto,
     ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.ReadAll, Workspace)) {
+        if (ability.cannot(ActionCasl.ReadAll, Workspace)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.findAllProcess(findAllDto).pipe(map((data) => ({ data, status: HttpStatus.OK })));
@@ -167,7 +172,7 @@ export class WorkspaceService
         hardRemove?: boolean,
     ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Delete, Workspace)) {
+        if (ability.cannot(ActionCasl.Delete, Workspace)) {
             throw new ForbiddenException('You are not allowed to delete this resource');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -193,7 +198,7 @@ export class WorkspaceService
         id: string,
     ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Restore, Workspace)) {
+        if (ability.cannot(ActionCasl.Restore, Workspace)) {
             throw new ForbiddenException('You are not allowed to restore this resource');
         }
         return this.restoreProcess(id).pipe(
@@ -234,7 +239,7 @@ export class WorkspaceService
         updateDto: UpdateWorkspaceDto,
     ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Update, Workspace)) {
+        if (ability.cannot(ActionCasl.Update, Workspace)) {
             throw new ForbiddenException('You are not allowed to update this resource');
         }
         return this.updateProcess(id, updateDto).pipe(

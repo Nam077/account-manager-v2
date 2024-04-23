@@ -10,17 +10,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, from, map, Observable, of, switchMap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { slugifyString } from '../../helper/slug';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import {
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    slugifyString,
+    updateEntity,
+} from '../../common';
+import { ActionCasl } from '../../common/enum/action-casl.enum';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
 import { AccountCategory } from './entities/account-category.entity';
+
 @Injectable()
 export class AccountCategoryService
     implements
@@ -58,7 +64,7 @@ export class AccountCategoryService
     }
     create(currentUser: User, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Manage, AccountCategory)) {
+        if (!ability.can(ActionCasl.Manage, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to create account category');
         }
         return this.createProcess(createDto).pipe(
@@ -87,7 +93,7 @@ export class AccountCategoryService
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Read, AccountCategory)) {
+        if (!ability.can(ActionCasl.Read, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to read account category');
         }
         return this.findOneProcess(id).pipe(
@@ -113,7 +119,7 @@ export class AccountCategoryService
     }
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.ReadAll, AccountCategory)) {
+        if (!ability.can(ActionCasl.ReadAll, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to read account category');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -152,7 +158,7 @@ export class AccountCategoryService
     }
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Delete, AccountCategory)) {
+        if (!ability.can(ActionCasl.Delete, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to delete account category');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -182,7 +188,7 @@ export class AccountCategoryService
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Restore, AccountCategory)) {
+        if (!ability.can(ActionCasl.Restore, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to restore account category');
         }
         return this.restoreProcess(id).pipe(
@@ -225,7 +231,7 @@ export class AccountCategoryService
         updateDto: UpdateAccountCategoryDto,
     ): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (!ability.can(Action.Update, AccountCategory)) {
+        if (!ability.can(ActionCasl.Update, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to update account category');
         }
         return this.updateProcess(id, updateDto).pipe(

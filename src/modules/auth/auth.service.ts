@@ -2,8 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { from, Observable, of, switchMap } from 'rxjs';
 
-import { GeoIpI } from '../../decorator/ip.decorator';
-import { JwtPayload } from '../../interfaces/jwt-payload';
+import { GeoIpI, JwtPayload } from '../../common';
 import { CreateRefreshTokenDto } from '../refresh-token/dto/create-refresh-token.dto';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service';
 import { User } from '../user/entities/user.entity';

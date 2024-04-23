@@ -10,18 +10,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
-import { FindAllDto } from '../../dto/find-all.dto';
-import { findWithPaginationAndSearch, SearchField } from '../../helper/pagination';
-import { updateEntity } from '../../helper/update';
-import { ApiResponse, PaginatedData } from '../../interfaces/api-response.interface';
-import { CrudService } from '../../interfaces/crud.interface';
-import { Action, CaslAbilityFactory } from '../casl/casl-ability-factory';
+import {
+    ActionCasl,
+    ApiResponse,
+    CrudService,
+    FindAllDto,
+    findWithPaginationAndSearch,
+    PaginatedData,
+    SearchField,
+    updateEntity,
+    WorkspaceEmailStatus,
+} from '../../common';
+import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
-import { WorkspaceEmail, WorkspaceEmailStatus } from './entities/workspace-email.entity';
+import { WorkspaceEmail } from './entities/workspace-email.entity';
+
 @Injectable()
 export class WorkspaceEmailService
     implements
@@ -76,7 +83,7 @@ export class WorkspaceEmailService
     }
     create(currentUser: User, createDto: CreateWorkspaceEmailDto): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Create, WorkspaceEmail)) {
+        if (ability.cannot(ActionCasl.Create, WorkspaceEmail)) {
             throw new BadRequestException(HttpStatus.FORBIDDEN, 'Forbidden');
         }
         return this.createProcess(createDto).pipe(
@@ -114,7 +121,7 @@ export class WorkspaceEmailService
         id: string,
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Read, WorkspaceEmail)) {
+        if (ability.cannot(ActionCasl.Read, WorkspaceEmail)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.findOneProcess(id).pipe(
@@ -129,14 +136,14 @@ export class WorkspaceEmailService
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<WorkspaceEmail>> {
         const fields: Array<keyof WorkspaceEmail> = ['id', 'workspaceId', 'emailId'];
-        const realations = ['workspace', 'email'];
+        const relations = ['workspace', 'email'];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<WorkspaceEmail>(
             this.workspaceEmailRepository,
             findAllDto,
             fields,
             searchFields,
-            realations,
+            relations,
         );
     }
     findAll(
@@ -144,7 +151,7 @@ export class WorkspaceEmailService
         findAllDto: FindAllDto,
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.ReadAll, WorkspaceEmail)) {
+        if (ability.cannot(ActionCasl.ReadAll, WorkspaceEmail)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.findAllProcess(findAllDto).pipe(
@@ -201,7 +208,7 @@ export class WorkspaceEmailService
         hardRemove?: boolean,
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Delete, WorkspaceEmail)) {
+        if (ability.cannot(ActionCasl.Delete, WorkspaceEmail)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.removeProcess(id, hardRemove).pipe(
@@ -237,7 +244,7 @@ export class WorkspaceEmailService
         id: string,
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Restore, WorkspaceEmail)) {
+        if (ability.cannot(ActionCasl.Restore, WorkspaceEmail)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.restoreProcess(id).pipe(
@@ -328,7 +335,7 @@ export class WorkspaceEmailService
         updateDto: UpdateWorkspaceEmailDto,
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        if (ability.cannot(Action.Update, WorkspaceEmail)) {
+        if (ability.cannot(ActionCasl.Update, WorkspaceEmail)) {
             throw new ForbiddenException('You are not allowed to access this resource');
         }
         return this.updateProcess(id, updateDto).pipe(

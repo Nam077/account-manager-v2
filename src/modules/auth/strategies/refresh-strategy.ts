@@ -5,7 +5,7 @@ import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Observable } from 'rxjs';
 
-import { JwtPayload } from '../../../interfaces/jwt-payload';
+import { JwtPayload } from '../../../common/interface/jwt-payload.interface';
 import { User } from '../../user/entities/user.entity';
 import { AuthService } from '../auth.service';
 

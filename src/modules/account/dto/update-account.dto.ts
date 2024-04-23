@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 
-import { IsOptionalCustom } from '../../../decorator/validator';
+import { IsOptionalCustom } from '../../../common';
 import { CreateAccountDto } from './create-account.dto';
 
 export class UpdateAccountDto extends PartialType(CreateAccountDto) {
