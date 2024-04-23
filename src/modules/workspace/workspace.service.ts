@@ -41,7 +41,8 @@ export class WorkspaceService
         >
 {
     constructor(
-        @InjectRepository(Workspace) private readonly workspaceRepository: Repository<Workspace>,
+        @InjectRepository(Workspace)
+        private readonly workspaceRepository: Repository<Workspace>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly adminAccountService: AdminAccountService,
     ) {}
@@ -176,7 +177,11 @@ export class WorkspaceService
             throw new ForbiddenException('You are not allowed to delete this resource');
         }
         return this.removeProcess(id, hardRemove).pipe(
-            map((data) => ({ data, status: HttpStatus.OK, message: 'Workspace deleted' })),
+            map((data) => ({
+                data,
+                status: HttpStatus.OK,
+                message: 'Workspace deleted',
+            })),
         );
     }
     restoreProcess(id: string): Observable<Workspace> {
@@ -202,7 +207,11 @@ export class WorkspaceService
             throw new ForbiddenException('You are not allowed to restore this resource');
         }
         return this.restoreProcess(id).pipe(
-            map((data) => ({ data, status: HttpStatus.OK, message: 'Workspace restored' })),
+            map((data) => ({
+                data,
+                status: HttpStatus.OK,
+                message: 'Workspace restored',
+            })),
         );
     }
     updateProcess(id: string, updateDto: UpdateWorkspaceDto): Observable<Workspace> {
@@ -243,7 +252,11 @@ export class WorkspaceService
             throw new ForbiddenException('You are not allowed to update this resource');
         }
         return this.updateProcess(id, updateDto).pipe(
-            map((data) => ({ data, status: HttpStatus.OK, message: 'Workspace updated' })),
+            map((data) => ({
+                data,
+                status: HttpStatus.OK,
+                message: 'Workspace updated',
+            })),
         );
     }
 

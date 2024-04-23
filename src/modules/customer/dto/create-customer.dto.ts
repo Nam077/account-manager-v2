@@ -7,7 +7,10 @@ export class CreateCustomerDto {
     @IsString()
     readonly name: string;
 
-    @ApiProperty({ description: 'Email of the customer', example: 'john@example.com' })
+    @ApiProperty({
+        description: 'Email of the customer',
+        example: 'john@example.com',
+    })
     @IsNotEmpty()
     @IsEmail()
     readonly email: string;
@@ -17,7 +20,10 @@ export class CreateCustomerDto {
     @IsString()
     readonly phone: string;
 
-    @ApiProperty({ description: 'Address of the customer', example: '123 Main St, City' })
+    @ApiProperty({
+        description: 'Address of the customer',
+        example: '123 Main St, City',
+    })
     @IsOptional()
     @IsString()
     readonly address: string;
@@ -27,7 +33,10 @@ export class CreateCustomerDto {
     @IsString()
     readonly company: string;
 
-    @ApiProperty({ description: 'Description of the customer', example: 'Regular customer' })
+    @ApiProperty({
+        description: 'Description of the customer',
+        example: 'Regular customer',
+    })
     @IsOptional()
     @IsString()
     readonly description: string;

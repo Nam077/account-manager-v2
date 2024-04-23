@@ -13,5 +13,17 @@
             "required": "ID của danh mục tài khoản là bắt buộc.",
             "isUUID": "ID của danh mục tài khoản phải là một UUID hợp lệ."
         }
+    },
+    "createAccountCategory": {
+        "name": {
+            "required": "Tên danh mục tài khoản là bắt buộc.",
+            "isString": "Tên danh mục tài khoản phải là chuỗi ký tự.",
+            "length": "Tên danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
+        },
+        "description": {
+            "required": "Mô tả danh mục tài khoản là bắt buộc.",
+            "isString": "Mô tả danh mục tài khoản phải là chuỗi ký tự.",
+            "length": "Mô tả danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
+        }
     }
 }

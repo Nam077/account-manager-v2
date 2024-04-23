@@ -39,7 +39,10 @@ export class CaslAbilityFactory {
             can(ActionCasl.Manage, 'all');
             cannot(ActionCasl.Delete, User, { role: UserRole.SUPER_ADMIN });
             can(ActionCasl.Update, User, { id: user.id });
-            cannot(ActionCasl.Update, User, { role: UserRole.SUPER_ADMIN, id: { $ne: user.id } });
+            cannot(ActionCasl.Update, User, {
+                role: UserRole.SUPER_ADMIN,
+                id: { $ne: user.id },
+            });
         }
         if (user.role === UserRole.ADMIN) {
             can(ActionCasl.Manage, 'all');

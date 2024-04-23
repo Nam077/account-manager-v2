@@ -42,7 +42,8 @@ export class AccountPriceService
         >
 {
     constructor(
-        @InjectRepository(AccountPrice) private readonly accountPriceRepository: Repository<AccountPrice>,
+        @InjectRepository(AccountPrice)
+        private readonly accountPriceRepository: Repository<AccountPrice>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly accountService: AccountService,
         private readonly rentalTypeService: RentalTypeService,

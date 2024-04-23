@@ -65,7 +65,11 @@ export class RentalTypeService
         }
         return this.createProcess(createDto).pipe(
             map((rentalType) => {
-                return { status: HttpStatus.CREATED, data: rentalType, message: 'Rental type created successfully' };
+                return {
+                    status: HttpStatus.CREATED,
+                    data: rentalType,
+                    message: 'Rental type created successfully',
+                };
             }),
         );
     }
@@ -92,7 +96,11 @@ export class RentalTypeService
         }
         return this.findOneProcess(id).pipe(
             map((rentalType) => {
-                return { status: HttpStatus.OK, data: rentalType, message: 'Rental type found' };
+                return {
+                    status: HttpStatus.OK,
+                    data: rentalType,
+                    message: 'Rental type found',
+                };
             }),
         );
     }
@@ -118,7 +126,11 @@ export class RentalTypeService
         }
         return this.findAllProcess(findAllDto).pipe(
             map((rentalTypes) => {
-                return { status: HttpStatus.OK, data: rentalTypes, message: 'Rental types found' };
+                return {
+                    status: HttpStatus.OK,
+                    data: rentalTypes,
+                    message: 'Rental types found',
+                };
             }),
         );
     }
@@ -188,7 +200,11 @@ export class RentalTypeService
         }
         return this.restoreProcess(id).pipe(
             map((rentalType) => {
-                return { status: HttpStatus.OK, data: rentalType, message: 'Rental type restored successfully' };
+                return {
+                    status: HttpStatus.OK,
+                    data: rentalType,
+                    message: 'Rental type restored successfully',
+                };
             }),
         );
     }
@@ -232,7 +248,11 @@ export class RentalTypeService
         }
         return this.updateProcess(id, updateDto).pipe(
             map((rentalType) => {
-                return { status: HttpStatus.OK, data: rentalType, message: 'Rental type updated successfully' };
+                return {
+                    status: HttpStatus.OK,
+                    data: rentalType,
+                    message: 'Rental type updated successfully',
+                };
             }),
         );
     }

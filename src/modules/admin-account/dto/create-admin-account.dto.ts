@@ -2,7 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateAdminAccountDto {
-    @ApiProperty({ description: 'Email of the account', example: 'admin@example.com' })
+    @ApiProperty({
+        description: 'Email of the account',
+        example: 'admin@example.com',
+    })
     @IsNotEmpty()
     @IsEmail()
     readonly email: string;
@@ -12,7 +15,10 @@ export class CreateAdminAccountDto {
     @IsString()
     readonly value: string;
 
-    @ApiProperty({ description: 'ID of the associated account', example: '123e4567-e89b-12d3-a456-426614174000' })
+    @ApiProperty({
+        description: 'ID of the associated account',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
     @IsNotEmpty()
     @IsUUID()
     readonly accountId: string;

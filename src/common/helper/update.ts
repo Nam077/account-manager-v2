@@ -10,7 +10,11 @@ export const updateEntity = <T extends { id: string }>(
     return of(repository.merge(entity, updateDto)).pipe(
         switchMap((updatedEntity) => from(repository.save(updatedEntity))),
         switchMap((updatedEntity) =>
-            from(repository.findOne({ where: { id: updatedEntity.id } as FindOptionsWhere<T> })),
+            from(
+                repository.findOne({
+                    where: { id: updatedEntity.id } as FindOptionsWhere<T>,
+                }),
+            ),
         ),
         catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.BAD_REQUEST))),
     );

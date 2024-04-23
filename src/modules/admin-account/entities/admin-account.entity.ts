@@ -13,10 +13,17 @@ import {
 } from 'typeorm';
 @Entity({ name: 'admin_accounts' })
 export class AdminAccount {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the account table',
+    })
     id: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Email of the account' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Email of the account',
+    })
     email: string;
 
     @Column({ type: 'text', nullable: true, comment: 'Value of the account' })

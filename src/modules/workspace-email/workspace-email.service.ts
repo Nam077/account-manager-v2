@@ -43,7 +43,8 @@ export class WorkspaceEmailService
         >
 {
     constructor(
-        @InjectRepository(WorkspaceEmail) private readonly workspaceEmailRepository: Repository<WorkspaceEmail>,
+        @InjectRepository(WorkspaceEmail)
+        private readonly workspaceEmailRepository: Repository<WorkspaceEmail>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly workspaceService: WorkspaceService,
         private readonly emailService: EmailService,

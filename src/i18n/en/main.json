@@ -1,4 +1,5 @@
 {
     "greeting": "Hello, World!",
-    "farewell": "Goodbye, World!"
+    "farewell": "Goodbye, World!",
+    "questionName": "Hello {name}, how are you?"
 }

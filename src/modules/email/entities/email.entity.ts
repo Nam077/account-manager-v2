@@ -18,7 +18,12 @@ export class Email {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the email table' })
     id: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Email of the email' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Email of the email',
+    })
     email: string;
 
     @Column({

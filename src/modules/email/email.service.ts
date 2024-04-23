@@ -41,7 +41,8 @@ export class EmailService
         >
 {
     constructor(
-        @InjectRepository(Email) private readonly emailRepository: Repository<Email>,
+        @InjectRepository(Email)
+        private readonly emailRepository: Repository<Email>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly customerService: CustomerService,
     ) {}

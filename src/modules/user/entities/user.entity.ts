@@ -16,16 +16,38 @@ export class User {
     @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the user table' })
     id: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Name of the user' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Name of the user',
+    })
     name: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, unique: true, comment: 'Email of the user' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        unique: true,
+        comment: 'Email of the user',
+    })
     email: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Password of the user', select: false })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Password of the user',
+        select: false,
+    })
     password: string;
 
-    @Column({ type: 'enum', enum: UserRole, default: UserRole.USER, comment: 'Role of the user' })
+    @Column({
+        type: 'enum',
+        enum: UserRole,
+        default: UserRole.USER,
+        comment: 'Role of the user',
+    })
     role: UserRole;
 
     @CreateDateColumn({

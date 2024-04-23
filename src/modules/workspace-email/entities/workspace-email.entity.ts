@@ -17,13 +17,25 @@ import { Workspace } from '../../workspace/entities/workspace.entity';
 
 @Entity({ name: 'workspace_emails' })
 export class WorkspaceEmail {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the workspace email table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the workspace email table',
+    })
     id: string;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Workspace id', name: 'workspace_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Workspace id',
+        name: 'workspace_id',
+    })
     workspaceId: string;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Email id', name: 'email_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Email id',
+        name: 'email_id',
+    })
     emailId: string;
 
     @Column({

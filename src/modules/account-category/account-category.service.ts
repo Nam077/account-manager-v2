@@ -171,7 +171,12 @@ export class AccountCategoryService
         );
     }
     restoreProcess(id: string): Observable<AccountCategory> {
-        return from(this.accountCategoryRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+        return from(
+            this.accountCategoryRepository.findOne({
+                where: { id },
+                withDeleted: true,
+            }),
+        ).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
                     throw new NotFoundException('Account category not found');

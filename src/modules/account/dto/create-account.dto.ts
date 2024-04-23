@@ -10,7 +10,10 @@ export class CreateAccountDto {
     @Length(1, 255, { message: 'validation.account.name.length' })
     name: string;
 
-    @ApiProperty({ description: 'Description of the account', example: 'Account Description' })
+    @ApiProperty({
+        description: 'Description of the account',
+        example: 'Account Description',
+    })
     @IsNotEmpty({
         message: 'validation.account.description.required',
     })

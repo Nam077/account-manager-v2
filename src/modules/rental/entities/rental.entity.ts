@@ -19,25 +19,58 @@ export enum RentalStatus {
 }
 @Entity({ name: 'rentals' })
 export class Rental {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the rental table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the rental table',
+    })
     id: string;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Customer id', name: 'customer_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Customer id',
+        name: 'customer_id',
+    })
     customerId: string;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Account price id', name: 'account_price_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Account price id',
+        name: 'account_price_id',
+    })
     accountPriceId: string;
 
-    @Column({ type: 'uuid', nullable: true, comment: 'Workspace email id', name: 'workspace_email_id', default: null })
+    @Column({
+        type: 'uuid',
+        nullable: true,
+        comment: 'Workspace email id',
+        name: 'workspace_email_id',
+        default: null,
+    })
     workspaceEmailId: string;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Email id', name: 'email_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Email id',
+        name: 'email_id',
+    })
     emailId: string;
 
-    @Column({ type: 'date', nullable: false, comment: 'Start date of the rental', name: 'start_date' })
+    @Column({
+        type: 'date',
+        nullable: false,
+        comment: 'Start date of the rental',
+        name: 'start_date',
+    })
     startDate: Date;
 
-    @Column({ type: 'date', nullable: false, comment: 'End date of the rental', name: 'end_date' })
+    @Column({
+        type: 'date',
+        nullable: false,
+        comment: 'End date of the rental',
+        name: 'end_date',
+    })
     endDate: Date;
 
     @Column({
@@ -81,7 +114,13 @@ export class Rental {
     })
     warrantyFee: number;
 
-    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false, comment: 'Discount' })
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        scale: 2,
+        nullable: false,
+        comment: 'Discount',
+    })
     discount: number;
 
     @Column({

@@ -2,12 +2,18 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 export class CreateWorkspaceDto {
-    @ApiProperty({ description: 'Description of the workspace', example: 'Workspace Description' })
+    @ApiProperty({
+        description: 'Description of the workspace',
+        example: 'Workspace Description',
+    })
     @IsNotEmpty()
     @IsString()
     readonly description: string;
 
-    @ApiProperty({ description: 'Maximum customers allowed in the workspace', example: 10 })
+    @ApiProperty({
+        description: 'Maximum customers allowed in the workspace',
+        example: 10,
+    })
     @IsNotEmpty()
     @IsInt()
     @Min(1)

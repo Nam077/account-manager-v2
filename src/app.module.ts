@@ -131,6 +131,7 @@ export class DefaultAuthMiddleware implements NestMiddleware {
         //    set default bearer token
         req.headers['authorization'] =
             `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiJkMDg3NDY2MC05Mjc2LTRiMWUtOTQ2MC1jNjNkMGRiMDUzMzgiLCJpYXQiOjE3MTM4NTEwNDgsImV4cCI6MTcxNDcxNTA0OH0.cgzDO_36zlOoIRKdZPp4g0C058-jTejdnyUu5Z5KiQ0`;
+        req.headers['x-lang'] = 'vi'; // Default language is Vietnamese
         next();
     }
 }

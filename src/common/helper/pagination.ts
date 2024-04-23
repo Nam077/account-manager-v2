@@ -101,13 +101,17 @@ export const findWithPaginationAndSearch = <T>(
             new Brackets((qb) => {
                 fields.forEach((field, index) => {
                     const method = index === 0 ? 'where' : 'orWhere';
-                    qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, { query: lowercaseQuery });
+                    qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, {
+                        query: lowercaseQuery,
+                    });
                 });
 
                 if (searchFieldsInRelations) {
                     searchFieldsInRelations.forEach(({ tableName, fields }) => {
                         fields.forEach((field) => {
-                            qb.orWhere(`LOWER(${tableName}.${field}) LIKE :query`, { query: lowercaseQuery });
+                            qb.orWhere(`LOWER(${tableName}.${field}) LIKE :query`, {
+                                query: lowercaseQuery,
+                            });
                         });
                     });
                 }

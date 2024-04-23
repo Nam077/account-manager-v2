@@ -15,16 +15,34 @@ import { AccountPrice } from '../../account-price/entities/account-price.entity'
 import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
 @Entity({ name: 'accounts' })
 export class Account {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the account table',
+    })
     id: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Name of the account' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Name of the account',
+    })
     name: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Description of the account' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Description of the account',
+    })
     description: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, unique: true, comment: 'Slug of the account' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        unique: true,
+        comment: 'Slug of the account',
+    })
     slug: string;
 
     @CreateDateColumn({

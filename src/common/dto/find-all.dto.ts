@@ -28,7 +28,11 @@ export class FindAllDto {
     @IsNumber({}, { message: 'Limit must be a number' })
     limit?: number;
 
-    @ApiPropertyOptional({ description: 'Sort order', example: SORT_ORDER.ASC, enum: SORT_ORDER })
+    @ApiPropertyOptional({
+        description: 'Sort order',
+        example: SORT_ORDER.ASC,
+        enum: SORT_ORDER,
+    })
     @IsOptional()
     @IsIn(Object.values(SORT_ORDER))
     sort?: SORT_ORDER;

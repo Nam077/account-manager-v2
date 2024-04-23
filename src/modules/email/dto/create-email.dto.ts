@@ -7,7 +7,10 @@ export class CreateEmailDto {
     @IsEmail()
     readonly email: string;
 
-    @ApiProperty({ description: 'ID of the associated customer', example: '123e4567-e89b-12d3-a456-426614174000' })
+    @ApiProperty({
+        description: 'ID of the associated customer',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
     @IsNotEmpty()
     @IsUUID()
     readonly customerId: string;

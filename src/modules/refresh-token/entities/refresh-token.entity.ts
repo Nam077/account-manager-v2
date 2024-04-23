@@ -4,16 +4,33 @@ import { User } from '../../user/entities/user.entity';
 
 @Entity({ name: 'refresh_tokens' })
 export class RefreshToken {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the refresh token table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the refresh token table',
+    })
     id: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'Refresh token' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'Refresh token',
+    })
     token: string;
 
-    @Column({ type: 'text', nullable: true, comment: 'Data of the refresh token' })
+    @Column({
+        type: 'text',
+        nullable: true,
+        comment: 'Data of the refresh token',
+    })
     data: string; //
 
-    @Column({ type: 'varchar', length: 255, nullable: false, comment: 'User id of the refresh token', name: 'user_id' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: false,
+        comment: 'User id of the refresh token',
+        name: 'user_id',
+    })
     userId: string;
 
     @ManyToOne(() => User, (user) => user.refreshTokens)

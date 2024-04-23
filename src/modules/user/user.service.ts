@@ -124,7 +124,11 @@ export class UserService
         }
         return this.findAllProcess(findAllDto).pipe(
             map((data) => {
-                return { status: HttpStatus.OK, data, message: 'Users fetched successfully' };
+                return {
+                    status: HttpStatus.OK,
+                    data,
+                    message: 'Users fetched successfully',
+                };
             }),
         );
     }
@@ -161,7 +165,11 @@ export class UserService
                 }
                 return this.removeProcess(id, hardRemove).pipe(
                     map((data) => {
-                        return { status: HttpStatus.OK, data, message: 'User deleted successfully' };
+                        return {
+                            status: HttpStatus.OK,
+                            data,
+                            message: 'User deleted successfully',
+                        };
                     }),
                 );
             }),
@@ -193,7 +201,11 @@ export class UserService
                 }
                 return this.restoreProcess(id).pipe(
                     map((data) => {
-                        return { status: HttpStatus.OK, data, message: 'User restored successfully' };
+                        return {
+                            status: HttpStatus.OK,
+                            data,
+                            message: 'User restored successfully',
+                        };
                     }),
                 );
             }),
@@ -246,7 +258,11 @@ export class UserService
                 }
                 return this.updateProcess(id, updateDto).pipe(
                     map((data) => {
-                        return { status: HttpStatus.OK, data, message: 'User updated successfully' };
+                        return {
+                            status: HttpStatus.OK,
+                            data,
+                            message: 'User updated successfully',
+                        };
                     }),
                 );
             }),

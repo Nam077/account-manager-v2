@@ -1,3 +1,4 @@
 {
-    "greeting": "Xin chào các bạn!"
+    "greeting": "Xin chào các bạn!",
+    "questionName": "Xin chào {name}, bạn có khỏe không?"
 }

@@ -40,7 +40,8 @@ export class CustomerService
         >
 {
     constructor(
-        @InjectRepository(Customer) private readonly customerRepository: Repository<Customer>,
+        @InjectRepository(Customer)
+        private readonly customerRepository: Repository<Customer>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
     ) {}
     checkExitsByEmail(email: string): Observable<boolean> {

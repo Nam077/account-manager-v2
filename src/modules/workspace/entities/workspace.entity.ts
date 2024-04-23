@@ -14,10 +14,18 @@ import { AdminAccount } from '../../admin-account/entities/admin-account.entity'
 import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
 @Entity({ name: 'workspaces' })
 export class Workspace {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the workspace table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the workspace table',
+    })
     id: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: true, comment: 'Description of the workspace', default: '' })
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+        comment: 'Description of the workspace',
+        default: '',
+    })
     description: string;
 
     @Column({
@@ -47,7 +55,12 @@ export class Workspace {
     })
     deletedAt: Date;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Admin account id', name: 'admin_account_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Admin account id',
+        name: 'admin_account_id',
+    })
     adminAccountId: string;
 
     //relations

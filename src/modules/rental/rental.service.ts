@@ -131,6 +131,7 @@ export class RentalService
 
         return forkJoin(tasks).pipe(
             map(([isExist, workspaceEmailId]) => {
+                isExist;
                 const rental = new Rental();
                 rental.customerId = customerId;
                 rental.accountPriceId = accountPriceId;
@@ -439,8 +440,7 @@ export class RentalService
 
                 return forkJoin(tasks).pipe(
                     switchMap(([accountPrice, email, workspace]) => {
-                        console.log(checkForForkJoin);
-
+                        email;
                         if (checkForForkJoin.accountPrice && checkForForkJoin.email && checkForForkJoin.workspace) {
                             this.checkEmailBelongToCustomer(emailId, rental.customerId);
                             if (workspaceId === null) {

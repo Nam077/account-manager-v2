@@ -15,16 +15,34 @@ import { Rental } from '../../rental/entities/rental.entity';
 import { RentalType } from '../../rental-type/entities/rental-type.entity';
 @Entity({ name: 'account_prices' })
 export class AccountPrice {
-    @PrimaryGeneratedColumn('uuid', { comment: 'Primary key of the account price table' })
+    @PrimaryGeneratedColumn('uuid', {
+        comment: 'Primary key of the account price table',
+    })
     id: string;
 
-    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false, comment: 'Price of the account' })
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        scale: 2,
+        nullable: false,
+        comment: 'Price of the account',
+    })
     price: number;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Account id', name: 'account_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Account id',
+        name: 'account_id',
+    })
     accountId: string;
 
-    @Column({ type: 'uuid', nullable: false, comment: 'Rental type id', name: 'rental_type_id' })
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Rental type id',
+        name: 'rental_type_id',
+    })
     rentalTypeId: string;
 
     @CreateDateColumn({

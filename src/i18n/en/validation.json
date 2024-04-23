@@ -13,5 +13,17 @@
             "required": "Account category ID is required.",
             "isUUID": "Account category ID must be a valid UUID."
         }
+    },
+    "accountCategory": {
+        "name": {
+            "required": "Account category name is required.",
+            "isString": "Account category name must be a string.",
+            "length": "Account category name must be between 1 and 255 characters long."
+        },
+        "description": {
+            "required": "Account category description is required.",
+            "isString": "Account category description must be a string.",
+            "length": "Account category description must be between 1 and 255 characters long."
+        }
     }
 }

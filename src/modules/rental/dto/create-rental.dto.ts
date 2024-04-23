@@ -5,11 +5,17 @@ import { IsDate, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Length } from '
 import { RentalStatus } from '../entities/rental.entity';
 
 export class CreateRentalDto {
-    @ApiProperty({ description: 'Customer id', example: '123e4567-e89b-12d3-a456-426614174000' })
+    @ApiProperty({
+        description: 'Customer id',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
     @IsUUID()
     customerId: string;
 
-    @ApiProperty({ description: 'Account price id', example: '123e4567-e89b-12d3-a456-426614174001' })
+    @ApiProperty({
+        description: 'Account price id',
+        example: '123e4567-e89b-12d3-a456-426614174001',
+    })
     @IsUUID()
     accountPriceId: string;
 
@@ -22,34 +28,62 @@ export class CreateRentalDto {
     @IsUUID()
     workspaceId?: string;
 
-    @ApiProperty({ description: 'Email id', example: '123e4567-e89b-12d3-a456-426614174003' })
+    @ApiProperty({
+        description: 'Email id',
+        example: '123e4567-e89b-12d3-a456-426614174003',
+    })
     @IsUUID()
     emailId: string;
 
-    @ApiProperty({ description: 'Start date of the rental', type: 'string', format: 'date', example: '2024-04-01' })
+    @ApiProperty({
+        description: 'Start date of the rental',
+        type: 'string',
+        format: 'date',
+        example: '2024-04-01',
+    })
     @Type(() => Date)
     @IsDate()
     startDate: Date;
 
-    @ApiProperty({ description: 'End date of the rental', type: 'string', format: 'date', example: '2024-04-30' })
+    @ApiProperty({
+        description: 'End date of the rental',
+        type: 'string',
+        format: 'date',
+        example: '2024-04-30',
+    })
     @Type(() => Date)
     @IsDate()
     endDate: Date;
 
-    @ApiProperty({ description: 'Status of the rental', example: RentalStatus.ACTIVE })
+    @ApiProperty({
+        description: 'Status of the rental',
+        example: RentalStatus.ACTIVE,
+    })
     @IsEnum(RentalStatus)
     status: RentalStatus;
 
-    @ApiProperty({ description: 'Note of the rental', required: false, example: 'Extra chairs included' })
+    @ApiProperty({
+        description: 'Note of the rental',
+        required: false,
+        example: 'Extra chairs included',
+    })
     @IsOptional()
     @IsString()
     note?: string;
 
-    @ApiProperty({ description: 'Total price of the rental', type: 'number', example: 299.99 })
+    @ApiProperty({
+        description: 'Total price of the rental',
+        type: 'number',
+        example: 299.99,
+    })
     @IsNumber({ maxDecimalPlaces: 2 })
     totalPrice: number;
 
-    @ApiProperty({ description: 'Payment amount', type: 'number', example: 150.0 })
+    @ApiProperty({
+        description: 'Payment amount',
+        type: 'number',
+        example: 150.0,
+    })
     @IsNumber({ maxDecimalPlaces: 2 })
     paymentAmount: number;
 
