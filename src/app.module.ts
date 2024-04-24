@@ -127,9 +127,7 @@ export class AppModule {
 }
 @Injectable()
 export class DefaultAuthMiddleware implements NestMiddleware {
-    constructor(private readonly configService: ConfigService) {
-        console.log(configService.get<string>('DEFAULT_ACCESS_TOKEN'));
-    }
+    constructor(private readonly configService: ConfigService) {}
     use(req: Request, res: Response, next: NextFunction) {
         req.headers['authorization'] = `Bearer ${this.configService.get<string>('DEFAULT_ACCESS_TOKEN')}`;
         req.headers['x-lang'] = 'en'; // Default language is Vietnamese
