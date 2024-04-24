@@ -15,6 +15,7 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -53,7 +54,7 @@ export class WorkspaceService
                 if (isExist) {
                     throw new ConflictException('Workspace already exist');
                 }
-                return this.adminAccountService.findOneData(adminAccountId);
+                return this.adminAccountService.findOneProcess(adminAccountId);
             }),
             switchMap((adminAccount) => {
                 if (!adminAccount) {
@@ -75,37 +76,14 @@ export class WorkspaceService
         }
         return this.createProcess(createDto).pipe(map((data) => ({ data, status: HttpStatus.CREATED })));
     }
-    findOneData(id: string): Observable<Workspace> {
-        return from(
-            this.workspaceRepository.findOne({
-                where: { id },
-                relations: { adminAccount: true },
-            }),
-        );
-    }
-    findOneWithAdminAccount(id: string): Observable<Workspace> {
-        return from(
-            this.workspaceRepository.findOne({
-                where: { id },
-                relations: { adminAccount: { account: true } },
-            }),
-        );
-    }
-    findOneWithWorkspaceEmails(id: string): Observable<Workspace> {
-        return from(
-            this.workspaceRepository.findOne({
-                where: { id },
-                relations: { workspaceEmails: true },
-            }),
-        );
-    }
-    findOneProcess(id: string): Observable<Workspace> {
-        return this.findOneData(id).pipe(
-            switchMap((workspace) => {
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Workspace>): Observable<Workspace> {
+        return from(this.workspaceRepository.findOne({ where: { id }, ...options })).pipe(
+            map((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException('Workspace not found');
                 }
-                return of(workspace);
+                return workspace;
             }),
         );
     }
@@ -216,7 +194,7 @@ export class WorkspaceService
     }
     updateProcess(id: string, updateDto: UpdateWorkspaceDto): Observable<Workspace> {
         const updateData: DeepPartial<Workspace> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException('Workspace not found');
@@ -224,7 +202,7 @@ export class WorkspaceService
                 const tasks: Observable<any>[] = [];
                 if (updateDto.adminAccountId && updateDto.adminAccountId !== workspace.adminAccountId) {
                     tasks.push(
-                        this.adminAccountService.findOneData(updateDto.adminAccountId).pipe(
+                        this.adminAccountService.findOneProcess(updateDto.adminAccountId).pipe(
                             tap((adminAccount) => {
                                 if (!adminAccount) {
                                     throw new NotFoundException('Admin account not found');

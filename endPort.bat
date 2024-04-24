@@ -8,4 +8,3 @@ if defined pid (
     echo No process found using port %port%.
 )
 pause
-```

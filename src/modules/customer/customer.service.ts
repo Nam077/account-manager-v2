@@ -15,6 +15,7 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -86,11 +87,8 @@ export class CustomerService
             ),
         );
     }
-    findOneData(id: string): Observable<Customer> {
-        return from(this.customerRepository.findOne({ where: { id } }));
-    }
-    findOneProcess(id: string): Observable<Customer> {
-        return from(this.customerRepository.findOne({ where: { id } })).pipe(
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Customer>): Observable<Customer> {
+        return from(this.customerRepository.findOne({ where: { id }, ...options })).pipe(
             map((customer) => {
                 if (!customer) {
                     throw new NotFoundException('Customer not found');
@@ -213,7 +211,7 @@ export class CustomerService
     }
     updateProcess(id: string, updateDto: UpdateCustomerDto): Observable<Customer> {
         const updateData: DeepPartial<Customer> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((customer) => {
                 if (!customer) {
                     throw new NotFoundException('Customer not found');

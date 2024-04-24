@@ -14,7 +14,7 @@
             "isUUID": "ID của danh mục tài khoản phải là một UUID hợp lệ."
         }
     },
-    "createAccountCategory": {
+    "accountCategory": {
         "name": {
             "required": "Tên danh mục tài khoản là bắt buộc.",
             "isString": "Tên danh mục tài khoản phải là chuỗi ký tự.",

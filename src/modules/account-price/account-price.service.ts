@@ -15,6 +15,7 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -50,12 +51,12 @@ export class AccountPriceService
     ) {}
     createProcess(createDto: CreateAccountPriceDto): Observable<AccountPrice> {
         const { accountId, rentalTypeId, price } = createDto;
-        return this.accountService.findOneData(accountId).pipe(
+        return this.accountService.findOneProcess(accountId).pipe(
             switchMap((account) => {
                 if (!account) {
                     throw new NotFoundException('Account not found');
                 }
-                return this.rentalTypeService.findOneData(rentalTypeId);
+                return this.rentalTypeService.findOneProcess(rentalTypeId);
             }),
             switchMap((rentalType) => {
                 if (!rentalType) {
@@ -95,25 +96,12 @@ export class AccountPriceService
             ),
         );
     }
-    findOneData(id: string): Observable<AccountPrice> {
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<AccountPrice>): Observable<AccountPrice> {
         return from(
             this.accountPriceRepository.findOne({
                 where: { id },
-                relations: {
-                    account: true,
-                    rentalType: true,
-                },
-            }),
-        );
-    }
-    findOneProcess(id: string): Observable<AccountPrice> {
-        return from(
-            this.accountPriceRepository.findOne({
-                where: { id },
-                relations: {
-                    account: true,
-                    rentalType: true,
-                },
+                ...options,
             }),
         );
     }
@@ -244,7 +232,7 @@ export class AccountPriceService
     }
     updateProcess(id: string, updateDto: UpdateAccountPriceDto): Observable<AccountPrice> {
         const updateData: DeepPartial<AccountPrice> = {};
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
                     throw new NotFoundException('Account price not found');
@@ -252,12 +240,11 @@ export class AccountPriceService
                 const tasks: Observable<any>[] = [];
                 if (updateDto.accountId && accountPrice.accountId !== updateDto.accountId) {
                     tasks.push(
-                        this.accountService.findOneData(updateData.accountId).pipe(
+                        this.accountService.findOneProcess(updateData.accountId).pipe(
                             tap((account) => {
                                 if (!account) {
                                     throw new NotFoundException('Account not found');
                                 }
-                                delete updateData.account;
                             }),
                         ),
                     );
@@ -265,12 +252,11 @@ export class AccountPriceService
 
                 if (updateDto.rentalTypeId && accountPrice.rentalTypeId !== updateDto.rentalTypeId) {
                     tasks.push(
-                        this.rentalTypeService.findOneData(updateData.rentalTypeId).pipe(
+                        this.rentalTypeService.findOneProcess(updateData.rentalTypeId).pipe(
                             tap((rentalType) => {
                                 if (!rentalType) {
                                     throw new NotFoundException('Rental type not found');
                                 }
-                                delete updateData.rentalType;
                             }),
                         ),
                     );

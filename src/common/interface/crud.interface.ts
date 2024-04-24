@@ -1,5 +1,7 @@
 import { Observable } from 'rxjs';
 
+import { FindOneOptionsCustom } from './find-one.interface';
+
 /**
  * Represents a CRUD (Create, Read, Update, Delete) service interface.
  * @template API - The API response type.
@@ -27,18 +29,12 @@ export interface CrudService<API, ENTITY, PAGINATE, CREATE_DTO, UPDATE_DTO, FIND
     create(currentUser: USER, createDto: CREATE_DTO): Observable<API>;
 
     /**
-     * Finds an entity by its ID.
-     * @param id - The ID of the entity.
-     * @returns An observable of the found entity.
-     */
-    findOneData(id: string): Observable<ENTITY>;
-
-    /**
      * Finds an entity by its ID and returns the API response.
      * @param id - The ID of the entity.
+     * @param options - Optional. The find one options.
      * @returns An observable of the API response.
      */
-    findOneProcess(id: string): Observable<ENTITY>;
+    findOneProcess(id: string, options?: FindOneOptionsCustom<ENTITY>): Observable<ENTITY>;
 
     /**
      * Finds an entity by its ID and returns the API response.

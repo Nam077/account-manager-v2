@@ -57,7 +57,7 @@ export class AuthService {
                 if (!refreshToken) {
                     throw new UnauthorizedException('Invalid token');
                 }
-                return this.userService.findOneData(refreshToken.userId);
+                return this.userService.findOneProcess(refreshToken.userId);
             }),
         );
     }

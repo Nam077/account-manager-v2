@@ -9,6 +9,7 @@ import {
     CheckForForkJoin,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -83,7 +84,7 @@ export class RentalService
         } = createDto;
         const tasks: Observable<any>[] = [];
         tasks.push(
-            this.customerService.findOneData(customerId).pipe(
+            this.customerService.findOneProcess(customerId).pipe(
                 switchMap((customer) => {
                     if (!customer) {
                         throw new NotFoundException('Customer not found');
@@ -99,7 +100,7 @@ export class RentalService
             ),
         );
         tasks.push(
-            this.accountPriceService.findOneData(accountPriceId).pipe(
+            this.accountPriceService.findOneProcess(accountPriceId).pipe(
                 map((accountPrice) => {
                     if (!accountPrice) {
                         throw new NotFoundException('Account price not found');
@@ -108,21 +109,27 @@ export class RentalService
                 }),
                 switchMap((accountPrice) => {
                     if (createDto.workspaceId) {
-                        return this.workspaceService.findOneWithAdminAccount(workspaceId).pipe(
-                            map((workspace) => {
-                                if (!workspace) {
-                                    throw new NotFoundException('Workspace not found');
-                                }
-                                this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
-                                return workspace;
-                            }),
-                            switchMap(() => {
-                                return this.workspaceEmailService.createProcessAndGetId({
-                                    workspaceId: createDto.workspaceId,
-                                    emailId: createDto.emailId,
-                                });
-                            }),
-                        );
+                        return this.workspaceService
+                            .findOneProcess(workspaceId, {
+                                relations: {
+                                    adminAccount: true,
+                                },
+                            })
+                            .pipe(
+                                map((workspace) => {
+                                    if (!workspace) {
+                                        throw new NotFoundException('Workspace not found');
+                                    }
+                                    this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
+                                    return workspace;
+                                }),
+                                switchMap(() => {
+                                    return this.workspaceEmailService.createProcessAndGetId({
+                                        workspaceId: createDto.workspaceId,
+                                        emailId: createDto.emailId,
+                                    });
+                                }),
+                            );
                     }
                     return of(null);
                 }),
@@ -168,21 +175,12 @@ export class RentalService
             }),
         );
     }
-    findOneData(id: string): Observable<Rental> {
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Rental>): Observable<Rental> {
         return from(
             this.rentalRepository.findOne({
                 where: { id },
-                relations: {
-                    workspaceEmail: { workspace: { adminAccount: true } },
-                    accountPrice: { account: true },
-                },
-            }),
-        );
-    }
-    findOneProcess(id: string): Observable<Rental> {
-        return from(
-            this.rentalRepository.findOne({
-                where: { id },
+                ...options,
             }),
         ).pipe(
             map((rental) => {
@@ -386,7 +384,14 @@ export class RentalService
             throw new BadRequestException('Customer id cannot be updated');
         }
         const updateData: DeepPartial<Rental> = { ...rest };
-        return from(this.findOneData(id)).pipe(
+        return from(
+            this.findOneProcess(id, {
+                relations: {
+                    workspaceEmail: { workspace: { adminAccount: true } },
+                    accountPrice: { account: true },
+                },
+            }),
+        ).pipe(
             switchMap((rental) => {
                 if (!rental) {
                     throw new NotFoundException('Rental not found');
@@ -395,15 +400,22 @@ export class RentalService
                 const checkForForkJoin: CheckForForkJoin = {};
                 if (accountPriceId && rental.accountPriceId !== accountPriceId) {
                     tasks.push(
-                        this.accountPriceService.findOneData(accountPriceId).pipe(
-                            map((accountPrice) => {
-                                if (!accountPrice) {
-                                    throw new NotFoundException('Account price not found');
-                                }
-                                checkForForkJoin.accountPrice = true;
-                                return accountPrice;
-                            }),
-                        ),
+                        this.accountPriceService
+                            .findOneProcess(accountPriceId, {
+                                relations: {
+                                    account: true,
+                                    rentalType: true,
+                                },
+                            })
+                            .pipe(
+                                map((accountPrice) => {
+                                    if (!accountPrice) {
+                                        throw new NotFoundException('Account price not found');
+                                    }
+                                    checkForForkJoin.accountPrice = true;
+                                    return accountPrice;
+                                }),
+                            ),
                     );
                 } else tasks.push(of(null));
                 if (emailId && rental.emailId !== emailId) {
@@ -426,15 +438,21 @@ export class RentalService
                         tasks.push(of(null));
                     } else
                         tasks.push(
-                            this.workspaceService.findOneData(workspaceId).pipe(
-                                map((workspace) => {
-                                    if (!workspace) {
-                                        throw new NotFoundException('Workspace not found');
-                                    }
-                                    checkForForkJoin.workspace = true;
-                                    return workspace;
-                                }),
-                            ),
+                            this.workspaceService
+                                .findOneProcess(workspaceId, {
+                                    relations: {
+                                        adminAccount: true,
+                                    },
+                                })
+                                .pipe(
+                                    map((workspace) => {
+                                        if (!workspace) {
+                                            throw new NotFoundException('Workspace not found');
+                                        }
+                                        checkForForkJoin.workspace = true;
+                                        return workspace;
+                                    }),
+                                ),
                         );
                 } else tasks.push(of(null));
 

@@ -48,7 +48,7 @@ export class EmailService
     ) {}
     createProcess(createDto: CreateEmailDto): Observable<Email> {
         const { email, customerId } = createDto;
-        return from(this.customerService.findOneData(customerId)).pipe(
+        return from(this.customerService.findOneProcess(customerId)).pipe(
             switchMap((customer) => {
                 if (!customer) {
                     throw new NotFoundException('Customer not found');
@@ -214,7 +214,7 @@ export class EmailService
 
                 if (updateDto.customerId && updateDto.customerId !== email.customerId) {
                     tasks.push(
-                        this.customerService.findOneData(updateDto.customerId).pipe(
+                        this.customerService.findOneProcess(updateDto.customerId).pipe(
                             tap((customer) => {
                                 if (!customer) {
                                     throw new NotFoundException('Customer not found');

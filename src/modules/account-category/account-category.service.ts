@@ -14,6 +14,7 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -77,11 +78,8 @@ export class AccountCategoryService
             ),
         );
     }
-    findOneData(id: string): Observable<AccountCategory> {
-        return from(this.accountCategoryRepository.findOne({ where: { id } }));
-    }
-    findOneProcess(id: string): Observable<AccountCategory> {
-        return from(this.accountCategoryRepository.findOne({ where: { id } })).pipe(
+    findOneProcess(id: string, options?: FindOneOptionsCustom<AccountCategory>): Observable<AccountCategory> {
+        return from(this.accountCategoryRepository.findOne({ where: { id }, ...options })).pipe(
             map((accountCategory) => {
                 if (!accountCategory) {
                     throw new NotFoundException('Account category not found');
@@ -207,7 +205,7 @@ export class AccountCategoryService
     }
     updateProcess(id: string, updateDto: UpdateAccountCategoryDto): Observable<AccountCategory> {
         const updateData: DeepPartial<AccountCategory> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
                     throw new NotFoundException('Account category not found');

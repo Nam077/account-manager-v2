@@ -17,11 +17,13 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     JwtPayload,
     PaginatedData,
     SearchField,
     updateEntity,
+    UserRole,
 } from '../../common';
 import { BcryptServiceInstance } from '../../common/helper/hash';
 import { LoginDto } from '../auth/dto/login.dto';
@@ -68,27 +70,27 @@ export class UserService
         );
     }
     create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
-        // const ability = this.caslAbilityFactory.createForUser(currentUser);
-        // if (!ability.can(ActionCasl.Manage, User)) {
-        //     throw new ForbiddenException('You are not allowed to create user');
-        // }
-        // const { role } = currentUser;
-        // if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
-        //     if (!ability.can(ActionCasl.AddAdmin, User)) {
-        //         throw new ForbiddenException('You are not allowed to add admin');
-        //     }
-        // }
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (!ability.can(ActionCasl.Manage, User)) {
+            throw new ForbiddenException('You are not allowed to create user');
+        }
+        const { role } = currentUser;
+        if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
+            if (!ability.can(ActionCasl.AddAdmin, User)) {
+                throw new ForbiddenException('You are not allowed to add admin');
+            }
+        }
         return this.createProcess(createDto).pipe(
             map((user) => {
                 return { status: HttpStatus.CREATED, data: user };
             }),
         );
     }
-    findOneProcess(id: string): Observable<User> {
+    findOneProcess(id: string, options?: FindOneOptionsCustom<User>): Observable<User> {
         return from(
             this.userRepository.findOne({
                 where: { id },
-                select: { password: false },
+                ...options,
             }),
         ).pipe(
             map((user) => {
@@ -155,7 +157,7 @@ export class UserService
         hardRemove?: boolean,
     ): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        return this.findOneData(id).pipe(
+        return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException('User not found');
@@ -191,7 +193,7 @@ export class UserService
     }
     restore(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        return this.findOneData(id).pipe(
+        return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException('User not found');
@@ -213,7 +215,7 @@ export class UserService
     }
     updateProcess(id: string, updateDto: UpdateUserDto): Observable<User> {
         const updateData: DeepPartial<User> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((user) => {
                 if (!user) {
                     return throwError(() => new NotFoundException('User not found'));
@@ -247,7 +249,7 @@ export class UserService
         id: string,
         updateDto: UpdateUserDto,
     ): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
-        return this.findOneData(id).pipe(
+        return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException('User not found');
@@ -273,15 +275,8 @@ export class UserService
         return from(this.userRepository.existsBy({ email }));
     }
 
-    findOneData(id: string): Observable<User> {
-        return from(
-            this.userRepository.findOne({
-                where: { id },
-            }),
-        );
-    }
     validateUser(payload: JwtPayload): Observable<User> {
-        return from(this.userRepository.findOne({ where: { id: payload.sub } }));
+        return from(this.findOneProcess(payload.sub));
     }
 
     login(loginDto: LoginDto) {
