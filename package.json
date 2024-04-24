@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@casl/ability": "^6.7.1",
+    "@commitlint/cli": "^19.3.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.2",
     "@nestjs/core": "^10.0.0",
