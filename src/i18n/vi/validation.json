@@ -128,7 +128,8 @@
             "isUUID": "ID của email phải là một UUID hợp lệ."
         },
         "startDate": {
-            "isDate": "Ngày bắt đầu của thuê phải là một ngày hợp lệ."
+            "isDate": "Ngày bắt đầu của thuê phải là một ngày hợp lệ.",
+            "isEarlierThanDate": "Ngày bắt đầu của thuê phải trước ngày kết thúc."
         },
         "endDate": {
             "isDate": "Ngày kết thúc của thuê phải là một ngày hợp lệ."
@@ -209,5 +210,10 @@
             "isNotEmpty": "ID của email phải được cung cấp.",
             "isUUID": "ID của email phải là một UUID hợp lệ."
         }
+    },
+    "Login": {
+        "Failed": "Đăng nhập thất bại: Tên đăng nhập hoặc mật khẩu không chính xác.",
+        "LockedOut": "Tài khoản của bạn đã bị khóa do nhập sai quá nhiều lần.",
+        "Inactive": "Tài khoản của bạn chưa được kích hoạt."
     }
 }

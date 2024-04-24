@@ -128,7 +128,8 @@
             "isUUID": "Email id must be a valid UUID."
         },
         "startDate": {
-            "isDate": "Start date of the rental must be a valid date."
+            "isDate": "Start date of the rental must be a valid date.",
+            "isEarlierThanDate": "Start date of the rental must be earlier than the end date."
         },
         "endDate": {
             "isDate": "End date of the rental must be a valid date."

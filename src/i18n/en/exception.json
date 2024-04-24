@@ -1,0 +1,66 @@
+{
+    "AccountCategory": {
+        "NotFound": "Account category not found",
+        "Conflict": "Account category already exists"
+    },
+    "Account": {
+        "NotFound": "Account not found",
+        "Conflict": "Account already exists"
+    },
+    "AdminAccount": {
+        "NotFound": "Admin account not found",
+        "Conflict": "Admin account already exists"
+    },
+    "Customer": {
+        "NotFound": "Customer not found",
+        "Conflict": "Customer already exists"
+    },
+    "Email": {
+        "NotFound": "Email not found",
+        "Conflict": "Email already in use"
+    },
+    "Workspace": {
+        "NotFound": "Workspace not found",
+        "Conflict": "Workspace already exists",
+        "Full": "Workspace is full"
+    },
+    "RentalType": {
+        "NotFound": "Rental type not found",
+        "Conflict": "Rental type already exists"
+    },
+    "AccountPrice": {
+        "NotFound": "Account price not found",
+        "Conflict": "Account price already exists"
+    },
+    "WorkspaceEmail": {
+        "NotFound": "Workspace email not found",
+        "Conflict": "Workspace email already exists"
+    },
+    "Rental": {
+        "NotFound": "Rental not found",
+        "Conflict": "Rental already exists"
+    },
+    "RefreshToken": {
+        "NotFound": "Refresh token not found",
+        "Invalid": "Refresh token is invalid"
+    },
+    "Authentication": {
+        "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",
+        "Forbidden": "Forbidden: You do not have permission to perform this action."
+    },
+    "Validation": {
+        "BadRequest": "Bad Request: The input data is invalid."
+    },
+    "Resource": {
+        "NotFound": "Not Found: The requested resource does not exist.",
+        "Conflict": "Conflict: The resource already exists."
+    },
+    "Server": {
+        "InternalError": "Internal Server Error: An unexpected error occurred."
+    },
+    "Login": {
+        "Failed": "Login failed: Incorrect username or password.",
+        "LockedOut": "Your account has been locked due to too many failed login attempts.",
+        "Inactive": "Your account is not activated."
+    }
+}

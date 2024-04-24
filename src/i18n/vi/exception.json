@@ -1,0 +1,61 @@
+{
+    "AccountCategory": {
+        "NotFound": "Không tìm thấy loại tài khoản",
+        "Conflict": "Loại tài khoản đã tồn tại"
+    },
+    "Account": {
+        "NotFound": "Không tìm thấy tài khoản",
+        "Conflict": "Tài khoản đã tồn tại"
+    },
+    "AdminAccount": {
+        "NotFound": "Không tìm thấy tài khoản quản trị",
+        "Conflict": "Tài khoản quản trị đã tồn tại"
+    },
+    "Customer": {
+        "NotFound": "Không tìm thấy khách hàng",
+        "Conflict": "Khách hàng đã tồn tại"
+    },
+    "Email": {
+        "NotFound": "Không tìm thấy email",
+        "Conflict": "Email đã được sử dụng"
+    },
+    "Workspace": {
+        "NotFound": "Không tìm thấy không gian làm việc",
+        "Conflict": "Không gian làm việc đã tồn tại",
+        "Full" : "Không gian làm việc đã đầy"
+    },
+    "RentalType": {
+        "NotFound": "Không tìm thấy loại cho thuê",
+        "Conflict": "Loại cho thuê đã tồn tại"
+    },
+    "AccountPrice": {
+        "NotFound": "Không tìm thấy giá tài khoản",
+        "Conflict": "Giá tài khoản đã tồn tại"
+    },
+    "WorkspaceEmail": {
+        "NotFound": "Không tìm thấy email không gian làm việc",
+        "Conflict": "Email không gian làm việc đã tồn tại"
+    },
+    "Rental": {
+        "NotFound": "Không tìm thấy thuê bao",
+        "Conflict": "Thuê bao đã tồn tại"
+    },
+    "RefreshToken": {
+        "NotFound": "Không tìm thấy token làm mới",
+        "Invalid": "Token làm mới không hợp lệ"
+    },
+    "Authentication": {
+        "Unauthorized": "Không có quyền truy cập: Thông tin xác thực không hợp lệ hoặc không tồn tại.",
+        "Forbidden": "Cấm truy cập: Không có quyền thực hiện hành động này."
+    },
+    "Validation": {
+        "BadRequest": "Yêu cầu không hợp lệ: Dữ liệu đầu vào không hợp lệ."
+    },
+    "Resource": {
+        "NotFound": "Không tìm thấy tài nguyên yêu cầu.",
+        "Conflict": "Xung đột tài nguyên: Tài nguyên đã tồn tại."
+    },
+    "Server": {
+        "InternalError": "Lỗi máy chủ nội bộ: Có lỗi không mong muốn xảy ra."
+    }
+}

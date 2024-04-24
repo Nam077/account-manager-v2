@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 
+import { IsEarlierThanDate } from '../../../common';
 import { RentalStatus } from '../entities/rental.entity';
 
 export class CreateRentalDto {
@@ -43,6 +44,7 @@ export class CreateRentalDto {
     })
     @Type(() => Date)
     @IsDate({ message: 'validation.createRental.startDate.isDate' })
+    @IsEarlierThanDate('endDate', { message: 'validation.createRental.startDate.isEarlierThanDate' })
     startDate: Date;
 
     @ApiProperty({

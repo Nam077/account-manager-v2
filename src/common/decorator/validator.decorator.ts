@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { ValidateIf, ValidationOptions } from 'class-validator';
+import { registerDecorator, ValidateIf, ValidationArguments, ValidationOptions } from 'class-validator';
 
 import { toCapitalize, toLowerCase, toUpperCase } from '../helper/index';
 
@@ -17,3 +17,26 @@ export const ToUpperCase = (): PropertyDecorator =>
 
 export const ToLowerCase = (): PropertyDecorator =>
     Transform(({ value }) => (typeof value === 'string' ? toLowerCase(value) : value));
+
+export const IsEarlierThanDate =
+    (property: string, validationOptions?: ValidationOptions) => (object: object, propertyName: string) => {
+        registerDecorator({
+            name: 'isEarlierThan',
+            target: object.constructor,
+            propertyName,
+            constraints: [property],
+            options: validationOptions,
+            validator: {
+                validate: (value: any, args: ValidationArguments) => {
+                    const [relatedPropertyName] = args.constraints;
+                    const relatedValue = (args.object as any)[relatedPropertyName];
+                    if (!(value instanceof Date && relatedValue instanceof Date)) {
+                        return false; // Ensures both values are Date instances
+                    }
+                    return value < relatedValue; // Compares dates
+                },
+                defaultMessage: (args: ValidationArguments) =>
+                    `${args.property} should be earlier than ${args.constraints[0]}`,
+            },
+        });
+    };
