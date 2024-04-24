@@ -12,6 +12,6 @@ export class CreateEmailDto {
         example: '123e4567-e89b-12d3-a456-426614174000',
     })
     @IsNotEmpty({ message: 'validation.createEmail.customerId.required' })
-    @IsUUID(undefined, { message: 'validation.createEmail.customerId.isUUID' })
+    @IsUUID('all', { message: 'validation.createEmail.customerId.isUUID' })
     readonly customerId: string;
 }
