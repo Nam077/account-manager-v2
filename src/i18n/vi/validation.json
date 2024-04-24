@@ -25,5 +25,189 @@
             "isString": "Mô tả danh mục tài khoản phải là chuỗi ký tự.",
             "length": "Mô tả danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
         }
+    },
+    "createAccountPrice": {
+        "price": {
+            "required": "Giá của tài khoản là bắt buộc.",
+            "isNumber": "Giá của tài khoản phải là một số.",
+            "min": "Giá của tài khoản phải lớn hơn hoặc bằng 0."
+        },
+        "accountId": {
+            "required": "ID của tài khoản liên kết là bắt buộc.",
+            "isUUID": "ID của tài khoản liên kết phải là một UUID hợp lệ."
+        },
+        "rentalTypeId": {
+            "required": "ID của loại cho thuê liên kết là bắt buộc.",
+            "isUUID": "ID của loại cho thuê liên kết phải là một UUID hợp lệ."
+        }
+    },
+    "createAdminAccount": {
+        "email": {
+            "required": "Email của tài khoản là bắt buộc.",
+            "isEmail": "Email phải là một địa chỉ email hợp lệ."
+        },
+        "value": {
+            "required": "Giá trị của tài khoản là bắt buộc.",
+            "isString": "Giá trị của tài khoản phải là một chuỗi ký tự."
+        },
+        "accountId": {
+            "required": "ID của tài khoản liên kết là bắt buộc.",
+            "isUUID": "ID của tài khoản liên kết phải là một UUID hợp lệ."
+        }
+    },
+    "login": {
+        "email": {
+            "required": "Email là bắt buộc.",
+            "isEmail": "Email phải là một địa chỉ email hợp lệ."
+        },
+        "password": {
+            "required": "Mật khẩu là bắt buộc.",
+            "isString": "Mật khẩu phải là một chuỗi ký tự.",
+            "minLength": "Mật khẩu phải có ít nhất 8 ký tự."
+        }
+    },
+    "register": {
+        "email": {
+            "required": "Email là bắt buộc.",
+            "isEmail": "Email phải là một địa chỉ email hợp lệ."
+        },
+        "password": {
+            "required": "Mật khẩu là bắt buộc.",
+            "isString": "Mật khẩu phải là một chuỗi ký tự.",
+            "minLength": "Mật khẩu phải có ít nhất 8 ký tự."
+        },
+        "name": {
+            "required": "Tên là bắt buộc.",
+            "isString": "Tên phải là một chuỗi ký tự."
+        }
+    },
+    "createCustomer": {
+        "name": {
+            "required": "Tên của khách hàng là bắt buộc.",
+            "isString": "Tên của khách hàng phải là một chuỗi ký tự."
+        },
+        "email": {
+            "required": "Email của khách hàng là bắt buộc.",
+            "isEmail": "Email phải là một địa chỉ email hợp lệ."
+        },
+        "phone": {
+            "required": "Số điện thoại của khách hàng là bắt buộc.",
+            "isString": "Số điện thoại của khách hàng phải là một chuỗi ký tự."
+        },
+        "address": {
+            "isString": "Địa chỉ của khách hàng phải là một chuỗi ký tự."
+        },
+        "company": {
+            "isString": "Công ty của khách hàng phải là một chuỗi ký tự."
+        },
+        "description": {
+            "isString": "Mô tả của khách hàng phải là một chuỗi ký tự."
+        }
+    },
+    "createEmail": {
+        "email": {
+            "required": "Địa chỉ email là bắt buộc.",
+            "isEmail": "Email phải là một địa chỉ email hợp lệ."
+        },
+        "customerId": {
+            "required": "ID của khách hàng liên kết là bắt buộc.",
+            "isUUID": "ID của khách hàng liên kết phải là một UUID hợp lệ."
+        }
+    },
+    "createRental": {
+        "customerId": {
+            "isUUID": "ID của khách hàng phải là một UUID hợp lệ."
+        },
+        "accountPriceId": {
+            "isUUID": "ID của giá tài khoản phải là một UUID hợp lệ."
+        },
+        "workspaceId": {
+            "isUUID": "ID của không gian làm việc phải là một UUID hợp lệ."
+        },
+        "emailId": {
+            "isUUID": "ID của email phải là một UUID hợp lệ."
+        },
+        "startDate": {
+            "isDate": "Ngày bắt đầu của thuê phải là một ngày hợp lệ."
+        },
+        "endDate": {
+            "isDate": "Ngày kết thúc của thuê phải là một ngày hợp lệ."
+        },
+        "status": {
+            "isEnum": "Trạng thái của thuê phải là một trong các giá trị được xác định trước."
+        },
+        "note": {
+            "isString": "Ghi chú của thuê phải là một chuỗi."
+        },
+        "totalPrice": {
+            "isNumber": "Tổng giá của thuê phải là một số."
+        },
+        "paymentAmount": {
+            "isNumber": "Số tiền thanh toán phải là một số."
+        },
+        "warrantyFee": {
+            "isNumber": "Phí bảo hành phải là một số."
+        },
+        "discount": {
+            "isNumber": "Giảm giá phải là một số."
+        },
+        "paymentMethod": {
+            "isString": "Phương thức thanh toán phải là một chuỗi.",
+            "length": "Phương thức thanh toán phải có độ dài từ 3 đến 255 ký tự."
+        }
+    },
+    "createRentalType": {
+        "name": {
+            "isNotEmpty": "Tên loại thuê phải được cung cấp.",
+            "isString": "Tên loại thuê phải là một chuỗi."
+        },
+        "description": {
+            "isString": "Mô tả loại thuê phải là một chuỗi."
+        },
+        "maxSlots": {
+            "isInt": "Số lượng khe cắm tối đa trong loại thuê phải là một số nguyên.",
+            "min": "Số lượng khe cắm tối đa trong loại thuê phải ít nhất là 1."
+        }
+    },
+    "createUser": {
+        "name": {
+            "isString": "Tên của người dùng phải là một chuỗi."
+        },
+        "email": {
+            "isEmail": "Email của người dùng phải là một địa chỉ email hợp lệ."
+        },
+        "password": {
+            "isString": "Mật khẩu của người dùng phải là một chuỗi.",
+            "length": "Mật khẩu phải có từ 8 đến 50 ký tự.",
+            "regex": "Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một số và một ký tự đặc biệt."
+        },
+        "role": {
+            "isEnum": "Vai trò của người dùng phải là một trong các giá trị được xác định trước."
+        }
+    },
+    "createWorkspace": {
+        "description": {
+            "isNotEmpty": "Mô tả của không gian làm việc phải được cung cấp.",
+            "isString": "Mô tả của không gian làm việc phải là một chuỗi."
+        },
+        "maxSlots": {
+            "isNotEmpty": "Số lượng khách hàng tối đa được phép trong không gian làm việc phải được cung cấp.",
+            "isInt": "Số lượng khách hàng tối đa được phép trong không gian làm việc phải là một số nguyên.",
+            "min": "Số lượng khách hàng tối đa được phép trong không gian làm việc phải ít nhất là 1."
+        },
+        "adminAccountId": {
+            "isNotEmpty": "ID tài khoản quản trị liên kết với không gian làm việc phải được cung cấp.",
+            "isUUID": "ID tài khoản quản trị liên kết với không gian làm việc phải là một UUID hợp lệ."
+        }
+    },
+    "createWorkspaceEmail": {
+        "workspaceId": {
+            "isNotEmpty": "ID của không gian làm việc phải được cung cấp.",
+            "isUUID": "ID của không gian làm việc phải là một UUID hợp lệ."
+        },
+        "emailId": {
+            "isNotEmpty": "ID của email phải được cung cấp.",
+            "isUUID": "ID của email phải là một UUID hợp lệ."
+        }
     }
 }

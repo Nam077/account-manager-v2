@@ -6,8 +6,8 @@ export class RegisterDto {
         description: 'User email',
         example: 'user@example.com',
     })
-    @IsEmail({}, { message: 'Invalid email' })
-    @IsNotEmpty({ message: 'Email is required' })
+    @IsEmail({}, { message: 'validation.register.email.isEmail' })
+    @IsNotEmpty({ message: 'validation.register.email.required' })
     email: string;
 
     @ApiProperty({
@@ -15,16 +15,16 @@ export class RegisterDto {
         example: 'strongPassword123',
         minLength: 8,
     })
-    @IsString({ message: 'Password must be a string' })
-    @MinLength(8, { message: 'Password must be at least 8 characters long' })
-    @IsNotEmpty({ message: 'Password is required' })
+    @IsString({ message: 'validation.register.password.isString' })
+    @MinLength(8, { message: 'validation.register.password.minLength' })
+    @IsNotEmpty({ message: 'validation.register.password.required' })
     password: string;
 
     @ApiProperty({
         description: 'User name',
         example: 'John Doe',
     })
-    @IsString({ message: 'Name must be a string' })
-    @IsNotEmpty({ message: 'Name is required' })
+    @IsString({ message: 'validation.register.name.isString' })
+    @IsNotEmpty({ message: 'validation.register.name.required' })
     name: string;
 }

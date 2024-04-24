@@ -3,21 +3,21 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
     @ApiProperty({ description: 'Name of the customer', example: 'John Doe' })
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty({ message: 'validation.createCustomer.name.required' })
+    @IsString({ message: 'validation.createCustomer.name.isString' })
     readonly name: string;
 
     @ApiProperty({
         description: 'Email of the customer',
         example: 'john@example.com',
     })
-    @IsNotEmpty()
-    @IsEmail()
+    @IsNotEmpty({ message: 'validation.createCustomer.email.required' })
+    @IsEmail({}, { message: 'validation.createCustomer.email.isEmail' })
     readonly email: string;
 
     @ApiProperty({ description: 'Phone of the customer', example: '123456789' })
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty({ message: 'validation.createCustomer.phone.required' })
+    @IsString({ message: 'validation.createCustomer.phone.isString' })
     readonly phone: string;
 
     @ApiProperty({
@@ -25,12 +25,12 @@ export class CreateCustomerDto {
         example: '123 Main St, City',
     })
     @IsOptional()
-    @IsString()
+    @IsString({ message: 'validation.createCustomer.address.isString' })
     readonly address: string;
 
     @ApiProperty({ description: 'Company of the customer', example: 'ABC Corp' })
     @IsOptional()
-    @IsString()
+    @IsString({ message: 'validation.createCustomer.company.isString' })
     readonly company: string;
 
     @ApiProperty({
@@ -38,6 +38,6 @@ export class CreateCustomerDto {
         example: 'Regular customer',
     })
     @IsOptional()
-    @IsString()
+    @IsString({ message: 'validation.createCustomer.description.isString' })
     readonly description: string;
 }

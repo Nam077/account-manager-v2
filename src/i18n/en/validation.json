@@ -25,5 +25,189 @@
             "isString": "Account category description must be a string.",
             "length": "Account category description must be between 1 and 255 characters long."
         }
+    },
+    "createAccountPrice": {
+        "price": {
+            "required": "Price of the account is required.",
+            "isNumber": "Price of the account must be a number.",
+            "min": "Price of the account must be greater than or equal to 0."
+        },
+        "accountId": {
+            "required": "ID of the associated account is required.",
+            "isUUID": "ID of the associated account must be a valid UUID."
+        },
+        "rentalTypeId": {
+            "required": "ID of the associated rental type is required.",
+            "isUUID": "ID of the associated rental type must be a valid UUID."
+        }
+    },
+    "createAdminAccount": {
+        "email": {
+            "required": "Email of the account is required.",
+            "isEmail": "Email must be a valid email address."
+        },
+        "value": {
+            "required": "Value of the account is required.",
+            "isString": "Value of the account must be a string."
+        },
+        "accountId": {
+            "required": "ID of the associated account is required.",
+            "isUUID": "ID of the associated account must be a valid UUID."
+        }
+    },
+    "login": {
+        "email": {
+            "required": "Email is required.",
+            "isEmail": "Email must be a valid email address."
+        },
+        "password": {
+            "required": "Password is required.",
+            "isString": "Password must be a string.",
+            "minLength": "Password must be at least 8 characters long."
+        }
+    },
+    "register": {
+        "email": {
+            "required": "Email is required.",
+            "isEmail": "Email must be a valid email address."
+        },
+        "password": {
+            "required": "Password is required.",
+            "isString": "Password must be a string.",
+            "minLength": "Password must be at least 8 characters long."
+        },
+        "name": {
+            "required": "Name is required.",
+            "isString": "Name must be a string."
+        }
+    },
+    "createCustomer": {
+        "name": {
+            "required": "Name of the customer is required.",
+            "isString": "Name of the customer must be a string."
+        },
+        "email": {
+            "required": "Email of the customer is required.",
+            "isEmail": "Email must be a valid email address."
+        },
+        "phone": {
+            "required": "Phone of the customer is required.",
+            "isString": "Phone of the customer must be a string."
+        },
+        "address": {
+            "isString": "Address of the customer must be a string."
+        },
+        "company": {
+            "isString": "Company of the customer must be a string."
+        },
+        "description": {
+            "isString": "Description of the customer must be a string."
+        }
+    },
+    "createEmail": {
+        "email": {
+            "required": "Email address is required.",
+            "isEmail": "Email must be a valid email address."
+        },
+        "customerId": {
+            "required": "ID of the associated customer is required.",
+            "isUUID": "ID of the associated customer must be a valid UUID."
+        }
+    },
+    "createRental": {
+        "customerId": {
+            "isUUID": "Customer id must be a valid UUID."
+        },
+        "accountPriceId": {
+            "isUUID": "Account price id must be a valid UUID."
+        },
+        "workspaceId": {
+            "isUUID": "Workspace id must be a valid UUID."
+        },
+        "emailId": {
+            "isUUID": "Email id must be a valid UUID."
+        },
+        "startDate": {
+            "isDate": "Start date of the rental must be a valid date."
+        },
+        "endDate": {
+            "isDate": "End date of the rental must be a valid date."
+        },
+        "status": {
+            "isEnum": "Status of the rental must be one of the predefined values."
+        },
+        "note": {
+            "isString": "Note of the rental must be a string."
+        },
+        "totalPrice": {
+            "isNumber": "Total price of the rental must be a number."
+        },
+        "paymentAmount": {
+            "isNumber": "Payment amount must be a number."
+        },
+        "warrantyFee": {
+            "isNumber": "Warranty fee must be a number."
+        },
+        "discount": {
+            "isNumber": "Discount must be a number."
+        },
+        "paymentMethod": {
+            "isString": "Payment method must be a string.",
+            "length": "Payment method must be between 3 and 255 characters long."
+        }
+    },
+    "createRentalType": {
+        "name": {
+            "isNotEmpty": "Name of the rental type is required.",
+            "isString": "Name of the rental type must be a string."
+        },
+        "description": {
+            "isString": "Description of the rental type must be a string."
+        },
+        "maxSlots": {
+            "isInt": "Maximum slots allowed in the rental type must be an integer.",
+            "min": "Maximum slots allowed in the rental type must be at least 1."
+        }
+    },
+    "createUser": {
+        "name": {
+            "isString": "Name of the user must be a string."
+        },
+        "email": {
+            "isEmail": "Email of the user must be a valid email address."
+        },
+        "password": {
+            "isString": "Password of the user must be a string.",
+            "length": "Password must be between 8 and 50 characters long.",
+            "regex": "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
+        },
+        "role": {
+            "isEnum": "Role of the user must be one of the predefined values."
+        }
+    },
+    "createWorkspace": {
+        "description": {
+            "isNotEmpty": "Description of the workspace is required.",
+            "isString": "Description of the workspace must be a string."
+        },
+        "maxSlots": {
+            "isNotEmpty": "Maximum customers allowed in the workspace is required.",
+            "isInt": "Maximum customers allowed in the workspace must be an integer.",
+            "min": "Maximum customers allowed in the workspace must be at least 1."
+        },
+        "adminAccountId": {
+            "isNotEmpty": "Admin account ID associated with the workspace is required.",
+            "isUUID": "Admin account ID associated with the workspace must be a valid UUID."
+        }
+    },
+    "createWorkspaceEmail": {
+        "workspaceId": {
+            "isNotEmpty": "Workspace ID is required.",
+            "isUUID": "Workspace ID must be a valid UUID."
+        },
+        "emailId": {
+            "isNotEmpty": "Email ID is required.",
+            "isUUID": "Email ID must be a valid UUID."
+        }
     }
 }

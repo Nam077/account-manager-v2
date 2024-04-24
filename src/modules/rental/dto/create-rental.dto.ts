@@ -9,14 +9,14 @@ export class CreateRentalDto {
         description: 'Customer id',
         example: '123e4567-e89b-12d3-a456-426614174000',
     })
-    @IsUUID()
+    @IsUUID('all', { message: 'validation.createRental.customerId.isUUID' })
     customerId: string;
 
     @ApiProperty({
         description: 'Account price id',
         example: '123e4567-e89b-12d3-a456-426614174001',
     })
-    @IsUUID()
+    @IsUUID('all', { message: 'validation.createRental.accountPriceId.isUUID' })
     accountPriceId: string;
 
     @ApiProperty({
@@ -25,14 +25,14 @@ export class CreateRentalDto {
         example: '123e4567-e89b-12d3-a456-426614174002',
     })
     @IsOptional()
-    @IsUUID()
+    @IsUUID('all', { message: 'validation.createRental.workspaceId.isUUID' })
     workspaceId?: string;
 
     @ApiProperty({
         description: 'Email id',
         example: '123e4567-e89b-12d3-a456-426614174003',
     })
-    @IsUUID()
+    @IsUUID('all', { message: 'validation.createRental.emailId.isUUID' })
     emailId: string;
 
     @ApiProperty({
@@ -42,7 +42,7 @@ export class CreateRentalDto {
         example: '2024-04-01',
     })
     @Type(() => Date)
-    @IsDate()
+    @IsDate({ message: 'validation.createRental.startDate.isDate' })
     startDate: Date;
 
     @ApiProperty({
@@ -52,14 +52,14 @@ export class CreateRentalDto {
         example: '2024-04-30',
     })
     @Type(() => Date)
-    @IsDate()
+    @IsDate({ message: 'validation.createRental.endDate.isDate' })
     endDate: Date;
 
     @ApiProperty({
         description: 'Status of the rental',
         example: RentalStatus.ACTIVE,
     })
-    @IsEnum(RentalStatus)
+    @IsEnum(RentalStatus, { message: 'validation.createRental.status.isEnum' })
     status: RentalStatus;
 
     @ApiProperty({
@@ -68,7 +68,7 @@ export class CreateRentalDto {
         example: 'Extra chairs included',
     })
     @IsOptional()
-    @IsString()
+    @IsString({ message: 'validation.createRental.note.isString' })
     note?: string;
 
     @ApiProperty({
@@ -76,7 +76,7 @@ export class CreateRentalDto {
         type: 'number',
         example: 299.99,
     })
-    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsNumber({ maxDecimalPlaces: 2 }, { message: 'validation.createRental.totalPrice.isNumber' })
     totalPrice: number;
 
     @ApiProperty({
@@ -84,15 +84,15 @@ export class CreateRentalDto {
         type: 'number',
         example: 150.0,
     })
-    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsNumber({ maxDecimalPlaces: 2 }, { message: 'validation.createRental.paymentAmount.isNumber' })
     paymentAmount: number;
 
     @ApiProperty({ description: 'Warranty fee', type: 'number', example: 50.0 })
-    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsNumber({ maxDecimalPlaces: 2 }, { message: 'validation.createRental.warrantyFee.isNumber' })
     warrantyFee: number;
 
     @ApiProperty({ description: 'Discount', type: 'number', example: 20.0 })
-    @IsNumber({ maxDecimalPlaces: 2 })
+    @IsNumber({ maxDecimalPlaces: 2 }, { message: 'validation.createRental.discount.isNumber' })
     discount: number;
 
     @ApiProperty({
@@ -101,7 +101,7 @@ export class CreateRentalDto {
         example: 'credit card',
         enum: ['cash', 'credit card', 'bank transfer'],
     })
-    @IsString()
-    @Length(3, 255)
+    @IsString({ message: 'validation.createRental.paymentMethod.isString' })
+    @Length(3, 255, { message: 'validation.createRental.paymentMethod.length' })
     paymentMethod: string;
 }

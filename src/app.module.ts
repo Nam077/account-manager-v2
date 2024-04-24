@@ -1,5 +1,5 @@
 import { Injectable, MiddlewareConsumer, Module, NestMiddleware } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { NextFunction } from 'express';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
@@ -118,7 +118,7 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
         RefreshTokenModule,
     ],
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, ConfigService],
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
@@ -127,11 +127,12 @@ export class AppModule {
 }
 @Injectable()
 export class DefaultAuthMiddleware implements NestMiddleware {
+    constructor(private readonly configService: ConfigService) {
+        console.log(configService.get<string>('DEFAULT_ACCESS_TOKEN'));
+    }
     use(req: Request, res: Response, next: NextFunction) {
-        //    set default bearer token
-        req.headers['authorization'] =
-            `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJzdWIiOiJkMDg3NDY2MC05Mjc2LTRiMWUtOTQ2MC1jNjNkMGRiMDUzMzgiLCJpYXQiOjE3MTM4NTEwNDgsImV4cCI6MTcxNDcxNTA0OH0.cgzDO_36zlOoIRKdZPp4g0C058-jTejdnyUu5Z5KiQ0`;
-        req.headers['x-lang'] = 'vi'; // Default language is Vietnamese
+        req.headers['authorization'] = `Bearer ${this.configService.get<string>('DEFAULT_ACCESS_TOKEN')}`;
+        req.headers['x-lang'] = 'en'; // Default language is Vietnamese
         next();
     }
 }
