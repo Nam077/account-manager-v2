@@ -15,6 +15,7 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -65,7 +66,7 @@ export class AccountService
                 if (isExist) {
                     throw new ConflictException('Account already exists');
                 }
-                return this.accountCategoryService.findOneData(accountCategoryId).pipe(
+                return this.accountCategoryService.findOneProcess(accountCategoryId).pipe(
                     switchMap((accountCategory) => {
                         if (!accountCategory) {
                             throw new NotFoundException('Account category not found');
@@ -107,25 +108,13 @@ export class AccountService
         );
     }
 
-    /**
-     * Retrieves an Observable of an Account based on the provided id.
-     * @author Nam077
-     * @param {string} id - The id of the Account to retrieve.
-     * @return {Observable<Account>} An Observable of the Account with the provided id.
-     */
-    findOneData(id: string): Observable<Account> {
-        return from(this.accountRepository.findOne({ where: { id } }));
-    }
-
-    /**
-     * Finds an account by its ID.
-     * @author Nam077
-     * @param id - The ID of the account to find.
-     * @returns An Observable that emits the found account.
-     * @throws {ForbiddenException} If the user is not allowed to read the account
-     */
-    findOneProcess(id: string): Observable<Account> {
-        return from(this.accountRepository.findOne({ where: { id } }));
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Account>): Observable<Account> {
+        return from(
+            this.accountRepository.findOne({
+                where: { id },
+                ...options,
+            }),
+        );
     }
 
     /**
@@ -263,7 +252,7 @@ export class AccountService
     }
     updateProcess(id: string, updateDto: UpdateAccountDto): Observable<Account> {
         const updateData: DeepPartial<Account> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((account) => {
                 if (!account) {
                     throw new NotFoundException('Account not found');
@@ -286,7 +275,7 @@ export class AccountService
                 }
                 if (updateDto.accountCategoryId && updateDto.accountCategoryId !== account.accountCategory.id) {
                     tasks.push(
-                        this.accountCategoryService.findOneData(updateDto.accountCategoryId).pipe(
+                        this.accountCategoryService.findOneProcess(updateDto.accountCategoryId).pipe(
                             tap((accountCategory) => {
                                 if (!accountCategory) {
                                     throw new NotFoundException('Account category not found');

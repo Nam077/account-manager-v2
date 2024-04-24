@@ -20,6 +20,7 @@ import {
     SearchField,
     updateEntity,
 } from '../../common';
+import { FindOneOptionsCustom } from '../../common/interface/find-one.interface';
 import { AccountService } from '../account/account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
@@ -54,7 +55,7 @@ export class AdminAccountService
                 if (adminAccount) {
                     throw new ConflictException('Admin account already exists');
                 }
-                return this.accountService.findOneData(accountId).pipe(
+                return this.accountService.findOneProcess(accountId).pipe(
                     switchMap((account) => {
                         if (!account) {
                             throw new NotFoundException('Account not found');
@@ -84,11 +85,9 @@ export class AdminAccountService
             })),
         );
     }
-    findOneData(id: string): Observable<AdminAccount> {
-        return from(this.adminAccountRepository.findOne({ where: { id } }));
-    }
-    findOneProcess(id: string): Observable<AdminAccount> {
-        return from(this.adminAccountRepository.findOne({ where: { id } })).pipe(
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<AdminAccount>): Observable<AdminAccount> {
+        return from(this.adminAccountRepository.findOne({ where: { id }, ...options })).pipe(
             map((adminAccount) => {
                 if (!adminAccount) {
                     throw new NotFoundException('Admin account not found');
@@ -97,10 +96,7 @@ export class AdminAccountService
             }),
         );
     }
-    findOne(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to read admin account');
@@ -201,10 +197,7 @@ export class AdminAccountService
             }),
         );
     }
-    restore(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
+    restore(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, AdminAccount)) {
             throw new ForbiddenException('You are not allowed to restore admin account');
@@ -219,7 +212,7 @@ export class AdminAccountService
     }
     updateProcess(id: string, updateDto: UpdateAdminAccountDto): Observable<AdminAccount> {
         const updateData: DeepPartial<AdminAccount> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
                     throw new NotFoundException('Admin account not found');
@@ -229,7 +222,7 @@ export class AdminAccountService
                 const tasks: Observable<any>[] = [];
                 if (updateDto.accountId && updateDto.accountId !== adminAccount.accountId) {
                     tasks.push(
-                        this.accountService.findOneData(updateDto.accountId).pipe(
+                        this.accountService.findOneProcess(updateDto.accountId).pipe(
                             tap((account) => {
                                 if (!account) {
                                     throw new NotFoundException('Account not found');
@@ -294,5 +287,11 @@ export class AdminAccountService
                 accountId,
             }),
         );
+    }
+    customFindOne(id: string, option?: FindOneOptionsCustom<AdminAccount>): Observable<AdminAccount> {
+        return from(this.adminAccountRepository.findOne({ where: { id }, ...option }));
+    }
+    test() {
+        return this.customFindOne('1', { relations: { account: true } });
     }
 }

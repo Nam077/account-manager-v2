@@ -51,7 +51,11 @@ export class WorkspaceEmailService
     ) {}
     createProcess(createDto: CreateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const { emailId, workspaceId } = createDto;
-        return from(this.workspaceService.findOneWithWorkspaceEmails(workspaceId)).pipe(
+        return from(
+            this.workspaceService.findOneProcess(workspaceId, {
+                relations: { workspaceEmails: true },
+            }),
+        ).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException('Workspace not found');
@@ -280,19 +284,23 @@ export class WorkspaceEmailService
                 } else tasks.push(of(null));
                 if (updateDto.workspaceId && updateDto.workspaceId !== workspaceEmail.workspaceId) {
                     tasks.push(
-                        this.workspaceService.findOneWithWorkspaceEmails(updateDto.workspaceId).pipe(
-                            tap((workspace) => {
-                                if (!workspace) {
-                                    throw new NotFoundException('Workspace not found');
-                                }
-                                if (
-                                    workspace.workspaceEmails &&
-                                    workspace.workspaceEmails.length === workspace.maxSlots
-                                ) {
-                                    throw new BadRequestException('Workspace is full');
-                                }
-                            }),
-                        ),
+                        this.workspaceService
+                            .findOneProcess(updateDto.workspaceId, {
+                                relations: { workspaceEmails: true },
+                            })
+                            .pipe(
+                                tap((workspace) => {
+                                    if (!workspace) {
+                                        throw new NotFoundException('Workspace not found');
+                                    }
+                                    if (
+                                        workspace.workspaceEmails &&
+                                        workspace.workspaceEmails.length === workspace.maxSlots
+                                    ) {
+                                        throw new BadRequestException('Workspace is full');
+                                    }
+                                }),
+                            ),
                     );
                 } else tasks.push(of(null));
                 if (

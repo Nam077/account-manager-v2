@@ -8,6 +8,7 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -73,11 +74,9 @@ export class RentalTypeService
             }),
         );
     }
-    findOneData(id: string): Observable<RentalType> {
-        return from(this.rentalTypeRepository.findOne({ where: { id } }));
-    }
-    findOneProcess(id: string): Observable<RentalType> {
-        return from(this.rentalTypeRepository.findOne({ where: { id } })).pipe(
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<RentalType>): Observable<RentalType> {
+        return from(this.rentalTypeRepository.findOne({ where: { id }, ...options })).pipe(
             map((rentalType) => {
                 if (!rentalType) {
                     throw new NotFoundException('Rental type not found');
@@ -86,10 +85,7 @@ export class RentalTypeService
             }),
         );
     }
-    findOne(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, RentalType)) {
             throw new BadRequestException('You do not have permission to read a rental type');
@@ -210,7 +206,7 @@ export class RentalTypeService
     }
     updateProcess(id: string, updateDto: UpdateRentalTypeDto): Observable<RentalType> {
         const updateData: DeepPartial<RentalType> = { ...updateDto };
-        return this.findOneData(id).pipe(
+        return this.findOneProcess(id).pipe(
             switchMap((rentalType: RentalType) => {
                 if (!rentalType) {
                     throw new NotFoundException('Rental type not found');

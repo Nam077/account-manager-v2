@@ -16,7 +16,7 @@ export class RefreshTokenService {
     ) {}
     create(createRefreshTokenDto: CreateRefreshTokenDto) {
         const { token, userId, data } = createRefreshTokenDto;
-        return this.userService.findOneData(userId).pipe(
+        return this.userService.findOneProcess(userId).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException('User not found');
