@@ -40,6 +40,7 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
                 AcceptLanguageResolver,
                 new HeaderResolver(['x-lang']),
             ],
+            typesOutputPath: join(__dirname, '../src/i18n/i18n.generated.ts'),
         }),
         AppModule,
         DatabaseModule,
@@ -125,6 +126,7 @@ export class AppModule {
         consumer.apply(DefaultAuthMiddleware).forRoutes('*');
     }
 }
+
 @Injectable()
 export class DefaultAuthMiddleware implements NestMiddleware {
     constructor(private readonly configService: ConfigService) {}

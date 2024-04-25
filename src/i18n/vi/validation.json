@@ -1,9 +1,9 @@
 {
-    "account": {
+    "createAccount": {
         "name": {
             "required": "Tên tài khoản là bắt buộc.",
             "isString": "Tên tài khoản phải là chuỗi ký tự.",
-            "length": "Tên tài khoản phải có độ dài từ 1 đến 255 ký tự."
+            "lengthAccept": "Tên tài khoản phải có độ dài từ 1 đến 255 ký tự."
         },
         "description": {
             "required": "Mô tả tài khoản là bắt buộc.",
@@ -14,16 +14,16 @@
             "isUUID": "ID của danh mục tài khoản phải là một UUID hợp lệ."
         }
     },
-    "accountCategory": {
+    "createAccountCategory": {
         "name": {
             "required": "Tên danh mục tài khoản là bắt buộc.",
             "isString": "Tên danh mục tài khoản phải là chuỗi ký tự.",
-            "length": "Tên danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
+            "lengthAccept": "Tên danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
         },
         "description": {
             "required": "Mô tả danh mục tài khoản là bắt buộc.",
             "isString": "Mô tả danh mục tài khoản phải là chuỗi ký tự.",
-            "length": "Mô tả danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
+            "lengthAccept": "Mô tả danh mục tài khoản phải có độ dài từ 1 đến 255 ký tự."
         }
     },
     "createAccountPrice": {
@@ -63,7 +63,7 @@
         "password": {
             "required": "Mật khẩu là bắt buộc.",
             "isString": "Mật khẩu phải là một chuỗi ký tự.",
-            "minLength": "Mật khẩu phải có ít nhất 8 ký tự."
+            "minLengthAccept": "Mật khẩu phải có ít nhất 8 ký tự."
         }
     },
     "register": {
@@ -74,7 +74,7 @@
         "password": {
             "required": "Mật khẩu là bắt buộc.",
             "isString": "Mật khẩu phải là một chuỗi ký tự.",
-            "minLength": "Mật khẩu phải có ít nhất 8 ký tự."
+            "minLengthAccept": "Mật khẩu phải có ít nhất 8 ký tự."
         },
         "name": {
             "required": "Tên là bắt buộc.",
@@ -154,7 +154,7 @@
         },
         "paymentMethod": {
             "isString": "Phương thức thanh toán phải là một chuỗi.",
-            "length": "Phương thức thanh toán phải có độ dài từ 3 đến 255 ký tự."
+            "lengthAccept": "Phương thức thanh toán phải có độ dài từ 3 đến 255 ký tự."
         }
     },
     "createRentalType": {
@@ -179,7 +179,7 @@
         },
         "password": {
             "isString": "Mật khẩu của người dùng phải là một chuỗi.",
-            "length": "Mật khẩu phải có từ 8 đến 50 ký tự.",
+            "lengthAccept": "Mật khẩu phải có từ 8 đến 50 ký tự.",
             "regex": "Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường, một số và một ký tự đặc biệt."
         },
         "role": {
