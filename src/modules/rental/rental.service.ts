@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -16,6 +17,7 @@ import {
     updateEntity,
     WorkspaceEmailStatus,
 } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
@@ -49,18 +51,28 @@ export class RentalService
         private readonly emailService: EmailService,
         private readonly workspaceEmailService: WorkspaceEmailService,
         private readonly caslAbilityFactory: CaslAbilityFactory,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
         if (accountId !== accountId2) {
-            throw new BadRequestException('Account does not belong to account price');
+            throw new BadRequestException(
+                this.i18nService.translate('message.Workspace.NotBelongToAccount', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
     }
     checkEmailBelongToCustomer(email: string, customerId: string): Observable<boolean> {
         return this.emailService.checkExistByEmailAndCustomerId(email, customerId).pipe(
             tap((isExist) => {
                 if (!isExist) {
-                    throw new BadRequestException('Email not found or not belong to customer');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotBelongToCustomer', {
+                            args: { name: email, customer: customerId },
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return isExist;
             }),
@@ -87,13 +99,21 @@ export class RentalService
             this.customerService.findOneProcess(customerId).pipe(
                 switchMap((customer) => {
                     if (!customer) {
-                        throw new NotFoundException('Customer not found');
+                        throw new NotFoundException(
+                            this.i18nService.translate('message.Customer.NotFound', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
-                    return this.emailService.findOneData(emailId);
+                    return this.emailService.findOneProcess(emailId);
                 }),
                 switchMap((email) => {
                     if (!email) {
-                        throw new NotFoundException('Email not found');
+                        throw new NotFoundException(
+                            this.i18nService.translate('message.Email.NotFound', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return this.checkEmailBelongToCustomer(email.email, customerId);
                 }),
@@ -103,7 +123,11 @@ export class RentalService
             this.accountPriceService.findOneProcess(accountPriceId).pipe(
                 map((accountPrice) => {
                     if (!accountPrice) {
-                        throw new NotFoundException('Account price not found');
+                        throw new NotFoundException(
+                            this.i18nService.translate('message.AccountPrice.NotFound', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return accountPrice;
                 }),
@@ -118,7 +142,11 @@ export class RentalService
                             .pipe(
                                 map((workspace) => {
                                     if (!workspace) {
-                                        throw new NotFoundException('Workspace not found');
+                                        throw new NotFoundException(
+                                            this.i18nService.translate('message.Workspace.NotFound', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
                                     }
                                     this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
                                     return workspace;
@@ -163,14 +191,20 @@ export class RentalService
     create(currentUser: User, createDto: CreateRentalDto): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Create, Rental)) {
-            throw new ForbiddenException('You are not allowed to create rental');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map((rental) => {
                 return {
                     status: HttpStatus.CREATED,
                     data: rental,
-                    message: 'Rental created successfully',
+                    message: this.i18nService.translate('message.Rental.Created', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -182,25 +216,32 @@ export class RentalService
                 where: { id },
                 ...options,
             }),
-        ).pipe(
-            map((rental) => {
-                if (!rental) {
-                    throw new NotFoundException('Rental not found');
-                }
-                return rental;
-            }),
         );
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, Rental)) {
-            throw new ForbiddenException('You are not allowed to read rental');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findOneProcess(id).pipe(
             map((rental) => {
+                if (!rental) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
                 return {
                     status: HttpStatus.OK,
                     data: rental,
+                    message: this.i18nService.translate('message.Rental.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -231,13 +272,20 @@ export class RentalService
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Rental>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, Rental)) {
-            throw new ForbiddenException('You are not allowed to read rental');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map((rentals) => {
                 return {
                     status: HttpStatus.OK,
                     data: rentals,
+                    message: this.i18nService.translate('message.Rental.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -259,14 +307,22 @@ export class RentalService
         return from(this.rentalRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
             map((rental) => {
                 if (!rental) {
-                    throw new NotFoundException('Rental not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return rental;
             }),
             switchMap((rental) => {
                 if (hardRemove) {
                     if (!rental.deletedAt) {
-                        throw new BadRequestException('Rental is not soft deleted');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Rental.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     if (rental.workspaceEmailId) {
                         this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental);
@@ -284,14 +340,20 @@ export class RentalService
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Delete, Rental)) {
-            throw new ForbiddenException('You are not allowed to delete rental');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map((rental) => {
                 return {
                     status: HttpStatus.OK,
                     data: rental,
-                    message: 'Rental deleted successfully',
+                    message: this.i18nService.translate('message.Rental.Deleted', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -300,13 +362,21 @@ export class RentalService
         return from(this.rentalRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             map((rental) => {
                 if (!rental) {
-                    throw new NotFoundException('Rental not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return rental;
             }),
             switchMap((rental) => {
                 if (!rental.deletedAt) {
-                    throw new BadRequestException('Rental is not soft deleted');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Rental.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (rental.workspaceEmailId) {
                     return from(
@@ -330,14 +400,20 @@ export class RentalService
     restore(currentUser: User, id: string): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Restore, Rental)) {
-            throw new ForbiddenException('You are not allowed to restore rental');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map((rental) => {
                 return {
                     status: HttpStatus.OK,
                     data: rental,
-                    message: 'Rental restored successfully',
+                    message: this.i18nService.translate('message.Rental.Restored', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -380,9 +456,7 @@ export class RentalService
     }
     updateProcess(id: string, updateDto: UpdateRentalDto): Observable<Rental> {
         const { accountPriceId, emailId, customerId, workspaceId, ...rest } = updateDto;
-        if (customerId) {
-            throw new BadRequestException('Customer id cannot be updated');
-        }
+
         const updateData: DeepPartial<Rental> = { ...rest };
         return from(
             this.findOneProcess(id, {
@@ -394,7 +468,18 @@ export class RentalService
         ).pipe(
             switchMap((rental) => {
                 if (!rental) {
-                    throw new NotFoundException('Rental not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                if (customerId && rental.customerId !== customerId) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Authentication.Forbidden', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const tasks: Observable<any>[] = [];
                 const checkForForkJoin: CheckForForkJoin = {};
@@ -410,7 +495,11 @@ export class RentalService
                             .pipe(
                                 map((accountPrice) => {
                                     if (!accountPrice) {
-                                        throw new NotFoundException('Account price not found');
+                                        throw new NotFoundException(
+                                            this.i18nService.translate('message.AccountPrice.NotFound', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
                                     }
                                     checkForForkJoin.accountPrice = true;
                                     return accountPrice;
@@ -420,10 +509,14 @@ export class RentalService
                 } else tasks.push(of(null));
                 if (emailId && rental.emailId !== emailId) {
                     tasks.push(
-                        this.emailService.findOneData(emailId).pipe(
+                        this.emailService.findOneProcess(emailId).pipe(
                             map((email) => {
                                 if (!email) {
-                                    throw new NotFoundException('Email not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.Email.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                                 checkForForkJoin.email = true;
                                 return email;
@@ -447,7 +540,11 @@ export class RentalService
                                 .pipe(
                                     map((workspace) => {
                                         if (!workspace) {
-                                            throw new NotFoundException('Workspace not found');
+                                            throw new NotFoundException(
+                                                this.i18nService.translate('message.Workspace.NotFound', {
+                                                    lang: I18nContext.current().lang,
+                                                }),
+                                            );
                                         }
                                         checkForForkJoin.workspace = true;
                                         return workspace;
@@ -607,7 +704,11 @@ export class RentalService
         ).pipe(
             map((result) => {
                 if (result.affected === 0) {
-                    throw new NotFoundException('Rental not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return true;
             }),
@@ -615,7 +716,7 @@ export class RentalService
     }
     removeWorkspaceEmail(rental: Rental): Observable<boolean> {
         if (rental.workspaceEmailId) {
-            return this.workspaceEmailService.removeNoCheckRealtion(rental.workspaceEmailId).pipe(
+            return this.workspaceEmailService.removeProcess(rental.workspaceEmailId).pipe(
                 map(() => {
                     return true;
                 }),
@@ -630,7 +731,11 @@ export class RentalService
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> | any {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Update, Rental)) {
-            throw new ForbiddenException('You are not allowed to update rental');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
 
         return this.updateProcess(id, updateDto);

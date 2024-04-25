@@ -1,100 +1,150 @@
 {
     "AccountCategory": {
         "NotFound": "Account category not found",
+        "Found": "Account category {name} found",
         "Conflict": "Account category {name} already exists",
         "Created": "Account category {name} created successfully",
         "Updated": "Account category {name} updated successfully",
         "Restored": "Account category {name} restored successfully",
-        "Deleted": "Account category {name} deleted successfully"
+        "Deleted": "Account category {name} deleted successfully",
+        "NotDeleted": "Account category {name} cannot be deleted",
+        "NotRestored": "Account category {name} cannot be restored"
     },
     "Account": {
         "NotFound": "Account not found",
+        "Found": "Account {name} found",
         "Conflict": "Account already exists",
         "Created": "Account {name} created successfully",
         "Updated": "Account {name} updated successfully",
         "Restored": "Account {name} restored successfully",
         "Deleted": "Account {name} deleted successfully",
         "Activated": "Account {name} activated successfully",
-        "Deactivated": "Account {name} deactivated successfully"
+        "Deactivated": "Account {name} deactivated successfully",
+        "NotDeleted": "Account {name} cannot be deleted",
+        "NotRestored": "Account {name} cannot be restored"
     },
     "AdminAccount": {
         "NotFound": "Admin account not found",
+        "Found": "Admin account {name} found",
         "Conflict": "Admin account already exists",
         "Created": "Admin account {name} created successfully",
         "Updated": "Admin account {name} updated successfully",
         "Restored": "Admin account {name} restored successfully",
-        "Deleted": "Admin account {name} deleted successfully"
+        "Deleted": "Admin account {name} deleted successfully",
+        "NotDeleted": "Admin account {name} cannot be deleted",
+        "NotRestored": "Admin account {name} cannot be restored"
     },
     "Customer": {
         "NotFound": "Customer not found",
+        "Found": "Customer {name} found",
         "Conflict": "Customer already exists",
         "Created": "Customer {name} created successfully",
         "Updated": "Customer {name} updated successfully",
         "Restored": "Customer {name} restored successfully",
         "Deleted": "Customer {name} deleted successfully",
         "Activated": "Customer {name} activated successfully",
-        "Deactivated": "Customer {name} deactivated successfully"
+        "Deactivated": "Customer {name} deactivated successfully",
+        "NotDeleted": "Customer {name} cannot be deleted",
+        "NotRestored": "Customer {name} cannot be restored"
     },
     "Email": {
         "NotFound": "Email not found",
+        "Found": "Email {name} found",
         "Conflict": "Email already in use",
         "Created": "Email {name} created successfully",
         "Updated": "Email {name} updated successfully",
         "Restored": "Email {name} restored successfully",
-        "Deleted": "Email {name} deleted successfully"
+        "Deleted": "Email {name} deleted successfully",
+        "NotDeleted": "Email {name} cannot be deleted",
+        "NotRestored": "Email {name} cannot be restored",
+        "NotBelongToCustomer" : "Email {name} does not belong to customer {customer}"
     },
     "Workspace": {
         "NotFound": "Workspace not found",
+        "Found": "Workspace {name} found",
         "Conflict": "Workspace already exists",
         "Full": "Workspace is full",
         "Created": "Workspace {name} created successfully",
         "Updated": "Workspace {name} updated successfully",
         "Restored": "Workspace {name} restored successfully",
-        "Deleted": "Workspace {name} deleted successfully"
+        "Deleted": "Workspace {name} deleted successfully",
+        "NotDeleted": "Workspace {name} cannot be deleted",
+        "NotRestored": "Workspace {name} cannot be restored",
+        "NotBelongToAccount": "Workspace {name} does not belong to account {account}"
     },
     "RentalType": {
         "NotFound": "Rental type not found",
+        "Found": "Rental type {name} found",
         "Conflict": "Rental type {name} already exists",
         "Created": "Rental type {name} created successfully",
         "Updated": "Rental type {name} updated successfully",
         "Restored": "Rental type {name} restored successfully",
-        "Deleted": "Rental type {name} deleted successfully"
+        "Deleted": "Rental type {name} deleted successfully",
+        "NotDeleted": "Rental type {name} cannot be deleted",
+        "NotRestored": "Rental type {name} cannot be restored"
     },
     "AccountPrice": {
         "NotFound": "Account price not found",
+        "Found": "Account price {name} found",
         "Conflict": "Account price already exists",
         "Created": "Account price {name} created successfully",
         "Updated": "Account price {name} updated successfully",
         "Restored": "Account price {name} restored successfully",
-        "Deleted": "Account price {name} deleted successfully"
+        "Deleted": "Account price {name} deleted successfully",
+        "NotDeleted": "Account price {name} cannot be deleted",
+        "NotRestored": "Account price {name} cannot be restored"
     },
     "WorkspaceEmail": {
         "NotFound": "Workspace email not found",
+        "Found": "Workspace email {name} found",
         "Conflict": "Workspace email already exists",
         "Created": "Workspace email {name} created successfully",
         "Updated": "Workspace email {name} updated successfully",
         "Restored": "Workspace email {name} restored successfully",
-        "Deleted": "Workspace email {name} deleted successfully"
+        "Deleted": "Workspace email {name} deleted successfully",
+        "NotDeleted": "Workspace email {name} cannot be deleted",
+        "NotRestored": "Workspace email {name} cannot be restored"
     },
     "Rental": {
         "NotFound": "Rental not found",
+        "Found": "Rental {name} found",
         "Conflict": "Rental already exists",
         "Created": "Rental {name} created successfully",
         "Updated": "Rental {name} updated successfully",
         "Restored": "Rental {name} restored successfully",
-        "Deleted": "Rental {name} deleted successfully"
+        "Deleted": "Rental {name} deleted successfully",
+        "NotDeleted": "Rental {name} cannot be deleted",
+        "NotRestored": "Rental {name} cannot be restored"
     },
     "RefreshToken": {
         "NotFound": "Refresh token not found",
+        "Found": "Refresh token {name} found",
         "Invalid": "Refresh token is invalid",
         "Created": "Refresh token {name} created successfully",
         "Updated": "Refresh token {name} updated successfully",
         "Restored": "Refresh token {name} restored successfully",
-        "Deleted": "Refresh token {name} deleted successfully"
+        "Deleted": "Refresh token {name} deleted successfully",
+        "NotDeleted": "Refresh token {name} cannot be deleted",
+        "NotRestored": "Refresh token {name} cannot be restored"
+    },
+    "User": {
+        "NotFound": "User not found",
+        "Found": "User {name} found",
+        "Conflict": "User already exists",
+        "Created": "User {name} created successfully",
+        "Updated": "User {name} updated successfully",
+        "Restored": "User {name} restored successfully",
+        "Deleted": "User {name} deleted successfully",
+        "Activated": "User {name} activated successfully",
+        "Deactivated": "User {name} deactivated successfully",
+        "NotDeleted": "User {name} cannot be deleted",
+        "NotRestored": "User {name} cannot be restored"
     },
     "Authentication": {
         "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",
-        "Forbidden": "Forbidden: You do not have permission to perform this action."
+        "Forbidden": "Forbidden: You do not have permission to perform this action.",
+        "InvalidToken" : "Invalid token",
+        "TokenExpired" : "Token expired"
     },
     "Validation": {
         "BadRequest": "Bad Request: The input data is invalid."

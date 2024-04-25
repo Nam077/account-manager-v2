@@ -9,6 +9,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -26,6 +27,7 @@ import {
     UserRole,
 } from '../../common';
 import { BcryptServiceInstance } from '../../common/helper/hash';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { LoginDto } from '../auth/dto/login.dto';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -48,13 +50,19 @@ export class UserService
     constructor(
         @InjectRepository(User) private readonly userRepository: Repository<User>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateUserDto): Observable<User> {
         const { email, name, password, role } = createDto;
         return from(this.checkExistByEmail(email)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Email already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.User.Conflict', {
+                            args: { name: email },
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return BcryptServiceInstance.hash(password);
             }),
@@ -69,20 +77,34 @@ export class UserService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+    create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, User)) {
-            throw new ForbiddenException('You are not allowed to create user');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         const { role } = currentUser;
         if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
             if (!ability.can(ActionCasl.AddAdmin, User)) {
-                throw new ForbiddenException('You are not allowed to add admin');
+                throw new ForbiddenException(
+                    this.i18nService.translate('message.Authentication.Forbidden', {
+                        lang: I18nContext.current().lang,
+                    }),
+                );
             }
         }
         return this.createProcess(createDto).pipe(
             map((user) => {
-                return { status: HttpStatus.CREATED, data: user };
+                return {
+                    status: HttpStatus.CREATED,
+                    data: user,
+                    message: this.i18nService.translate('message.User.Created', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
             }),
         );
     }
@@ -92,24 +114,33 @@ export class UserService
                 where: { id },
                 ...options,
             }),
-        ).pipe(
-            map((user) => {
-                if (!user) {
-                    throw new NotFoundException('User not found');
-                }
-                return user;
-            }),
-            catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<User>> {
         return this.findOneProcess(id).pipe(
             map((user) => {
+                if (!user) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
                 const ability = this.caslAbilityFactory.createForUser(currentUser);
                 if (!ability.can(ActionCasl.Read, user)) {
-                    throw new ForbiddenException('You are not allowed to read this user');
+                    throw new ForbiddenException(
+                        this.i18nService.translate('message.Authentication.Forbidden', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
-                return { status: HttpStatus.OK, data: user };
+                return {
+                    status: HttpStatus.OK,
+                    data: user,
+                    message: this.i18nService.translate('message.User.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
             }),
         );
     }
@@ -122,14 +153,20 @@ export class UserService
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, User)) {
-            throw new ForbiddenException('You are not allowed to read users');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map((data) => {
                 return {
                     status: HttpStatus.OK,
                     data,
-                    message: 'Users fetched successfully',
+                    message: this.i18nService.translate('message.User.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -138,11 +175,19 @@ export class UserService
         return from(this.userRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
             switchMap((user) => {
                 if (!user) {
-                    throw new NotFoundException('User not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!user.deletedAt) {
-                        throw new BadRequestException('User not deleted yet');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.User.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return this.userRepository.remove(user);
                 }
@@ -160,17 +205,27 @@ export class UserService
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
-                    throw new NotFoundException('User not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!ability.can(ActionCasl.Delete, user)) {
-                    throw new ForbiddenException('You are not allowed to delete this user');
+                    throw new ForbiddenException(
+                        this.i18nService.translate('message.Authentication.Forbidden', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.removeProcess(id, hardRemove).pipe(
                     map((data) => {
                         return {
                             status: HttpStatus.OK,
                             data,
-                            message: 'User deleted successfully',
+                            message: this.i18nService.translate('message.User.Deleted', {
+                                lang: I18nContext.current().lang,
+                            }),
                         };
                     }),
                 );
@@ -181,10 +236,18 @@ export class UserService
         return from(this.userRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((user) => {
                 if (!user) {
-                    throw new NotFoundException('User not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!user.deletedAt) {
-                    throw new BadRequestException('User not deleted yet');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.User.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.userRepository.restore(user.id)).pipe(map(() => user));
             }),
@@ -196,17 +259,27 @@ export class UserService
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
-                    throw new NotFoundException('User not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!ability.can(ActionCasl.Restore, user)) {
-                    throw new ForbiddenException('You are not allowed to restore this user');
+                    throw new ForbiddenException(
+                        this.i18nService.translate('message.Authentication.Forbidden', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.restoreProcess(id).pipe(
                     map((data) => {
                         return {
                             status: HttpStatus.OK,
                             data,
-                            message: 'User restored successfully',
+                            message: this.i18nService.translate('message.User.Restored', {
+                                lang: I18nContext.current().lang,
+                            }),
                         };
                     }),
                 );
@@ -218,7 +291,11 @@ export class UserService
         return from(this.findOneProcess(id)).pipe(
             switchMap((user) => {
                 if (!user) {
-                    return throwError(() => new NotFoundException('User not found'));
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
 
                 const tasks: Observable<any>[] = [];
@@ -227,7 +304,12 @@ export class UserService
                         this.checkExistByEmail(updateDto.email).pipe(
                             tap((isExist) => {
                                 if (isExist) {
-                                    throw new ConflictException('Email already exists');
+                                    throw new ConflictException(
+                                        this.i18nService.translate('message.User.Conflict', {
+                                            args: { name: updateDto.email },
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -252,18 +334,28 @@ export class UserService
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
-                    throw new NotFoundException('User not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.User.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const ability = this.caslAbilityFactory.createForUser(currentUser);
                 if (!ability.can(ActionCasl.Update, user)) {
-                    throw new ForbiddenException('You are not allowed to update this user');
+                    throw new ForbiddenException(
+                        this.i18nService.translate('message.Authentication.Forbidden', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.updateProcess(id, updateDto).pipe(
                     map((data) => {
                         return {
                             status: HttpStatus.OK,
                             data,
-                            message: 'User updated successfully',
+                            message: this.i18nService.translate('message.User.Updated', {
+                                lang: I18nContext.current().lang,
+                            }),
                         };
                     }),
                 );
@@ -288,12 +380,20 @@ export class UserService
         ).pipe(
             switchMap((user) => {
                 if (!user) {
-                    throw new UnauthorizedException('Invalid credentials');
+                    throw new UnauthorizedException(
+                        this.i18nService.translate('message.Login.Failed', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return BcryptServiceInstance.compare(loginDto.password, user.password).pipe(
                     switchMap((isMatch) => {
                         if (!isMatch) {
-                            throw new UnauthorizedException('Invalid credentials');
+                            throw new UnauthorizedException(
+                                this.i18nService.translate('message.Login.Failed', {
+                                    lang: I18nContext.current().lang,
+                                }),
+                            );
                         }
                         delete user.password;
                         return of(user);

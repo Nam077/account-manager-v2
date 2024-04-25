@@ -7,6 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -22,6 +23,7 @@ import {
     slugifyString,
     updateEntity,
 } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountCategoryService } from '../account-category/account-category.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
@@ -47,6 +49,7 @@ export class AccountService
         private readonly accountRepository: Repository<Account>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly accountCategoryService: AccountCategoryService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
 
     /**
@@ -64,12 +67,20 @@ export class AccountService
         return from(this.checkExistBySlug(slug)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Account already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.Account.Conflict', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.accountCategoryService.findOneProcess(accountCategoryId).pipe(
                     switchMap((accountCategory) => {
                         if (!accountCategory) {
-                            throw new NotFoundException('Account category not found');
+                            throw new NotFoundException(
+                                this.i18nService.translate('message.AccountCategory.NotFound', {
+                                    lang: I18nContext.current().lang,
+                                }),
+                            );
                         }
                         const account = new Account();
                         account.name = name;
@@ -97,12 +108,19 @@ export class AccountService
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
-            throw new ForbiddenException('You are not allowed to create account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map((data) => ({
                 status: HttpStatus.CREATED,
-                message: 'Account created successfully',
+                message: this.i18nService.translate('message.Account.Created', {
+                    lang: I18nContext.current().lang,
+                    args: { name: data.name },
+                }),
                 data,
             })),
         );
@@ -131,11 +149,22 @@ export class AccountService
             throw new ForbiddenException('You are not allowed to read account');
         }
         return this.findOneProcess(id).pipe(
-            map((data) => ({
-                message: 'Account found',
-                data,
-                status: HttpStatus.OK,
-            })),
+            map((account) => {
+                if (!account) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Account.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return {
+                    status: HttpStatus.OK,
+                    message: this.i18nService.translate('message.Account.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                    data: account,
+                };
+            }),
         );
     }
     /**
@@ -168,11 +197,17 @@ export class AccountService
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Account)) {
-            throw new ForbiddenException('You are not allowed to read account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map((data) => ({
-                message: 'Accounts found',
+                message: this.i18nService.translate('message.Account.Found', {
+                    lang: I18nContext.current().lang,
+                }),
                 data,
                 status: HttpStatus.OK,
             })),
@@ -190,16 +225,28 @@ export class AccountService
         ).pipe(
             switchMap((account) => {
                 if (!account) {
-                    throw new NotFoundException('Account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Account.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!account.deletedAt) {
-                        throw new BadRequestException('Account not deleted yet');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Account.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return from(this.accountRepository.remove(account));
                 }
                 if (account.adminAccounts) {
-                    throw new BadRequestException('Account has admin account');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Account.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.accountRepository.softRemove(account));
             }),
@@ -213,11 +260,18 @@ export class AccountService
     ): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
-            throw new ForbiddenException('You are not allowed to delete account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map((data) => ({
-                message: 'Account deleted successfully',
+                message: this.i18nService.translate('message.Account.Deleted', {
+                    lang: I18nContext.current().lang,
+                    args: { name: data.name },
+                }),
                 data,
                 status: HttpStatus.OK,
             })),
@@ -227,10 +281,18 @@ export class AccountService
         return from(this.accountRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((account) => {
                 if (!account) {
-                    throw new NotFoundException('Account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Account.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!account.deletedAt) {
-                    throw new BadRequestException('Account not deleted yet');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Account.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.accountRepository.restore(account.id)).pipe(map(() => account));
             }),
@@ -240,11 +302,18 @@ export class AccountService
     restore(currentUser: User, id: string): Observable<ApiResponse<Account | PaginatedData<Account> | Account[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
-            throw new ForbiddenException('You are not allowed to restore account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map((data) => ({
-                message: 'Account restored successfully',
+                message: this.i18nService.translate('message.Account.Restored', {
+                    lang: I18nContext.current().lang,
+                    args: { name: data.name },
+                }),
                 data,
                 status: HttpStatus.OK,
             })),
@@ -255,7 +324,11 @@ export class AccountService
         return from(this.findOneProcess(id)).pipe(
             switchMap((account) => {
                 if (!account) {
-                    throw new NotFoundException('Account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Account.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const tasks: Observable<any>[] = [];
                 if (updateDto.name && updateDto.name !== account.name) {
@@ -264,7 +337,11 @@ export class AccountService
                         from(this.checkExistBySlug(slug)).pipe(
                             tap((isExist) => {
                                 if (isExist) {
-                                    throw new ConflictException('Account already exists');
+                                    throw new ConflictException(
+                                        this.i18nService.translate('message.Account.Conflict', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                                 updateData.slug = slug;
                             }),
@@ -278,7 +355,11 @@ export class AccountService
                         this.accountCategoryService.findOneProcess(updateDto.accountCategoryId).pipe(
                             tap((accountCategory) => {
                                 if (!accountCategory) {
-                                    throw new NotFoundException('Account category not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.AccountCategory.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                                 updateData.accountCategory = accountCategory;
                             }),
@@ -306,7 +387,10 @@ export class AccountService
         }
         return this.updateProcess(id, updateDto).pipe(
             map((data) => ({
-                message: 'Account updated successfully',
+                message: this.i18nService.translate('message.Account.Updated', {
+                    lang: I18nContext.current().lang,
+                    args: { name: data.name },
+                }),
                 data,
                 status: HttpStatus.OK,
             })),

@@ -7,6 +7,8 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nService } from 'nestjs-i18n';
+import { I18nContext } from 'nestjs-i18n';
 import { catchError, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -21,13 +23,13 @@ import {
     updateEntity,
 } from '../../common';
 import { FindOneOptionsCustom } from '../../common/interface/find-one.interface';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountService } from '../account/account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
 import { AdminAccount } from './entities/admin-account.entity';
-
 @Injectable()
 export class AdminAccountService
     implements
@@ -46,19 +48,28 @@ export class AdminAccountService
         private readonly adminAccountRepository: Repository<AdminAccount>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly accountService: AccountService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateAdminAccountDto): Observable<AdminAccount> {
         const { email, accountId, value } = createDto;
 
-        return from(this.findByEmailAndAcountId(email, accountId)).pipe(
+        return from(this.findByEmailAndAccountId(email, accountId)).pipe(
             switchMap((adminAccount) => {
                 if (adminAccount) {
-                    throw new ConflictException('Admin account already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.AdminAccount.Conflict', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.accountService.findOneProcess(accountId).pipe(
                     switchMap((account) => {
                         if (!account) {
-                            throw new NotFoundException('Account not found');
+                            throw new NotFoundException(
+                                this.i18nService.translate('message.Account.NotFound', {
+                                    lang: I18nContext.current().lang,
+                                }),
+                            );
                         }
                         const newAdminAccount = new AdminAccount();
                         newAdminAccount.email = email;
@@ -74,13 +85,19 @@ export class AdminAccountService
     create(currentUser: User, createDto: CreateAdminAccountDto): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Create, AdminAccount)) {
-            throw new ForbiddenException('You are not allowed to create admin account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
 
         return this.createProcess(createDto).pipe(
             map((data) => ({
                 status: HttpStatus.CREATED,
-                message: 'Admin account created successfully',
+                message: this.i18nService.translate('message.AdminAccount.Created', {
+                    lang: I18nContext.current().lang,
+                }),
                 data,
             })),
         );
@@ -90,7 +107,11 @@ export class AdminAccountService
         return from(this.adminAccountRepository.findOne({ where: { id }, ...options })).pipe(
             map((adminAccount) => {
                 if (!adminAccount) {
-                    throw new NotFoundException('Admin account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AdminAccount.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return adminAccount;
             }),
@@ -99,14 +120,29 @@ export class AdminAccountService
     findOne(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, AdminAccount)) {
-            throw new ForbiddenException('You are not allowed to read admin account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findOneProcess(id).pipe(
-            map((data) => ({
-                status: HttpStatus.OK,
-                data,
-                message: 'Admin account found',
-            })),
+            map((adminAccount) => {
+                if (!adminAccount) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AdminAccount.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return {
+                    status: HttpStatus.OK,
+                    data: adminAccount,
+                    message: this.i18nService.translate('message.AdminAccount.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
+            }),
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AdminAccount>> {
@@ -129,13 +165,19 @@ export class AdminAccountService
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AdminAccount>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, AdminAccount)) {
-            throw new ForbiddenException('You are not allowed to read admin account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
-                message: 'Admin account found',
+                message: this.i18nService.translate('message.AdminAccount.Found', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
@@ -149,17 +191,29 @@ export class AdminAccountService
         ).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
-                    throw new NotFoundException('Admin account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AdminAccount.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!adminAccount.deletedAt) {
-                        throw new BadRequestException('Admin account not deleted');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.AdminAccount.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return from(this.adminAccountRepository.remove(adminAccount));
                 }
                 if (adminAccount.workspaces) {
                     if (adminAccount.workspaces.length > 0) {
-                        throw new BadRequestException('Admin account has workspaces');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.AdminAccount.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                 }
 
@@ -174,13 +228,19 @@ export class AdminAccountService
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, AdminAccount)) {
-            throw new ForbiddenException('You are not allowed to delete admin account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
-                message: 'Admin account deleted successfully',
+                message: this.i18nService.translate('message.AdminAccount.Deleted', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
@@ -188,10 +248,18 @@ export class AdminAccountService
         return from(this.adminAccountRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
-                    throw new NotFoundException('Admin account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AdminAccount.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!adminAccount.deletedAt) {
-                    throw new BadRequestException('Admin account not deleted');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.AdminAccount.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.adminAccountRepository.restore(adminAccount.id)).pipe(map(() => adminAccount));
             }),
@@ -200,13 +268,19 @@ export class AdminAccountService
     restore(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, AdminAccount)) {
-            throw new ForbiddenException('You are not allowed to restore admin account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
-                message: 'Admin account restored successfully',
+                message: this.i18nService.translate('message.AdminAccount.Restored', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
@@ -215,7 +289,11 @@ export class AdminAccountService
         return from(this.findOneProcess(id)).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
-                    throw new NotFoundException('Admin account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AdminAccount.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const checkEmail = updateDto.email || adminAccount.email;
                 const checkAccountId = updateDto.accountId || adminAccount.accountId;
@@ -225,7 +303,11 @@ export class AdminAccountService
                         this.accountService.findOneProcess(updateDto.accountId).pipe(
                             tap((account) => {
                                 if (!account) {
-                                    throw new NotFoundException('Account not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.Account.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                                 delete updateData.account;
                             }),
@@ -240,7 +322,11 @@ export class AdminAccountService
                         this.checkExistByEmailAndAccountId(checkEmail, checkAccountId).pipe(
                             tap((isExist) => {
                                 if (isExist) {
-                                    throw new ConflictException('Admin account already exists');
+                                    throw new ConflictException(
+                                        this.i18nService.translate('message.AdminAccount.Conflict', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -261,18 +347,24 @@ export class AdminAccountService
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, AdminAccount)) {
-            throw new ForbiddenException('You are not allowed to update admin account');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.updateProcess(id, updateDto).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
-                message: 'Admin account updated successfully',
+                message: this.i18nService.translate('message.AdminAccount.Updated', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
 
-    findByEmailAndAcountId(email: string, accountId: string): Observable<AdminAccount> {
+    findByEmailAndAccountId(email: string, accountId: string): Observable<AdminAccount> {
         return from(
             this.adminAccountRepository.findOne({
                 where: { email, accountId },
@@ -287,11 +379,5 @@ export class AdminAccountService
                 accountId,
             }),
         );
-    }
-    customFindOne(id: string, option?: FindOneOptionsCustom<AdminAccount>): Observable<AdminAccount> {
-        return from(this.adminAccountRepository.findOne({ where: { id }, ...option }));
-    }
-    test() {
-        return this.customFindOne('1', { relations: { account: true } });
     }
 }

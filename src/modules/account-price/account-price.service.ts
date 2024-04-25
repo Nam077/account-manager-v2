@@ -7,6 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -21,6 +22,7 @@ import {
     SearchField,
     updateEntity,
 } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountService } from '../account/account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { RentalTypeService } from '../rental-type/rental-type.service';
@@ -48,25 +50,38 @@ export class AccountPriceService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly accountService: AccountService,
         private readonly rentalTypeService: RentalTypeService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateAccountPriceDto): Observable<AccountPrice> {
         const { accountId, rentalTypeId, price } = createDto;
         return this.accountService.findOneProcess(accountId).pipe(
             switchMap((account) => {
                 if (!account) {
-                    throw new NotFoundException('Account not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Account.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.rentalTypeService.findOneProcess(rentalTypeId);
             }),
             switchMap((rentalType) => {
                 if (!rentalType) {
-                    throw new NotFoundException('Rental type not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.RentalType.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.checkExistByAccountIdAndRentalTypeId(accountId, rentalTypeId);
             }),
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Account price already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.AccountPrice.Conflict', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const accountPrice = new AccountPrice();
                 accountPrice.accountId = accountId;
@@ -84,12 +99,18 @@ export class AccountPriceService
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Create, AccountPrice)) {
-            throw new ForbiddenException('You are not allowed to create account price');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
-                    message: 'Account price created successfully',
+                    message: this.i18nService.translate('message.AccountPrice.Created', {
+                        lang: I18nContext.current().lang,
+                    }),
                     data,
                     status: HttpStatus.CREATED,
                 }),
@@ -111,16 +132,29 @@ export class AccountPriceService
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, AccountPrice)) {
-            throw new ForbiddenException('You are not allowed to read account price');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findOneProcess(id).pipe(
-            map(
-                (data): ApiResponse<AccountPrice> => ({
-                    data,
+            map((accountPrice): ApiResponse<AccountPrice> => {
+                if (!accountPrice) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountPrice.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return {
+                    data: accountPrice,
                     status: HttpStatus.OK,
-                    message: 'Account price found',
-                }),
-            ),
+                    message: this.i18nService.translate('message.AccountPrice.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
+            }),
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AccountPrice>> {
@@ -141,14 +175,20 @@ export class AccountPriceService
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, AccountPrice)) {
-            throw new ForbiddenException('You are not allowed to read account price');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
                     data,
                     status: HttpStatus.OK,
-                    message: 'Account price found',
+                    message: this.i18nService.translate('message.AccountPrice.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 }),
             ),
         );
@@ -163,11 +203,19 @@ export class AccountPriceService
         ).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
-                    throw new NotFoundException('Account price not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountPrice.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!accountPrice.deletedAt) {
-                        throw new BadRequestException('Account price is not deleted');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.AccountPrice.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return from(this.accountPriceRepository.remove(accountPrice));
                 }
@@ -183,13 +231,19 @@ export class AccountPriceService
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, AccountPrice)) {
-            throw new ForbiddenException('You are not allowed to delete account price');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map(
                 (): ApiResponse<AccountPrice> => ({
                     status: HttpStatus.OK,
-                    message: 'Account price deleted successfully',
+                    message: this.i18nService.translate('message.AccountPrice.Deleted', {
+                        lang: I18nContext.current().lang,
+                    }),
                 }),
             ),
         );
@@ -203,10 +257,18 @@ export class AccountPriceService
         ).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
-                    throw new NotFoundException('Account price not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountPrice.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!accountPrice.deletedAt) {
-                    throw new BadRequestException('Account price is not deleted');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.AccountPrice.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.accountPriceRepository.restore(accountPrice)).pipe(map(() => accountPrice));
             }),
@@ -218,14 +280,20 @@ export class AccountPriceService
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, AccountPrice)) {
-            throw new ForbiddenException('You are not allowed to restore account price');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
                     data,
                     status: HttpStatus.OK,
-                    message: 'Account price restored successfully',
+                    message: this.i18nService.translate('message.AccountPrice.Restored', {
+                        lang: I18nContext.current().lang,
+                    }),
                 }),
             ),
         );
@@ -235,7 +303,11 @@ export class AccountPriceService
         return from(this.findOneProcess(id)).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
-                    throw new NotFoundException('Account price not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountPrice.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const tasks: Observable<any>[] = [];
                 if (updateDto.accountId && accountPrice.accountId !== updateDto.accountId) {
@@ -243,7 +315,11 @@ export class AccountPriceService
                         this.accountService.findOneProcess(updateData.accountId).pipe(
                             tap((account) => {
                                 if (!account) {
-                                    throw new NotFoundException('Account not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.Account.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -255,7 +331,11 @@ export class AccountPriceService
                         this.rentalTypeService.findOneProcess(updateData.rentalTypeId).pipe(
                             tap((rentalType) => {
                                 if (!rentalType) {
-                                    throw new NotFoundException('Rental type not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.RentalType.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -271,7 +351,11 @@ export class AccountPriceService
                         this.checkExistByAccountIdAndRentalTypeId(checkAccountId, checkRentalTypeId).pipe(
                             tap((isExist) => {
                                 if (isExist) {
-                                    throw new ConflictException('Account price already exists');
+                                    throw new ConflictException(
+                                        this.i18nService.translate('message.AccountPrice.Conflict', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -292,14 +376,20 @@ export class AccountPriceService
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, AccountPrice)) {
-            throw new ForbiddenException('You are not allowed to update account price');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.updateProcess(id, updateDto).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
                     data,
                     status: HttpStatus.OK,
-                    message: 'Account price updated successfully',
+                    message: this.i18nService.translate('message.AccountPrice.Updated', {
+                        lang: I18nContext.current().lang,
+                    }),
                 }),
             ),
         );

@@ -7,6 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, from, map, Observable, of, switchMap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -22,6 +23,7 @@ import {
     updateEntity,
 } from '../../common';
 import { ActionCasl } from '../../common/enum/action-casl.enum';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
@@ -45,6 +47,7 @@ export class AccountCategoryService
         @InjectRepository(AccountCategory)
         private readonly accountCategoryRepository: Repository<AccountCategory>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateAccountCategoryDto): Observable<AccountCategory> {
         const { name, description } = createDto;
@@ -52,7 +55,12 @@ export class AccountCategoryService
         return from(this.checkExistBySlug(slug)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Account category already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.AccountCategory.Conflict', {
+                            args: { name },
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const accountCategory = new AccountCategory();
                 accountCategory.name = name;
@@ -66,13 +74,20 @@ export class AccountCategoryService
     create(currentUser: User, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to create account category');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<AccountCategory> => ({
                     status: HttpStatus.CREATED,
-                    message: 'Account category created successfully',
+                    message: this.i18nService.translate('message.AccountCategory.Created', {
+                        args: { name: data.name },
+                        lang: I18nContext.current().lang,
+                    }),
                     data,
                 }),
             ),
@@ -82,7 +97,11 @@ export class AccountCategoryService
         return from(this.accountCategoryRepository.findOne({ where: { id }, ...options })).pipe(
             map((accountCategory) => {
                 if (!accountCategory) {
-                    throw new NotFoundException('Account category not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountCategory.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return accountCategory;
             }),
@@ -92,15 +111,29 @@ export class AccountCategoryService
     findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to read account category');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findOneProcess(id).pipe(
-            map(
-                (data): ApiResponse<AccountCategory> => ({
+            map((accountCategory): ApiResponse<AccountCategory> => {
+                if (!accountCategory) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountCategory.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return {
                     status: HttpStatus.OK,
-                    data,
-                }),
-            ),
+                    data: accountCategory,
+                    message: this.i18nService.translate('message.AccountCategory.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
+            }),
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AccountCategory>> {
@@ -118,13 +151,19 @@ export class AccountCategoryService
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, AccountCategory)) {
-            throw new ForbiddenException('You are not allowed to read account category');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
-                message: 'Account category found',
+                message: this.i18nService.translate('message.AccountCategory.Found', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
@@ -138,16 +177,28 @@ export class AccountCategoryService
         ).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
-                    throw new NotFoundException('Account category not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountCategory.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!accountCategory.deletedAt) {
-                        throw new BadRequestException('Account category not deleted');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.AccountCategory.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return from(this.accountCategoryRepository.remove(accountCategory));
                 }
                 if (accountCategory.accounts) {
-                    throw new BadRequestException('Account category has accounts');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.AccountCategory.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.accountCategoryRepository.softRemove(accountCategory));
             }),
@@ -164,6 +215,10 @@ export class AccountCategoryService
                 (data): ApiResponse<AccountCategory> => ({
                     status: HttpStatus.OK,
                     data,
+                    message: this.i18nService.translate('message.AccountCategory.Deleted', {
+                        lang: I18nContext.current().lang,
+                        args: { name: data.name },
+                    }),
                 }),
             ),
         );
@@ -177,10 +232,18 @@ export class AccountCategoryService
         ).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
-                    throw new NotFoundException('Account category not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountCategory.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!accountCategory.deletedAt) {
-                    throw new BadRequestException('Account category not deleted yet');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.AccountCategory.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.accountCategoryRepository.restore(accountCategory.id)).pipe(
                     map(() => accountCategory),
@@ -199,6 +262,10 @@ export class AccountCategoryService
                 (data): ApiResponse<AccountCategory> => ({
                     status: HttpStatus.OK,
                     data,
+                    message: this.i18nService.translate('message.AccountCategory.Restored', {
+                        lang: I18nContext.current().lang,
+                        args: { name: data.name },
+                    }),
                 }),
             ),
         );
@@ -208,13 +275,22 @@ export class AccountCategoryService
         return from(this.findOneProcess(id)).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
-                    throw new NotFoundException('Account category not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.AccountCategory.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (updateData.name && accountCategory.name !== updateData.name) {
                     return from(this.checkExistBySlug(slugifyString(updateData.name))).pipe(
                         switchMap((isExist) => {
                             if (isExist) {
-                                throw new ConflictException('Account category already exists');
+                                throw new ConflictException(
+                                    this.i18nService.translate('message.AccountCategory.Conflict', {
+                                        args: { name: updateData.name },
+                                        lang: I18nContext.current().lang,
+                                    }),
+                                );
                             }
                             updateData.slug = slugifyString(updateData.name);
                             return of(accountCategory);
@@ -242,6 +318,10 @@ export class AccountCategoryService
                 (data): ApiResponse<AccountCategory> => ({
                     status: HttpStatus.OK,
                     data,
+                    message: this.i18nService.translate('message.AccountCategory.Updated', {
+                        lang: I18nContext.current().lang,
+                        args: { name: data.name },
+                    }),
                 }),
             ),
         );

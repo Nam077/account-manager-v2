@@ -7,6 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -15,12 +16,14 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
     updateEntity,
     WorkspaceEmailStatus,
 } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
@@ -48,6 +51,7 @@ export class WorkspaceEmailService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly workspaceService: WorkspaceService,
         private readonly emailService: EmailService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const { emailId, workspaceId } = createDto;
@@ -58,22 +62,38 @@ export class WorkspaceEmailService
         ).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
-                    throw new NotFoundException('Workspace not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (workspace.workspaceEmails && workspace.workspaceEmails.length === workspace.maxSlots) {
-                    throw new BadRequestException('Workspace is full');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Workspace.Full', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
-                return from(this.emailService.findOneData(emailId));
+                return from(this.emailService.findOneProcess(emailId));
             }),
             switchMap((email) => {
                 if (!email) {
-                    throw new NotFoundException('Email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.checkExistByWorkspaceIdAndEmailId(workspaceId, emailId));
             }),
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Workspace email already exist');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.WorkspaceEmail.Conflict', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const workspaceEmail = new WorkspaceEmail();
                 workspaceEmail.emailId = emailId;
@@ -89,7 +109,11 @@ export class WorkspaceEmailService
     create(currentUser: User, createDto: CreateWorkspaceEmailDto): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Create, WorkspaceEmail)) {
-            throw new BadRequestException(HttpStatus.FORBIDDEN, 'Forbidden');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map((workspaceEmail) => {
@@ -100,24 +124,12 @@ export class WorkspaceEmailService
             }),
         );
     }
-    findOneData(id: string): Observable<WorkspaceEmail> {
-        return from(this.workspaceEmailRepository.findOne({ where: { id } }));
-    }
-    findOneProcess(id: string): Observable<WorkspaceEmail> {
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<WorkspaceEmail>): Observable<WorkspaceEmail> {
         return from(
             this.workspaceEmailRepository.findOne({
                 where: { id },
-                relations: {
-                    email: true,
-                    workspace: true,
-                },
-            }),
-        ).pipe(
-            map((workspaceEmail) => {
-                if (!workspaceEmail) {
-                    throw new NotFoundException('Workspace email not found');
-                }
-                return workspaceEmail;
+                ...options,
             }),
         );
     }
@@ -127,14 +139,32 @@ export class WorkspaceEmailService
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, WorkspaceEmail)) {
-            throw new ForbiddenException('You are not allowed to access this resource');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
-        return this.findOneProcess(id).pipe(
+        return this.findOneProcess(id, {
+            relations: {
+                email: true,
+                workspace: true,
+            },
+        }).pipe(
             map((workspaceEmail) => {
+                if (!workspaceEmail) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
                 return {
                     status: HttpStatus.OK,
                     data: workspaceEmail,
-                    message: 'Workspace email found',
+                    message: this.i18nService.translate('message.WorkspaceEmail.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -157,14 +187,20 @@ export class WorkspaceEmailService
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.ReadAll, WorkspaceEmail)) {
-            throw new ForbiddenException('You are not allowed to access this resource');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map((workspaceEmails) => {
                 return {
                     status: HttpStatus.OK,
                     data: workspaceEmails,
-                    message: 'Workspace emails found',
+                    message: this.i18nService.translate('message.WorkspaceEmail.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -181,32 +217,35 @@ export class WorkspaceEmailService
         ).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
-                    throw new NotFoundException('Workspace email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!workspaceEmail.deletedAt) {
-                        throw new BadRequestException('Workspace email already deleted');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.WorkspaceEmail.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return from(this.workspaceEmailRepository.remove(workspaceEmail));
                 }
                 if (workspaceEmail.rentals) {
-                    throw new BadRequestException('Workspace email is in use');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
 
                 return from(this.workspaceEmailRepository.softRemove(workspaceEmail));
             }),
         );
     }
-    removeNoCheckRealtion(id: string): Observable<WorkspaceEmail> {
-        return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
-            switchMap((workspaceEmail) => {
-                if (!workspaceEmail) {
-                    throw new NotFoundException('Workspace email not found');
-                }
-                return from(this.workspaceEmailRepository.remove(workspaceEmail));
-            }),
-        );
-    }
+
     remove(
         currentUser: User,
         id: string,
@@ -214,14 +253,20 @@ export class WorkspaceEmailService
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Delete, WorkspaceEmail)) {
-            throw new ForbiddenException('You are not allowed to access this resource');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map((workspaceEmail) => {
                 return {
                     status: HttpStatus.OK,
                     data: workspaceEmail,
-                    message: 'Workspace email deleted',
+                    message: this.i18nService.translate('message.WorkspaceEmail.Deleted', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -235,10 +280,18 @@ export class WorkspaceEmailService
         ).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
-                    throw new NotFoundException('Workspace email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!workspaceEmail.deletedAt) {
-                    throw new BadRequestException('Workspace email already restored');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.workspaceEmailRepository.restore(workspaceEmail)).pipe(map(() => workspaceEmail));
             }),
@@ -250,14 +303,20 @@ export class WorkspaceEmailService
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Restore, WorkspaceEmail)) {
-            throw new ForbiddenException('You are not allowed to access this resource');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map((workspaceEmail) => {
                 return {
                     status: HttpStatus.OK,
                     data: workspaceEmail,
-                    message: 'Workspace email restored',
+                    message: this.i18nService.translate('message.WorkspaceEmail.Restored', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );
@@ -267,15 +326,23 @@ export class WorkspaceEmailService
         return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
-                    throw new NotFoundException('Workspace email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const tasks: Observable<any>[] = [];
                 if (updateDto.emailId && updateDto.emailId !== workspaceEmail.emailId) {
                     tasks.push(
-                        this.emailService.findOneData(updateDto.emailId).pipe(
+                        this.emailService.findOneProcess(updateDto.emailId).pipe(
                             tap((email) => {
                                 if (!email) {
-                                    throw new NotFoundException('Email not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.Email.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                                 return email;
                             }),
@@ -291,13 +358,21 @@ export class WorkspaceEmailService
                             .pipe(
                                 tap((workspace) => {
                                     if (!workspace) {
-                                        throw new NotFoundException('Workspace not found');
+                                        throw new NotFoundException(
+                                            this.i18nService.translate('message.Workspace.NotFound', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
                                     }
                                     if (
                                         workspace.workspaceEmails &&
                                         workspace.workspaceEmails.length === workspace.maxSlots
                                     ) {
-                                        throw new BadRequestException('Workspace is full');
+                                        throw new BadRequestException(
+                                            this.i18nService.translate('message.Workspace.Full', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
                                     }
                                 }),
                             ),
@@ -313,7 +388,11 @@ export class WorkspaceEmailService
                         this.checkExistByWorkspaceIdAndEmailId(checkWorkspaceId, checkEmailId).pipe(
                             tap((isExist) => {
                                 if (isExist) {
-                                    throw new ConflictException('Workspace email already exist');
+                                    throw new ConflictException(
+                                        this.i18nService.translate('message.WorkspaceEmail.Conflict', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -331,7 +410,11 @@ export class WorkspaceEmailService
         return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
-                    throw new NotFoundException('Workspace email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 workspaceEmail.status = status;
                 return from(this.workspaceEmailRepository.save(workspaceEmail));
@@ -345,14 +428,20 @@ export class WorkspaceEmailService
     ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Update, WorkspaceEmail)) {
-            throw new ForbiddenException('You are not allowed to access this resource');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.updateProcess(id, updateDto).pipe(
             map((workspaceEmail) => {
                 return {
                     status: HttpStatus.OK,
                     data: workspaceEmail,
-                    message: 'Workspace email updated',
+                    message: this.i18nService.translate('message.WorkspaceEmail.Updated', {
+                        lang: I18nContext.current().lang,
+                    }),
                 };
             }),
         );

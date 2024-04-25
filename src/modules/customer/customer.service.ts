@@ -7,6 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, from, map, Observable, of, switchMap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -21,6 +22,7 @@ import {
     SearchField,
     updateEntity,
 } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -44,6 +46,7 @@ export class CustomerService
         @InjectRepository(Customer)
         private readonly customerRepository: Repository<Customer>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     checkExitsByEmail(email: string): Observable<boolean> {
         return from(
@@ -57,7 +60,12 @@ export class CustomerService
         return from(this.checkExitsByEmail(email)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Email already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.Customer.Conflict', {
+                            args: { name: email },
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const newCustomer = new Customer();
                 newCustomer.name = name;
@@ -75,13 +83,20 @@ export class CustomerService
     create(currentUser: User, createDto: CreateCustomerDto): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Create, Customer)) {
-            throw new ForbiddenException('You are not allowed to create customer');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<Customer> => ({
                     status: HttpStatus.CREATED,
-                    message: 'Customer created successfully',
+                    message: this.i18nService.translate('message.Customer.Created', {
+                        args: { name: data.name },
+                        lang: I18nContext.current().lang,
+                    }),
                     data,
                 }),
             ),
@@ -91,7 +106,11 @@ export class CustomerService
         return from(this.customerRepository.findOne({ where: { id }, ...options })).pipe(
             map((customer) => {
                 if (!customer) {
-                    throw new NotFoundException('Customer not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Customer.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return customer;
             }),
@@ -103,12 +122,22 @@ export class CustomerService
             throw new ForbiddenException('You are not allowed to read customer');
         }
         return this.findOneProcess(id).pipe(
-            map(
-                (data): ApiResponse<Customer> => ({
+            map((customer) => {
+                if (!customer) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Customer.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return {
                     status: HttpStatus.OK,
-                    data,
-                }),
-            ),
+                    data: customer,
+                    message: this.i18nService.translate('message.Customer.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
+            }),
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Customer>> {
@@ -129,13 +158,20 @@ export class CustomerService
     ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Customer)) {
-            throw new ForbiddenException('You are not allowed to read customer');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map(
                 (data): ApiResponse<PaginatedData<Customer>> => ({
                     status: HttpStatus.OK,
                     data,
+                    message: this.i18nService.translate('message.Customer.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                 }),
             ),
         );
@@ -153,13 +189,21 @@ export class CustomerService
             switchMap((customer) => {
                 if (hardRemove) {
                     if (!customer.deletedAt) {
-                        throw new BadRequestException('Customer already deleted');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Customer.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
 
                     return from(this.customerRepository.remove(customer));
                 }
                 if (customer.emails) {
-                    throw new BadRequestException('Customer has emails');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Customer.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.customerRepository.softRemove(customer));
             }),
@@ -173,12 +217,18 @@ export class CustomerService
     ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, Customer)) {
-            throw new ForbiddenException('You are not allowed to delete customer');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map(() => ({
                 status: HttpStatus.OK,
-                message: 'Customer removed successfully',
+                message: this.i18nService.translate('message.Customer.Deleted', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
@@ -186,10 +236,18 @@ export class CustomerService
         return from(this.customerRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((customer) => {
                 if (!customer) {
-                    throw new NotFoundException('Customer not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Customer.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!customer.deletedAt) {
-                    throw new BadRequestException('Customer already restored');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Customer.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
 
                 return from(this.customerRepository.restore(customer)).pipe(map(() => customer));
@@ -200,12 +258,18 @@ export class CustomerService
     restore(currentUser: User, id: string): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, Customer)) {
-            throw new ForbiddenException('You are not allowed to restore customer');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map(() => ({
                 status: HttpStatus.OK,
-                message: 'Customer restored successfully',
+                message: this.i18nService.translate('message.Customer.Restored', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }
@@ -214,13 +278,21 @@ export class CustomerService
         return from(this.findOneProcess(id)).pipe(
             switchMap((customer) => {
                 if (!customer) {
-                    throw new NotFoundException('Customer not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Customer.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (updateDto.email && updateDto.email !== customer.email) {
                     return from(this.checkExitsByEmail(updateDto.email)).pipe(
                         switchMap((isExist) => {
                             if (isExist) {
-                                throw new ConflictException('Email already exists');
+                                throw new ConflictException(
+                                    this.i18nService.translate('message.Customer.Conflict', {
+                                        lang: I18nContext.current().lang,
+                                    }),
+                                );
                             }
                             return of(customer);
                         }),
@@ -239,12 +311,18 @@ export class CustomerService
     ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, Customer)) {
-            throw new ForbiddenException('You are not allowed to update customer');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.updateProcess(id, updateDto).pipe(
             map(() => ({
                 status: HttpStatus.OK,
-                message: 'Customer updated successfully',
+                message: this.i18nService.translate('message.Customer.Updated', {
+                    lang: I18nContext.current().lang,
+                }),
             })),
         );
     }

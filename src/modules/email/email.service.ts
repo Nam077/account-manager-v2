@@ -7,6 +7,8 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { I18nService } from 'nestjs-i18n';
+import { I18nContext } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -15,18 +17,19 @@ import {
     ApiResponse,
     CrudService,
     FindAllDto,
+    FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
     updateEntity,
 } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { User } from '../user/entities/user.entity';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Email } from './entities/email.entity';
-
 @Injectable()
 export class EmailService
     implements
@@ -45,19 +48,28 @@ export class EmailService
         private readonly emailRepository: Repository<Email>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly customerService: CustomerService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateEmailDto): Observable<Email> {
         const { email, customerId } = createDto;
         return from(this.customerService.findOneProcess(customerId)).pipe(
             switchMap((customer) => {
                 if (!customer) {
-                    throw new NotFoundException('Customer not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Customer.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return this.checkExistByEmailAndCustomerId(email, customerId);
             }),
             switchMap((isExist) => {
                 if (isExist) {
-                    throw new ConflictException('Email already exists');
+                    throw new ConflictException(
+                        this.i18nService.translate('message.Email.Conflict', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const emailCreate = new Email();
                 emailCreate.email = email;
@@ -71,44 +83,56 @@ export class EmailService
     create(currentUser: User, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Create, Email)) {
-            throw new ForbiddenException('You do not have permission to create email');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<Email> => ({
                     status: HttpStatus.CREATED,
-                    message: 'Email created successfully',
+                    message: this.i18nService.translate('message.Email.Created', {
+                        lang: I18nContext.current().lang,
+                        args: { name: data.email },
+                    }),
                     data,
                 }),
             ),
         );
     }
-    findOneData(id: string): Observable<Email> {
-        return from(this.emailRepository.findOne({ where: { id } }));
-    }
-    findOneProcess(id: string): Observable<Email> {
-        return from(this.emailRepository.findOne({ where: { id } })).pipe(
-            map((email) => {
-                if (!email) {
-                    throw new NotFoundException('Email not found');
-                }
-                return email;
-            }),
-        );
+
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Email>): Observable<Email> {
+        return from(this.emailRepository.findOne({ where: { id }, ...options }));
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, Email)) {
-            throw new ForbiddenException('You do not have permission to read email');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findOneProcess(id).pipe(
-            map(
-                (data): ApiResponse<Email> => ({
+            map((email) => {
+                if (!email) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return {
                     status: HttpStatus.OK,
-                    message: 'Email found',
-                    data,
-                }),
-            ),
+                    message: this.i18nService.translate('message.Email.Found', {
+                        lang: I18nContext.current().lang,
+                        args: { name: email.email },
+                    }),
+                    data: email,
+                };
+            }),
         );
     }
     findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Email>> {
@@ -125,13 +149,19 @@ export class EmailService
     findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Email>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Email)) {
-            throw new ForbiddenException('You do not have permission to read email');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.findAllProcess(findAllDto).pipe(
             map(
                 (data): ApiResponse<PaginatedData<Email>> => ({
                     status: HttpStatus.OK,
-                    message: 'Emails found',
+                    message: this.i18nService.translate('message.Email.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
                     data,
                 }),
             ),
@@ -146,11 +176,19 @@ export class EmailService
         ).pipe(
             switchMap((email) => {
                 if (!email) {
-                    throw new NotFoundException('Email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (hardRemove) {
                     if (!email.deletedAt) {
-                        throw new BadRequestException('Email not deleted yet');
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Email.NotDeleted', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
                     return from(this.emailRepository.remove(email));
                 }
@@ -162,13 +200,19 @@ export class EmailService
     remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, Email)) {
-            throw new ForbiddenException('You do not have permission to delete email');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.removeProcess(id, hardRemove).pipe(
             map(
                 (data): ApiResponse<Email> => ({
                     status: HttpStatus.OK,
-                    message: 'Email deleted successfully',
+                    message: this.i18nService.translate('message.Email.Deleted', {
+                        lang: I18nContext.current().lang,
+                    }),
                     data,
                 }),
             ),
@@ -178,10 +222,18 @@ export class EmailService
         return from(this.emailRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((email) => {
                 if (!email) {
-                    throw new NotFoundException('Email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 if (!email.deletedAt) {
-                    throw new BadRequestException('Email not deleted yet');
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotRestored', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 return from(this.emailRepository.restore(email.id)).pipe(map(() => email));
             }),
@@ -191,13 +243,19 @@ export class EmailService
     restore(currentUser: User, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, Email)) {
-            throw new ForbiddenException('You do not have permission to restore email');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.restoreProcess(id).pipe(
             map(
                 (data): ApiResponse<Email> => ({
                     status: HttpStatus.OK,
-                    message: 'Email restored successfully',
+                    message: this.i18nService.translate('message.Email.Restored', {
+                        lang: I18nContext.current().lang,
+                    }),
                     data,
                 }),
             ),
@@ -205,10 +263,14 @@ export class EmailService
     }
     updateProcess(id: string, updateDto: UpdateEmailDto): Observable<Email> {
         const updateData: DeepPartial<Email> = { ...updateDto };
-        return from(this.findOneData(id)).pipe(
+        return from(this.findOneProcess(id)).pipe(
             switchMap((email) => {
                 if (!email) {
-                    throw new NotFoundException('Email not found');
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
                 const tasks: Observable<any>[] = [];
 
@@ -217,7 +279,11 @@ export class EmailService
                         this.customerService.findOneProcess(updateDto.customerId).pipe(
                             tap((customer) => {
                                 if (!customer) {
-                                    throw new NotFoundException('Customer not found');
+                                    throw new NotFoundException(
+                                        this.i18nService.translate('message.Customer.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                                 delete email.customer;
                             }),
@@ -234,7 +300,11 @@ export class EmailService
                         this.checkExistByEmailAndCustomerId(checkEmail, checkCustomerId).pipe(
                             tap((isExist) => {
                                 if (isExist) {
-                                    throw new ConflictException('Email already exists');
+                                    throw new ConflictException(
+                                        this.i18nService.translate('message.Email.Conflict', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
                                 }
                             }),
                         ),
@@ -251,13 +321,20 @@ export class EmailService
     update(currentUser: User, id: string, updateDto: UpdateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, Email)) {
-            throw new ForbiddenException('You do not have permission to update email');
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
         }
         return this.updateProcess(id, updateDto).pipe(
             map(
                 (data): ApiResponse<Email> => ({
                     status: HttpStatus.OK,
-                    message: 'Email updated successfully',
+                    message: this.i18nService.translate('message.Email.Updated', {
+                        lang: I18nContext.current().lang,
+                        args: { name: data.email },
+                    }),
                     data,
                 }),
             ),
