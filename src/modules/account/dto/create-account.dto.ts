@@ -1,13 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID, Length } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
+import { I18nTranslations } from '../../../i18n/i18n.generated';
 export class CreateAccountDto {
     @ApiProperty({ description: 'Name of the account', example: 'Account Name' })
-    @IsNotEmpty({ message: 'validation.account.name.required' })
+    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.createAccount.name.required') })
     @IsString({
-        message: 'validation.account.name.isString',
+        message: i18nValidationMessage<I18nTranslations>('validation.createAccount.name.isString'),
     })
-    @Length(1, 255, { message: 'validation.account.name.length' })
+    @Length(1, 255, { message: i18nValidationMessage<I18nTranslations>('validation.createAccount.name.lengthAccept') })
     name: string;
 
     @ApiProperty({
@@ -15,12 +17,11 @@ export class CreateAccountDto {
         example: 'Account Description',
     })
     @IsNotEmpty({
-        message: 'validation.account.description.required',
+        message: i18nValidationMessage<I18nTranslations>('validation.createAccount.description.required'),
     })
     @IsString({
-        message: 'validation.account.description.isString',
+        message: i18nValidationMessage<I18nTranslations>('validation.createAccount.description.isString'),
     })
-    @Length(1, 255)
     description: string;
 
     @ApiProperty({
@@ -28,8 +29,10 @@ export class CreateAccountDto {
         example: '123e4567-e89b-12d3-a456-426614174000',
     })
     @IsNotEmpty({
-        message: 'validation.account.accountCategoryId.required',
+        message: i18nValidationMessage<I18nTranslations>('validation.createAccount.accountCategoryId.required'),
     })
-    @IsUUID('all', { message: 'validation.account.accountCategoryId.isUUID' })
+    @IsUUID('all', {
+        message: i18nValidationMessage<I18nTranslations>('validation.createAccount.accountCategoryId.isUUID'),
+    })
     accountCategoryId: string;
 }

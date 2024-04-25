@@ -1,9 +1,9 @@
 {
-    "account": {
+    "createAccount": {
         "name": {
             "required": "Account name is required.",
             "isString": "Account name must be a string.",
-            "length": "Account name must be between 1 and 255 characters long."
+            "lengthAccept": "Account name must be between 1 and 255 characters long."
         },
         "description": {
             "required": "Account description is required.",
@@ -14,16 +14,16 @@
             "isUUID": "Account category ID must be a valid UUID."
         }
     },
-    "accountCategory": {
+    "createAccountCategory": {
         "name": {
             "required": "Account category name is required.",
             "isString": "Account category name must be a string.",
-            "length": "Account category name must be between 1 and 255 characters long."
+            "lengthAccept": "Account category name must be between 1 and 255 characters long."
         },
         "description": {
             "required": "Account category description is required.",
             "isString": "Account category description must be a string.",
-            "length": "Account category description must be between 1 and 255 characters long."
+            "lengthAccept": "Account category description must be between 1 and 255 characters long."
         }
     },
     "createAccountPrice": {
@@ -154,7 +154,7 @@
         },
         "paymentMethod": {
             "isString": "Payment method must be a string.",
-            "length": "Payment method must be between 3 and 255 characters long."
+            "lengthAccept": "Payment method must be between 3 and 255 characters long."
         }
     },
     "createRentalType": {
@@ -179,7 +179,7 @@
         },
         "password": {
             "isString": "Password of the user must be a string.",
-            "length": "Password must be between 8 and 50 characters long.",
+            "lengthAccept": "Password must be between 8 and 50 characters long.",
             "regex": "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character."
         },
         "role": {
