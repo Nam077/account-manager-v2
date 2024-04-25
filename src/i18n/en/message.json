@@ -1,0 +1,119 @@
+{
+    "AccountCategory": {
+        "NotFound": "Account category not found",
+        "Conflict": "Account category {name} already exists",
+        "Created": "Account category {name} created successfully",
+        "Updated": "Account category {name} updated successfully",
+        "Restored": "Account category {name} restored successfully",
+        "Deleted": "Account category {name} deleted successfully"
+    },
+    "Account": {
+        "NotFound": "Account not found",
+        "Conflict": "Account already exists",
+        "Created": "Account {name} created successfully",
+        "Updated": "Account {name} updated successfully",
+        "Restored": "Account {name} restored successfully",
+        "Deleted": "Account {name} deleted successfully",
+        "Activated": "Account {name} activated successfully",
+        "Deactivated": "Account {name} deactivated successfully"
+    },
+    "AdminAccount": {
+        "NotFound": "Admin account not found",
+        "Conflict": "Admin account already exists",
+        "Created": "Admin account {name} created successfully",
+        "Updated": "Admin account {name} updated successfully",
+        "Restored": "Admin account {name} restored successfully",
+        "Deleted": "Admin account {name} deleted successfully"
+    },
+    "Customer": {
+        "NotFound": "Customer not found",
+        "Conflict": "Customer already exists",
+        "Created": "Customer {name} created successfully",
+        "Updated": "Customer {name} updated successfully",
+        "Restored": "Customer {name} restored successfully",
+        "Deleted": "Customer {name} deleted successfully",
+        "Activated": "Customer {name} activated successfully",
+        "Deactivated": "Customer {name} deactivated successfully"
+    },
+    "Email": {
+        "NotFound": "Email not found",
+        "Conflict": "Email already in use",
+        "Created": "Email {name} created successfully",
+        "Updated": "Email {name} updated successfully",
+        "Restored": "Email {name} restored successfully",
+        "Deleted": "Email {name} deleted successfully"
+    },
+    "Workspace": {
+        "NotFound": "Workspace not found",
+        "Conflict": "Workspace already exists",
+        "Full": "Workspace is full",
+        "Created": "Workspace {name} created successfully",
+        "Updated": "Workspace {name} updated successfully",
+        "Restored": "Workspace {name} restored successfully",
+        "Deleted": "Workspace {name} deleted successfully"
+    },
+    "RentalType": {
+        "NotFound": "Rental type not found",
+        "Conflict": "Rental type {name} already exists",
+        "Created": "Rental type {name} created successfully",
+        "Updated": "Rental type {name} updated successfully",
+        "Restored": "Rental type {name} restored successfully",
+        "Deleted": "Rental type {name} deleted successfully"
+    },
+    "AccountPrice": {
+        "NotFound": "Account price not found",
+        "Conflict": "Account price already exists",
+        "Created": "Account price {name} created successfully",
+        "Updated": "Account price {name} updated successfully",
+        "Restored": "Account price {name} restored successfully",
+        "Deleted": "Account price {name} deleted successfully"
+    },
+    "WorkspaceEmail": {
+        "NotFound": "Workspace email not found",
+        "Conflict": "Workspace email already exists",
+        "Created": "Workspace email {name} created successfully",
+        "Updated": "Workspace email {name} updated successfully",
+        "Restored": "Workspace email {name} restored successfully",
+        "Deleted": "Workspace email {name} deleted successfully"
+    },
+    "Rental": {
+        "NotFound": "Rental not found",
+        "Conflict": "Rental already exists",
+        "Created": "Rental {name} created successfully",
+        "Updated": "Rental {name} updated successfully",
+        "Restored": "Rental {name} restored successfully",
+        "Deleted": "Rental {name} deleted successfully"
+    },
+    "RefreshToken": {
+        "NotFound": "Refresh token not found",
+        "Invalid": "Refresh token is invalid",
+        "Created": "Refresh token {name} created successfully",
+        "Updated": "Refresh token {name} updated successfully",
+        "Restored": "Refresh token {name} restored successfully",
+        "Deleted": "Refresh token {name} deleted successfully"
+    },
+    "Authentication": {
+        "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",
+        "Forbidden": "Forbidden: You do not have permission to perform this action."
+    },
+    "Validation": {
+        "BadRequest": "Bad Request: The input data is invalid."
+    },
+    "Resource": {
+        "NotFound": "Not Found: The requested resource does not exist.",
+        "Conflict": "Conflict: The resource already exists."
+    },
+    "Server": {
+        "InternalError": "Internal Server Error: An unexpected error occurred."
+    },
+    "Login": {
+        "Failed": "Login failed: Incorrect username or password.",
+        "LockedOut": "Your account has been locked due to too many failed login attempts.",
+        "Inactive": "Your account is not activated.",
+        "Success": "Login successful."
+    },
+    "Register": {
+        "Failed": "Registration failed: The email address is already in use.",
+        "Success": "Registration successful."
+    }
+}

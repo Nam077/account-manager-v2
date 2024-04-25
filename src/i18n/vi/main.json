@@ -1,4 +1,7 @@
 {
     "greeting": "Xin chào các bạn!",
-    "questionName": "Xin chào {name}, bạn có khỏe không?"
+    "questionName": {
+        "question": "Tên của bạn là gì?",
+        "reprompt": "Chào bạn tôi tên là {name}. Bạn tên là gì?"
+    }
 }

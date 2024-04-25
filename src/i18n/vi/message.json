@@ -1,0 +1,119 @@
+{
+    "AccountCategory": {
+        "NotFound": "Không tìm thấy loại tài khoản",
+        "Conflict": "Loại tài khoản {name} đã tồn tại",
+        "Created": "Loại tài khoản {name} đã được tạo thành công",
+        "Updated": "Loại tài khoản {name} đã được cập nhật thành công",
+        "Restored": "Loại tài khoản {name} đã được khôi phục thành công",
+        "Deleted": "Loại tài khoản {name} đã bị xóa thành công"
+    },
+    "Account": {
+        "NotFound": "Không tìm thấy tài khoản",
+        "Conflict": "Tài khoản đã tồn tại",
+        "Created": "Tài khoản {name} đã được tạo thành công",
+        "Updated": "Tài khoản {name} đã được cập nhật thành công",
+        "Restored": "Tài khoản {name} đã được khôi phục thành công",
+        "Deleted": "Tài khoản {name} đã bị xóa thành công",
+        "Activated": "Tài khoản {name} đã được kích hoạt thành công",
+        "Deactivated": "Tài khoản {name} đã bị vô hiệu hóa thành công"
+    },
+    "AdminAccount": {
+        "NotFound": "Không tìm thấy tài khoản quản trị viên",
+        "Conflict": "Tài khoản quản trị viên đã tồn tại",
+        "Created": "Tài khoản quản trị viên {name} đã được tạo thành công",
+        "Updated": "Tài khoản quản trị viên {name} đã được cập nhật thành công",
+        "Restored": "Tài khoản quản trị viên {name} đã được khôi phục thành công",
+        "Deleted": "Tài khoản quản trị viên {name} đã bị xóa thành công"
+    },
+    "Customer": {
+        "NotFound": "Không tìm thấy khách hàng",
+        "Conflict": "Khách hàng đã tồn tại",
+        "Created": "Khách hàng {name} đã được tạo thành công",
+        "Updated": "Khách hàng {name} đã được cập nhật thành công",
+        "Restored": "Khách hàng {name} đã được khôi phục thành công",
+        "Deleted": "Khách hàng {name} đã bị xóa thành công",
+        "Activated": "Khách hàng {name} đã được kích hoạt thành công",
+        "Deactivated": "Khách hàng {name} đã bị vô hiệu hóa thành công"
+    },
+    "Email": {
+        "NotFound": "Không tìm thấy email",
+        "Conflict": "Email đã được sử dụng",
+        "Created": "Email {name} đã được tạo thành công",
+        "Updated": "Email {name} đã được cập nhật thành công",
+        "Restored": "Email {name} đã được khôi phục thành công",
+        "Deleted": "Email {name} đã bị xóa thành công"
+    },
+    "Workspace": {
+        "NotFound": "Không tìm thấy không gian làm việc",
+        "Conflict": "Không gian làm việc đã tồn tại",
+        "Full": "Không gian làm việc đầy",
+        "Created": "Không gian làm việc {name} đã được tạo thành công",
+        "Updated": "Không gian làm việc {name} đã được cập nhật thành công",
+        "Restored": "Không gian làm việc {name} đã được khôi phục thành công",
+        "Deleted": "Không gian làm việc {name} đã bị xóa thành công"
+    },
+    "RentalType": {
+        "NotFound": "Không tìm thấy loại cho thuê",
+        "Conflict": "Loại cho thuê {name} đã tồn tại",
+        "Created": "Loại cho thuê {name} đã được tạo thành công",
+        "Updated": "Loại cho thuê {name} đã được cập nhật thành công",
+        "Restored": "Loại cho thuê {name} đã được khôi phục thành công",
+        "Deleted": "Loại cho thuê {name} đã bị xóa thành công"
+    },
+    "AccountPrice": {
+        "NotFound": "Không tìm thấy giá tài khoản",
+        "Conflict": "Giá tài khoản đã tồn tại",
+        "Created": "Giá tài khoản {name} đã được tạo thành công",
+        "Updated": "Giá tài khoản {name} đã được cập nhật thành công",
+        "Restored": "Giá tài khoản {name} đã được khôi phục thành công",
+        "Deleted": "Giá tài khoản {name} đã bị xóa thành công"
+    },
+    "WorkspaceEmail": {
+        "NotFound": "Không tìm thấy email không gian làm việc",
+        "Conflict": "Email không gian làm việc đã tồn tại",
+        "Created": "Email không gian làm việc {name} đã được tạo thành công",
+        "Updated": "Email không gian làm việc {name} đã được cập nhật thành công",
+        "Restored": "Email không gian làm việc {name} đã được khôi phục thành công",
+        "Deleted": "Email không gian làm việc {name} đã bị xóa thành công"
+    },
+    "Rental": {
+        "NotFound": "Không tìm thấy cho thuê",
+        "Conflict": "Cho thuê đã tồn tại",
+        "Created": "Cho thuê {name} đã được tạo thành công",
+        "Updated": "Cho thuê {name} đã được cập nhật thành công",
+        "Restored": "Cho thuê {name} đã được khôi phục thành công",
+        "Deleted": "Cho thuê {name} đã bị xóa thành công"
+    },
+    "RefreshToken": {
+        "NotFound": "Không tìm thấy token làm mới",
+        "Invalid": "Token làm mới không hợp lệ",
+        "Created": "Token làm mới {name} đã được tạo thành công",
+        "Updated": "Token làm mới {name} đã được cập nhật thành công",
+        "Restored": "Token làm mới {name} đã được khôi phục thành công",
+        "Deleted": "Token làm mới {name} đã bị xóa thành công"
+    },
+    "Authentication": {
+        "Unauthorized": "Không được ủy quyền: Thông tin đăng nhập không hợp lệ hoặc bị thiếu.",
+        "Forbidden": "Cấm: Bạn không có quyền thực hiện hành động này."
+    },
+    "Validation": {
+        "BadRequest": "Yêu cầu không hợp lệ: Dữ liệu đầu vào không hợp lệ."
+    },
+    "Resource": {
+        "NotFound": "Không tìm thấy: Không tìm thấy tài nguyên được yêu cầu.",
+        "Conflict": "Xung đột: Tài nguyên đã tồn tại."
+    },
+    "Server": {
+        "InternalError": "Lỗi máy chủ nội bộ: Đã xảy ra một lỗi không mong muốn."
+    },
+    "Login": {
+        "Failed": "Đăng nhập thất bại: Tên người dùng hoặc mật khẩu không chính xác.",
+        "LockedOut": "Tài khoản của bạn đã bị khóa do quá nhiều lần đăng nhập không thành công.",
+        "Inactive": "Tài khoản của bạn chưa được kích hoạt.",
+        "Success": "Đăng nhập thành công."
+    },
+    "Register": {
+        "Failed": "Đăng ký thất bại: Địa chỉ email đã được sử dụng.",
+        "Success": "Đăng ký thành công."
+    }
+}

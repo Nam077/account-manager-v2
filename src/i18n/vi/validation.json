@@ -63,7 +63,7 @@
         "password": {
             "required": "Mật khẩu là bắt buộc.",
             "isString": "Mật khẩu phải là một chuỗi ký tự.",
-            "minLengthAccept": "Mật khẩu phải có ít nhất 8 ký tự."
+            "minLength": "Mật khẩu phải có ít nhất 8 ký tự."
         }
     },
     "register": {
@@ -74,7 +74,7 @@
         "password": {
             "required": "Mật khẩu là bắt buộc.",
             "isString": "Mật khẩu phải là một chuỗi ký tự.",
-            "minLengthAccept": "Mật khẩu phải có ít nhất 8 ký tự."
+            "minLength": "Mật khẩu phải có ít nhất 8 ký tự."
         },
         "name": {
             "required": "Tên là bắt buộc.",
