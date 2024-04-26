@@ -31,6 +31,10 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
         }),
         I18nModule.forRoot({
             fallbackLanguage: 'en',
+            fallbacks: {
+                'en-US': 'en',
+                'vi-VN': 'vi',
+            },
             loaderOptions: {
                 path: join(__dirname, '/i18n/'),
                 watch: true,
@@ -123,7 +127,7 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(DefaultAuthMiddleware).forRoutes('*');
+        consumer.apply(DefaultAuthMiddleware, LoggerMiddleware).forRoutes('*');
     }
 }
 
@@ -132,7 +136,14 @@ export class DefaultAuthMiddleware implements NestMiddleware {
     constructor(private readonly configService: ConfigService) {}
     use(req: Request, res: Response, next: NextFunction) {
         req.headers['authorization'] = `Bearer ${this.configService.get<string>('DEFAULT_ACCESS_TOKEN')}`;
-        req.headers['x-lang'] = 'en'; // Default language is Vietnamese
+        next();
+    }
+}
+
+@Injectable()
+export class LoggerMiddleware implements NestMiddleware {
+    use(req: Request, res: Response, next: NextFunction) {
+        console.log('Headers:', req.headers);
         next();
     }
 }

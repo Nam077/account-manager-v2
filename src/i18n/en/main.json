@@ -2,7 +2,7 @@
     "greeting": "Hello, World!",
     "farewell": "Goodbye, World!",
     "questionName": {
-        "question": "Tên của bạn là gì?",
-        "reprompt": "Chào bạn tôi tên là {name}. Bạn tên là gì?"
+        "question": "What is your name?",
+        "reprompt": "Hi, my name is {name}. What's your name?"
     }
 }

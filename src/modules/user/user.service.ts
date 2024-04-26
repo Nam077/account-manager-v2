@@ -131,6 +131,7 @@ export class UserService
                     throw new ForbiddenException(
                         this.i18nService.translate('message.Authentication.Forbidden', {
                             lang: I18nContext.current().lang,
+                            args: { name: user.name },
                         }),
                     );
                 }
