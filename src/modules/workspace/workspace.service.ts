@@ -15,7 +15,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -27,6 +26,7 @@ import { AdminAccountService } from '../admin-account/admin-account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
+import { FindAllWorkspaceDto } from './dto/find-all.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { Workspace } from './entities/workspace.entity';
 
@@ -39,7 +39,7 @@ export class WorkspaceService
             PaginatedData<Workspace>,
             CreateWorkspaceDto,
             UpdateWorkspaceDto,
-            FindAllDto,
+            FindAllWorkspaceDto,
             User
         >
 {
@@ -95,10 +95,7 @@ export class WorkspaceService
     findOneProcess(id: string, options?: FindOneOptionsCustom<Workspace>): Observable<Workspace> {
         return from(this.workspaceRepository.findOne({ where: { id }, ...options }));
     }
-    findOne(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, Workspace)) {
             throw new ForbiddenException(
@@ -126,7 +123,7 @@ export class WorkspaceService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Workspace>> {
+    findAllProcess(findAllDto: FindAllWorkspaceDto): Observable<PaginatedData<Workspace>> {
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
         const relations = ['adminAccount'];
         const searchFields: SearchField[] = [];
@@ -138,7 +135,7 @@ export class WorkspaceService
             relations,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Workspace>>> {
+    findAll(currentUser: User, findAllDto: FindAllWorkspaceDto): Observable<ApiResponse<PaginatedData<Workspace>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.ReadAll, Workspace)) {
             throw new ForbiddenException(
@@ -191,11 +188,7 @@ export class WorkspaceService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(
-        currentUser: User,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Delete, Workspace)) {
             throw new ForbiddenException(
@@ -294,11 +287,7 @@ export class WorkspaceService
             }),
         );
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateWorkspaceDto,
-    ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
+    update(currentUser: User, id: string, updateDto: UpdateWorkspaceDto): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Update, Workspace)) {
             throw new ForbiddenException(

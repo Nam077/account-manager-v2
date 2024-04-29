@@ -15,7 +15,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -26,6 +25,7 @@ import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
+import { FindAllCustomerDto } from './dto/find-all.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Customer } from './entities/customer.entity';
 
@@ -38,7 +38,7 @@ export class CustomerService
             PaginatedData<Customer>,
             CreateCustomerDto,
             UpdateCustomerDto,
-            FindAllDto,
+            FindAllCustomerDto,
             User
         >
 {
@@ -116,7 +116,7 @@ export class CustomerService
             }),
         );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, Customer)) {
             throw new ForbiddenException('You are not allowed to read customer');
@@ -140,7 +140,7 @@ export class CustomerService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Customer>> {
+    findAllProcess(findAllDto: FindAllCustomerDto): Observable<PaginatedData<Customer>> {
         const relations = [];
         const searchFields: SearchField[] = [];
         const fields: Array<keyof Customer> = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
@@ -152,10 +152,7 @@ export class CustomerService
             relations,
         );
     }
-    findAll(
-        currentUser: User,
-        findAllDto: FindAllDto,
-    ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
+    findAll(currentUser: User, findAllDto: FindAllCustomerDto): Observable<ApiResponse<PaginatedData<Customer>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Customer)) {
             throw new ForbiddenException(
@@ -210,11 +207,7 @@ export class CustomerService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(
-        currentUser: User,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, Customer)) {
             throw new ForbiddenException(
@@ -250,12 +243,12 @@ export class CustomerService
                     );
                 }
 
-                return from(this.customerRepository.restore(customer)).pipe(map(() => customer));
+                return from(this.customerRepository.restore(customer.id)).pipe(map(() => customer));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
+    restore(currentUser: User, id: string): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, Customer)) {
             throw new ForbiddenException(
@@ -304,11 +297,7 @@ export class CustomerService
             }),
         );
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateCustomerDto,
-    ): Observable<ApiResponse<Customer | PaginatedData<Customer> | Customer[]>> {
+    update(currentUser: User, id: string, updateDto: UpdateCustomerDto): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, Customer)) {
             throw new ForbiddenException(
