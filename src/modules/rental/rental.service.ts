@@ -9,7 +9,6 @@ import {
     ApiResponse,
     CheckForForkJoin,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -26,6 +25,7 @@ import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
+import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
 
@@ -38,7 +38,7 @@ export class RentalService
             PaginatedData<Rental>,
             CreateRentalDto,
             UpdateRentalDto,
-            FindAllDto,
+            FindAllRentalDto,
             User
         >
 {
@@ -246,7 +246,7 @@ export class RentalService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Rental>> {
+    findAllProcess(findAllDto: FindAllRentalDto): Observable<PaginatedData<Rental>> {
         const fields: Array<keyof Rental> = [
             'id',
             'status',
@@ -269,7 +269,7 @@ export class RentalService
         const relations: string[] = ['accountPrice', 'customer', 'email', 'workspaceEmail'];
         return findWithPaginationAndSearch<Rental>(this.rentalRepository, findAllDto, fields, searchFields, relations);
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Rental>>> {
+    findAll(currentUser: User, findAllDto: FindAllRentalDto): Observable<ApiResponse<PaginatedData<Rental>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException(

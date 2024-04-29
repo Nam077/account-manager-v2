@@ -16,7 +16,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -28,6 +27,7 @@ import { AccountService } from '../account/account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
+import { FindAllAdminAccountDto } from './dto/find-all.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
 import { AdminAccount } from './entities/admin-account.entity';
 @Injectable()
@@ -39,7 +39,7 @@ export class AdminAccountService
             PaginatedData<AdminAccount>,
             CreateAdminAccountDto,
             UpdateAdminAccountDto,
-            FindAllDto,
+            FindAllAdminAccountDto,
             User
         >
 {
@@ -145,7 +145,7 @@ export class AdminAccountService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AdminAccount>> {
+    findAllProcess(findAllDto: FindAllAdminAccountDto): Observable<PaginatedData<AdminAccount>> {
         const fields: Array<keyof AdminAccount> = ['id', 'email', 'value'];
         const relations = ['account'];
         const searchFields: SearchField[] = [
@@ -162,7 +162,10 @@ export class AdminAccountService
             relations,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AdminAccount>>> {
+    findAll(
+        currentUser: User,
+        findAllDto: FindAllAdminAccountDto,
+    ): Observable<ApiResponse<PaginatedData<AdminAccount>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, AdminAccount)) {
             throw new ForbiddenException(

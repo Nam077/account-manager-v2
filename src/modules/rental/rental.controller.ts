@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { FindAllDto, GetCurrentUser } from '../../common';
+import { GetCurrentUser } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateRentalDto } from './dto/create-rental.dto';
+import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { RentalService } from './rental.service';
 
@@ -21,7 +22,7 @@ export class RentalController {
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllDto) {
+    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllRentalDto) {
         return this.rentalService.findAll(user, findAllDto);
     }
 
