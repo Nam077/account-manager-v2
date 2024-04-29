@@ -16,6 +16,7 @@ import { CaslModule } from './modules/casl/casl.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { EmailModule } from './modules/email/email.module';
+import { MailModule } from './modules/mail/mail.module';
 import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 import { RentalModule } from './modules/rental/rental.module';
 import { RentalRenewModule } from './modules/rental-renew/rental-renew.module';
@@ -127,13 +128,14 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
         RentalModule,
         RefreshTokenModule,
         RentalRenewModule,
+        MailModule,
     ],
     controllers: [AppController],
     providers: [AppService, ConfigService],
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(DefaultAuthMiddleware, LoggerMiddleware).forRoutes('*');
+        consumer.apply(DefaultAuthMiddleware).forRoutes('*');
     }
 }
 

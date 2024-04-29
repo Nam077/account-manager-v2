@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
@@ -7,11 +8,14 @@ import { DeepPartial, Repository } from 'typeorm';
 import {
     ActionCasl,
     ApiResponse,
+    checkDate,
+    checkDaysDifference,
     CheckForForkJoin,
     CrudService,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalStatus,
     SearchField,
     updateEntity,
     WorkspaceEmailStatus,
@@ -23,6 +27,7 @@ import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
 import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { FindAllRentalDto } from './dto/find-all.dto';
@@ -52,6 +57,7 @@ export class RentalService
         private readonly workspaceEmailService: WorkspaceEmailService,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
+        private readonly configService: ConfigService,
     ) {}
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
@@ -79,6 +85,8 @@ export class RentalService
         );
     }
     createProcess(createDto: CreateRentalDto): Observable<Rental> {
+        console.log('createDto', createDto);
+
         const {
             customerId,
             accountPriceId,
@@ -739,5 +747,78 @@ export class RentalService
         }
 
         return this.updateProcess(id, updateDto);
+    }
+    checkExpiredAndUpdateStatus(rental: Rental): {
+        rental: Rental;
+        workspaceEmail: WorkspaceEmail;
+        nearExpired: boolean;
+    } {
+        if (checkDate(rental.endDate)) {
+            rental.status = RentalStatus.EXPIRED;
+            if (rental.workspaceEmail) {
+                rental.workspaceEmail.status = WorkspaceEmailStatus.EXPIRED;
+            }
+        }
+        let nearExpired = false;
+        if (checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))) {
+            nearExpired = true;
+        }
+        return {
+            rental,
+            workspaceEmail: rental.workspaceEmail,
+            nearExpired,
+        };
+    }
+
+    saveAll(rentals: Rental[]): Observable<Rental[]> {
+        return from(this.rentalRepository.save(rentals));
+    }
+
+    checkExpiredAll() {
+        const rentals = from(
+            this.rentalRepository.find({
+                where: {
+                    status: RentalStatus.ACTIVE,
+                },
+                relations: {
+                    workspaceEmail: true,
+                    customer: true,
+                },
+            }),
+        );
+        return rentals.pipe(
+            map((rentals) => {
+                const check: {
+                    rentals: Rental[];
+                    workspaceEmails: WorkspaceEmail[];
+                    rentalNearExpired: Rental[];
+                } = {
+                    rentals: [],
+                    workspaceEmails: [],
+                    rentalNearExpired: [],
+                };
+                rentals.map((rentalCheck) => {
+                    const { rental, workspaceEmail, nearExpired } = this.checkExpiredAndUpdateStatus(rentalCheck);
+                    check.rentals.push(rental);
+                    if (workspaceEmail) {
+                        check.workspaceEmails.push(workspaceEmail);
+                    }
+                    if (nearExpired) {
+                        check.rentalNearExpired.push(rental);
+                    }
+                });
+                return check;
+            }),
+            switchMap((check) => {
+                return forkJoin([
+                    this.saveAll(check.rentals),
+                    this.workspaceEmailService.saveAll(check.workspaceEmails),
+                ]).pipe(
+                    map(() => {
+                        return check.rentalNearExpired;
+                    }),
+                );
+            }),
+        );
     }
 }

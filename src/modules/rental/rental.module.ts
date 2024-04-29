@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AccountPriceModule } from '../account-price/account-price.module';
@@ -20,6 +21,7 @@ import { RentalService } from './rental.service';
         EmailModule,
         CaslModule,
         WorkspaceEmailModule,
+        ConfigModule,
     ],
     controllers: [RentalController],
     providers: [RentalService],

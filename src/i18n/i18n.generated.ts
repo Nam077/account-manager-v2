@@ -166,7 +166,6 @@ export type I18nTranslations = {
             "NotDeleted": string;
             "NotRestored": string;
             "InvalidDate": string;
-            "DateInvalid": string;
         };
         "Authentication": {
             "Unauthorized": string;
