@@ -165,7 +165,7 @@ export type I18nTranslations = {
             "Deleted": string;
             "NotDeleted": string;
             "NotRestored": string;
-            "DateInvalid": string;
+            "InvalidDate": string;
         };
         "Authentication": {
             "Unauthorized": string;
@@ -193,6 +193,9 @@ export type I18nTranslations = {
             "Failed": string;
             "Success": string;
         };
+    };
+    "test": {
+        "ok": string;
     };
     "validation": {
         "createAccount": {
@@ -405,6 +408,38 @@ export type I18nTranslations = {
             "emailId": {
                 "isNotEmpty": string;
                 "isUUID": string;
+            };
+        };
+        "createRentalRenew": {
+            "rentalId": {
+                "isNotEmpty": string;
+                "isUUID": string;
+            };
+            "newEndDate": {
+                "isNotEmpty": string;
+                "isDate": string;
+            };
+            "lastStartDate": {
+                "isNotEmpty": string;
+                "isDate": string;
+            };
+            "totalPrice": {
+                "isNotEmpty": string;
+                "isNumber": string;
+            };
+            "warrantyFee": {
+                "isNotEmpty": string;
+                "isNumber": string;
+            };
+            "discount": {
+                "isNotEmpty": string;
+                "isNumber": string;
+            };
+            "paymentMethod": {
+                "isString": string;
+            };
+            "note": {
+                "isString": string;
             };
         };
         "Login": {

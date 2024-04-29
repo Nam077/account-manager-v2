@@ -436,4 +436,8 @@ export class WorkspaceEmailService
     checkExistByWorkspaceIdAndEmailId(workspaceId: string, emailId: string): Observable<boolean> {
         return from(this.workspaceEmailRepository.existsBy({ workspaceId, emailId }));
     }
+
+    saveAll(workspaceEmails: WorkspaceEmail[]): Observable<WorkspaceEmail[]> {
+        return from(this.workspaceEmailRepository.save(workspaceEmails));
+    }
 }

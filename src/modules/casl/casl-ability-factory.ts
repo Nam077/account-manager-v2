@@ -10,6 +10,7 @@ import { AdminAccount } from '../admin-account/entities/admin-account.entity';
 import { Customer } from '../customer/entities/customer.entity';
 import { Email } from '../email/entities/email.entity';
 import { Rental } from '../rental/entities/rental.entity';
+import { RentalRenew } from '../rental-renew/entities/rental-renew.entity';
 import { RentalType } from '../rental-type/entities/rental-type.entity';
 import { User } from '../user/entities/user.entity';
 import { Workspace } from '../workspace/entities/workspace.entity';
@@ -27,6 +28,7 @@ export type Subjects = InferSubjects<
     | typeof AccountPrice
     | typeof WorkspaceEmail
     | typeof Rental
+    | typeof RentalRenew
     | 'all'
 >;
 type AppAbility = MongoAbility<[ActionCasl, Subjects]>;
