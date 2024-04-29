@@ -150,7 +150,7 @@
         "Deleted": "Rental renew {name} deleted successfully",
         "NotDeleted": "Rental renew {name} cannot be deleted",
         "NotRestored": "Rental renew {name} cannot be restored",
-        "DateInvalid": "Invalid renew date, please choose a date after the expiration date"
+        "InvalidDate": "New end date must be greater than current end date"
     },
     "Authentication": {
         "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",
