@@ -2,13 +2,10 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
-enum SORT_ORDER {
-    ASC = 'ASC',
-    DESC = 'DESC',
-}
+import { SORT_ORDER } from '../enum';
 
-export class FindAllDto {
-    @ApiPropertyOptional({ description: 'Search query', example: 'example' })
+export abstract class FindAllDtoAbstract {
+    @ApiPropertyOptional({ description: 'Search query', example: '' })
     @IsOptional()
     @IsString({ message: 'Query must be a string' })
     @IsNotEmpty({ message: 'Query cannot be empty' })
@@ -36,10 +33,4 @@ export class FindAllDto {
     @IsOptional()
     @IsIn(Object.values(SORT_ORDER))
     sort?: SORT_ORDER;
-
-    @ApiPropertyOptional({ description: 'Sort field', example: 'name' })
-    @IsOptional()
-    @IsString({ message: 'SortField must be a string' })
-    @IsNotEmpty({ message: 'SortField cannot be empty' })
-    sortField?: string;
 }
