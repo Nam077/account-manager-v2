@@ -788,9 +788,15 @@ export class RentalService
                     status: RentalStatus.ACTIVE,
                 },
                 relations: {
-                    workspaceEmail: true,
+                    workspaceEmail: {
+                        workspace: {
+                            adminAccount: {
+                                account: true,
+                            },
+                        },
+                    },
                     customer: true,
-                    accountPrice: { account: true },
+                    accountPrice: { account: true, rentalType: true },
                 },
             }),
         ).pipe(
@@ -804,25 +810,23 @@ export class RentalService
                     workspaceEmail: [],
                     rentalNearExpired: [],
                 };
-                rentals.map((rental) => {
-                    const {
-                        rental: rentalUpdate,
-                        workspaceEmail,
-                        nearExpired,
-                    } = this.checkExpiredAndUpdateStatus(rental);
-                    checks.rental.push(rentalUpdate);
+                rentals.map((rentalCheck) => {
+                    const { rental, workspaceEmail, nearExpired } = this.checkExpiredAndUpdateStatus(rentalCheck);
                     if (workspaceEmail) {
                         checks.workspaceEmail.push(workspaceEmail);
                     }
                     if (nearExpired) {
-                        checks.rentalNearExpired.push(rentalUpdate);
+                        checks.rentalNearExpired.push(rental);
+                    } else {
+                        checks.rental.push(rental);
                     }
                 });
                 return forkJoin([
                     this.saveAll(checks.rental),
                     this.workspaceEmailService.saveAll(checks.workspaceEmail),
                     this.sendMailWithForJoin(checks.rentalNearExpired),
-                    this.pingToAdminBot(checks.rentalNearExpired[0]),
+                    this.pingToAdminBotMany(checks.rentalNearExpired, true),
+                    this.pingToAdminBotMany(checks.rental),
                 ]);
             }),
             map(() => {
@@ -855,21 +859,35 @@ export class RentalService
         });
         return forkJoin(tasks);
     }
+    pingToAdminBotMany(rentals: Rental[], nearExpired = false) {
+        const tasks: Observable<any>[] = [];
+        rentals.map((rental) => {
+            return tasks.push(this.pingToAdminBot(rental, nearExpired));
+        });
+        return forkJoin(tasks);
+    }
 
-    pingToAdminBot(rental: Rental) {
-        const markDown = `
-        *Rental ${rental.id} is expired*
-        *Customer*: ${rental.customer.name}
-        *Account*: ${rental.accountPrice.account.name}
-        *Expired at*: ${rental.endDate}
-        `;
+    pingToAdminBot(rental: Rental, nearExpired = false) {
+        const markDown = `<b>📄 Thông Tin Thuê Tài Khoản</b>\n
+        - Trạng thái thuê: ${nearExpired ? '<b>🔔 Sắp hết hạn</b>' : '<b>⏳ Đã hết hạn</b>'}\n
+        - Tên khách hàng: <b>${rental.customer.name}</b>\n
+        - Tên tài khoản: <b>${rental.accountPrice.account.name}</b>\n
+        - Email khách hàng: <b>${rental.customer.email}</b>\n
+        - Ngày hết hạn thuê: <b>${rental.endDate}</b>\n
+        ${nearExpired ? `- Số ngày còn lại: <b>${this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS')} ngày</b>\n` : ''}
+        ${rental.workspaceEmail ? `- Thông tin workspace: <b>${rental.workspaceEmail.workspace.adminAccount.email} - ${rental.workspaceEmail.workspace.adminAccount.account.name}</b>\n` : ''}
+<b>💳 Chi Tiết Thanh Toán</b>\n
+        - Loại thuê: <b>${rental.accountPrice.rentalType.name}</b>\n
+        - Tổng giá tiền: <b>${rental.totalPrice}</b>\n
+        - Phương thức thanh toán: <b>${rental.paymentMethod}</b>\n`;
+
         return from(
             this.bot.telegram.sendMessage(this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
-                parse_mode: 'Markdown',
+                parse_mode: 'HTML',
             }),
         );
     }
-    @Cron(CronExpression.EVERY_MINUTE)
+    @Cron(CronExpression.EVERY_DAY_AT_7AM)
     handleCron() {
         this.checkExpiredAll().subscribe((result) => {
             console.log('result', result);
