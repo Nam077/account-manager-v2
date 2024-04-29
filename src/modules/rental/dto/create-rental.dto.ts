@@ -3,9 +3,8 @@ import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
-import { IsEarlierThanDate } from '../../../common';
+import { IsEarlierThanDate, RentalStatus } from '../../../common';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
-import { RentalStatus } from '../entities/rental.entity';
 
 export class CreateRentalDto {
     @ApiProperty({

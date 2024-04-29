@@ -215,5 +215,37 @@
         "Failed": "Đăng nhập thất bại: Tên đăng nhập hoặc mật khẩu không chính xác.",
         "LockedOut": "Tài khoản của bạn đã bị khóa do nhập sai quá nhiều lần.",
         "Inactive": "Tài khoản của bạn chưa được kích hoạt."
+    },
+    "createRentalRenew": {
+        "rentalId": {
+            "isNotEmpty": "ID của hợp đồng thuê là bắt buộc.",
+            "isUUID": "ID của hợp đồng thuê phải là UUID hợp lệ."
+        },
+        "newEndDate": {
+            "isNotEmpty": "Ngày kết thúc mới là bắt buộc.",
+            "isDate": "Ngày kết thúc mới phải là ngày hợp lệ."
+        },
+        "lastStartDate": {
+            "isNotEmpty": "Ngày bắt đầu cuối cùng là bắt buộc.",
+            "isDate": "Ngày bắt đầu cuối cùng phải là ngày hợp lệ."
+        },
+        "totalPrice": {
+            "isNotEmpty": "Tổng giá là bắt buộc.",
+            "isNumber": "Tổng giá phải là số."
+        },
+        "warrantyFee": {
+            "isNotEmpty": "Phí bảo hành là bắt buộc.",
+            "isNumber": "Phí bảo hành phải là số."
+        },
+        "discount": {
+            "isNotEmpty": "Giảm giá là bắt buộc.",
+            "isNumber": "Giảm giá phải là số."
+        },
+        "paymentMethod": {
+            "isString": "Phương thức thanh toán phải là chuỗi."
+        },
+        "note": {
+            "isString": "Ghi chú phải là chuỗi."
+        }
     }
 }

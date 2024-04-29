@@ -5,18 +5,18 @@ import {
     Entity,
     JoinColumn,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
 
+import { RentalStatus } from '../../../common';
 import { AccountPrice } from '../../account-price/entities/account-price.entity';
 import { Customer } from '../../customer/entities/customer.entity';
 import { Email } from '../../email/entities/email.entity';
+import { RentalRenew } from '../../rental-renew/entities/rental-renew.entity';
 import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
-export enum RentalStatus {
-    ACTIVE = 'active',
-    INACTIVE = 'inactive',
-}
+
 @Entity({ name: 'rentals' })
 export class Rental {
     @PrimaryGeneratedColumn('uuid', {
@@ -74,16 +74,6 @@ export class Rental {
     endDate: Date;
 
     @Column({
-        type: 'decimal',
-        precision: 10,
-        scale: 2,
-        nullable: false,
-        comment: 'Total price of the rental',
-        name: 'total_price',
-    })
-    totalPrice: number;
-
-    @Column({
         type: 'enum',
         enum: RentalStatus,
         default: RentalStatus.ACTIVE,
@@ -103,6 +93,16 @@ export class Rental {
         name: 'payment_amount',
     })
     paymentAmount: number;
+
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        scale: 2,
+        nullable: false,
+        comment: 'Total price of the rental',
+        name: 'total_price',
+    })
+    totalPrice: number;
 
     @Column({
         type: 'decimal',
@@ -167,4 +167,7 @@ export class Rental {
     @ManyToOne(() => WorkspaceEmail, (workspaceEmail) => workspaceEmail.rentals)
     @JoinColumn({ name: 'workspace_email_id' })
     workspaceEmail: WorkspaceEmail;
+
+    @OneToMany(() => RentalRenew, (rentalRenew) => rentalRenew.rental)
+    rentalRenews: RentalRenew[];
 }

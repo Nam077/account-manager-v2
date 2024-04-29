@@ -10,6 +10,7 @@ import { Customer } from '../../customer/entities/customer.entity';
 import { Email } from '../../email/entities/email.entity';
 import { RefreshToken } from '../../refresh-token/entities/refresh-token.entity';
 import { Rental } from '../../rental/entities/rental.entity';
+import { RentalRenew } from '../../rental-renew/entities/rental-renew.entity';
 import { RentalType } from '../../rental-type/entities/rental-type.entity';
 import { User } from '../../user/entities/user.entity';
 import { Workspace } from '../../workspace/entities/workspace.entity';
@@ -39,6 +40,7 @@ export class MainConfigServiceService implements TypeOrmOptionsFactory {
                 WorkspaceEmail,
                 Rental,
                 RefreshToken,
+                RentalRenew,
             ],
             synchronize: true,
             // logging: true,

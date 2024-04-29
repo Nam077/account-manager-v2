@@ -1,4 +1,4 @@
-export enum WorkspaceEmailStatus {
+export enum RentalStatus {
     ACTIVE = 'active',
     INACTIVE = 'inactive',
     EXPIRED = 'expired',
