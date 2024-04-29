@@ -140,6 +140,18 @@
         "NotDeleted": "User {name} cannot be deleted",
         "NotRestored": "User {name} cannot be restored"
     },
+    "RentalRenew": {
+        "NotFound": "Rental renew not found",
+        "Found": "Rental renew {name} found",
+        "Conflict": "Rental renew already exists",
+        "Created": "Rental renew {name} created successfully",
+        "Updated": "Rental renew {name} updated successfully",
+        "Restored": "Rental renew {name} restored successfully",
+        "Deleted": "Rental renew {name} deleted successfully",
+        "NotDeleted": "Rental renew {name} cannot be deleted",
+        "NotRestored": "Rental renew {name} cannot be restored",
+        "DateInvalid": "Invalid renew date, please choose a date after the expiration date"
+    },
     "Authentication": {
         "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",
         "Forbidden": "Forbidden: You do not have permission to perform this action.",
