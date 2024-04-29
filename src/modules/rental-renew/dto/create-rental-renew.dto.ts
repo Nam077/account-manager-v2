@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
@@ -12,19 +13,13 @@ export class CreateRentalRenewDto {
     @IsUUID('all', { message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.rentalId.isUUID') })
     readonly rentalId: string;
 
-    @ApiProperty({ description: 'New end date of the rental', example: '2024-04-30' })
+    @ApiProperty({ description: 'New end date of the rental', type: 'string', format: 'date', example: '2024-04-01' })
     @IsNotEmpty({
         message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.newEndDate.isNotEmpty'),
     })
+    @Type(() => Date)
     @IsDate({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.newEndDate.isDate') })
     readonly newEndDate: Date;
-
-    @ApiProperty({ description: 'Last start date of the rental', example: '2024-03-01' })
-    @IsNotEmpty({
-        message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.lastStartDate.isNotEmpty'),
-    })
-    @IsDate({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.lastStartDate.isDate') })
-    readonly lastStartDate: Date;
 
     @ApiProperty({ description: 'Total price of the rental', example: 299.99 })
     @IsNotEmpty({

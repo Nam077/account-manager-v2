@@ -1,6 +1,7 @@
 import { Injectable, MiddlewareConsumer, Module, NestMiddleware } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { NextFunction } from 'express';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import { join } from 'path';
@@ -16,10 +17,12 @@ import { CaslModule } from './modules/casl/casl.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { EmailModule } from './modules/email/email.module';
+import { MailModule } from './modules/mail/mail.module';
 import { RefreshTokenModule } from './modules/refresh-token/refresh-token.module';
 import { RentalModule } from './modules/rental/rental.module';
 import { RentalRenewModule } from './modules/rental-renew/rental-renew.module';
 import { RentalTypeModule } from './modules/rental-type/rental-type.module';
+import { TelegramBotModule } from './modules/telegram-bot/telegram-bot.module';
 import { UserModule } from './modules/user/user.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.module';
@@ -127,13 +130,16 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
         RentalModule,
         RefreshTokenModule,
         RentalRenewModule,
+        MailModule,
+        ScheduleModule.forRoot(),
+        TelegramBotModule,
     ],
     controllers: [AppController],
     providers: [AppService, ConfigService],
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(DefaultAuthMiddleware, LoggerMiddleware).forRoutes('*');
+        consumer.apply(DefaultAuthMiddleware).forRoutes('*');
     }
 }
 

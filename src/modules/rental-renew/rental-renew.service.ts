@@ -45,10 +45,10 @@ export class RentalRenewService
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     checkDate(currentDate: Date, newEndDate: Date): boolean {
-        return newEndDate > currentDate;
+        return Date.parse(currentDate.toString()) < Date.parse(newEndDate.toString());
     }
     createProcess(createDto: CreateRentalRenewDto): Observable<RentalRenew> | any {
-        const { rentalId, newEndDate, warrantyFee, note } = createDto;
+        const { rentalId, newEndDate, warrantyFee, note, discount, totalPrice, paymentMethod } = createDto;
         return this.rentalService
             .findOneProcess(rentalId, {
                 relations: { workspaceEmail: true },
@@ -99,8 +99,11 @@ export class RentalRenewService
                     rentalRenew.newEndDate = newEndDate;
                     rentalRenew.warrantyFee = warrantyFee;
                     rentalRenew.note = note;
-                    rentalRenew.lastStartDate = rental.startDate;
-                    rentalRenew.paymentMethod = createDto.paymentMethod || 'cash';
+                    rentalRenew.lastStartDate = rental.endDate;
+                    rentalRenew.paymentMethod = paymentMethod;
+                    rentalRenew.discount = discount;
+                    rentalRenew.totalPrice = totalPrice;
+                    rentalRenew.rental = rental;
                     return from(this.rentalRenewRepository.save(rentalRenew));
                 }),
             );
@@ -201,6 +204,7 @@ export class RentalRenewService
     removeProcess(id: string, hardRemove?: boolean): Observable<RentalRenew> {
         return this.findOneProcess(id, {
             withDeleted: hardRemove,
+            relations: { rental: true },
         }).pipe(
             map((rentalRenew) => {
                 if (!rentalRenew) {

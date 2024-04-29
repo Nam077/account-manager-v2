@@ -1,17 +1,24 @@
 import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { I18nContext, I18nService } from 'nestjs-i18n';
+import { InjectBot } from 'nestjs-telegraf';
 import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { Scenes, Telegraf } from 'telegraf';
 import { DeepPartial, Repository } from 'typeorm';
 
 import {
     ActionCasl,
     ApiResponse,
+    checkDate,
+    checkDaysDifference,
     CheckForForkJoin,
     CrudService,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalStatus,
     SearchField,
     updateEntity,
     WorkspaceEmailStatus,
@@ -21,13 +28,16 @@ import { AccountPriceService } from '../account-price/account-price.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
+import { MailService } from '../mail/mail.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
+import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
 import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
+export interface TelegrafContext extends Scenes.SceneContext {}
 
 @Injectable()
 export class RentalService
@@ -52,6 +62,9 @@ export class RentalService
         private readonly workspaceEmailService: WorkspaceEmailService,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
+        private readonly configService: ConfigService,
+        private readonly mailService: MailService,
+        @InjectBot() private bot: Telegraf<TelegrafContext>,
     ) {}
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
@@ -79,6 +92,8 @@ export class RentalService
         );
     }
     createProcess(createDto: CreateRentalDto): Observable<Rental> {
+        console.log('createDto', createDto);
+
         const {
             customerId,
             accountPriceId,
@@ -739,5 +754,125 @@ export class RentalService
         }
 
         return this.updateProcess(id, updateDto);
+    }
+    checkExpiredAndUpdateStatus(rental: Rental): {
+        rental: Rental;
+        workspaceEmail: WorkspaceEmail;
+        nearExpired: boolean;
+    } {
+        if (checkDate(rental.endDate)) {
+            rental.status = RentalStatus.EXPIRED;
+            if (rental.workspaceEmail) {
+                rental.workspaceEmail.status = WorkspaceEmailStatus.EXPIRED;
+            }
+        }
+        let nearExpired = false;
+        if (checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))) {
+            nearExpired = true;
+        }
+        return {
+            rental,
+            workspaceEmail: rental.workspaceEmail,
+            nearExpired,
+        };
+    }
+
+    saveAll(rentals: Rental[]): Observable<Rental[]> {
+        return from(this.rentalRepository.save(rentals));
+    }
+
+    checkExpiredAll() {
+        return from(
+            this.rentalRepository.find({
+                where: {
+                    status: RentalStatus.ACTIVE,
+                },
+                relations: {
+                    workspaceEmail: true,
+                    customer: true,
+                    accountPrice: { account: true },
+                },
+            }),
+        ).pipe(
+            map((rentals) => {
+                const checks: {
+                    rental: Rental[];
+                    workspaceEmail: WorkspaceEmail[];
+                    rentalNearExpired: Rental[];
+                } = {
+                    rental: [],
+                    workspaceEmail: [],
+                    rentalNearExpired: [],
+                };
+                rentals.map((rental) => {
+                    const {
+                        rental: rentalUpdate,
+                        workspaceEmail,
+                        nearExpired,
+                    } = this.checkExpiredAndUpdateStatus(rental);
+                    checks.rental.push(rentalUpdate);
+                    if (workspaceEmail) {
+                        checks.workspaceEmail.push(workspaceEmail);
+                    }
+                    if (nearExpired) {
+                        checks.rentalNearExpired.push(rentalUpdate);
+                    }
+                });
+                return forkJoin([
+                    this.saveAll(checks.rental),
+                    this.workspaceEmailService.saveAll(checks.workspaceEmail),
+                    this.sendMailWithForJoin(checks.rentalNearExpired),
+                    this.pingToAdminBot(checks.rentalNearExpired[0]),
+                ]);
+            }),
+            map(() => {
+                return 'success';
+            }),
+        );
+    }
+    sendMailExpired(rental: Rental) {
+        return from(
+            this.mailService
+                .sendMailWarningNearExpired(rental.customer.email, {
+                    name: rental.customer.name,
+                    email: rental.customer.email,
+                    accountName: rental.accountPrice.account.name,
+                    expiredAt: rental.endDate,
+                    daysLeft: this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'),
+                })
+                .pipe(
+                    map(() => {
+                        console.log('send mail success');
+                        return rental;
+                    }),
+                ),
+        );
+    }
+    sendMailWithForJoin(rentals: Rental[]) {
+        const tasks: Observable<any>[] = [];
+        rentals.map((rental) => {
+            return tasks.push(this.sendMailExpired(rental));
+        });
+        return forkJoin(tasks);
+    }
+
+    pingToAdminBot(rental: Rental) {
+        const markDown = `
+        *Rental ${rental.id} is expired*
+        *Customer*: ${rental.customer.name}
+        *Account*: ${rental.accountPrice.account.name}
+        *Expired at*: ${rental.endDate}
+        `;
+        return from(
+            this.bot.telegram.sendMessage(this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
+                parse_mode: 'Markdown',
+            }),
+        );
+    }
+    @Cron(CronExpression.EVERY_MINUTE)
+    handleCron() {
+        this.checkExpiredAll().subscribe((result) => {
+            console.log('result', result);
+        });
     }
 }
