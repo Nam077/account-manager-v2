@@ -3,9 +3,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule, MailerOptions, MailerOptionsFactory } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { I18nService } from 'nestjs-i18n';
-import path from 'path';
+import { join } from 'path';
+
+import { MailService } from './mail.service';
+
 @Injectable()
-export class MailConfigService implements MailerOptionsFactory {
+class MailerConfigService implements MailerOptionsFactory {
     constructor(
         private readonly configService: ConfigService,
         private readonly i18n: I18nService,
@@ -15,7 +18,6 @@ export class MailConfigService implements MailerOptionsFactory {
             transport: {
                 host: this.configService.get('MAIL_HOST'),
                 port: this.configService.get('MAIL_PORT'),
-                secure: false,
                 auth: {
                     user: this.configService.get('MAIL_USER'),
                     pass: this.configService.get('MAIL_PASS'),
@@ -25,25 +27,31 @@ export class MailConfigService implements MailerOptionsFactory {
                 from: this.configService.get('MAIL_FROM'),
             },
             template: {
-                dir: path.join(__dirname, '../resources/templates/'),
-                adapter: new HandlebarsAdapter({ t: this.i18n.hbsHelper }),
+                adapter: new HandlebarsAdapter({
+                    t: this.i18n.hbsHelper,
+                }),
+                options: {
+                    strict: true,
+                },
+                dir: join(__dirname, '../../mail/templates'),
             },
         };
     }
 }
-
 @Module({
     imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
         MailerModule.forRootAsync({
-            useClass: MailConfigService,
-            inject: [I18nService],
-        }),
-        ConfigModule.forRoot({
-            isGlobal: true,
+            useClass: MailerConfigService,
+            inject: [ConfigService, I18nService],
         }),
     ],
     controllers: [],
-    providers: [],
-    exports: [],
+    providers: [MailerConfigService, MailService],
+    exports: [MailService],
 })
-export class MailModule {}
+export class MailModule {
+    constructor() {
+        console.log(join(__dirname, '../../mail/templates'));
+    }
+}

@@ -1,8 +1,11 @@
 import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { I18nContext, I18nService } from 'nestjs-i18n';
+import { InjectBot } from 'nestjs-telegraf';
 import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
+import { Scenes, Telegraf } from 'telegraf';
 import { DeepPartial, Repository } from 'typeorm';
 
 import {
@@ -25,6 +28,7 @@ import { AccountPriceService } from '../account-price/account-price.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
+import { MailService } from '../mail/mail.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
@@ -33,6 +37,7 @@ import { CreateRentalDto } from './dto/create-rental.dto';
 import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
+export interface TelegrafContext extends Scenes.SceneContext {}
 
 @Injectable()
 export class RentalService
@@ -58,6 +63,8 @@ export class RentalService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly configService: ConfigService,
+        private readonly mailService: MailService,
+        @InjectBot() private bot: Telegraf<TelegrafContext>,
     ) {}
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
@@ -775,7 +782,7 @@ export class RentalService
     }
 
     checkExpiredAll() {
-        const rentals = from(
+        return from(
             this.rentalRepository.find({
                 where: {
                     status: RentalStatus.ACTIVE,
@@ -783,42 +790,89 @@ export class RentalService
                 relations: {
                     workspaceEmail: true,
                     customer: true,
+                    accountPrice: { account: true },
                 },
             }),
-        );
-        return rentals.pipe(
+        ).pipe(
             map((rentals) => {
-                const check: {
-                    rentals: Rental[];
-                    workspaceEmails: WorkspaceEmail[];
+                const checks: {
+                    rental: Rental[];
+                    workspaceEmail: WorkspaceEmail[];
                     rentalNearExpired: Rental[];
                 } = {
-                    rentals: [],
-                    workspaceEmails: [],
+                    rental: [],
+                    workspaceEmail: [],
                     rentalNearExpired: [],
                 };
-                rentals.map((rentalCheck) => {
-                    const { rental, workspaceEmail, nearExpired } = this.checkExpiredAndUpdateStatus(rentalCheck);
-                    check.rentals.push(rental);
+                rentals.map((rental) => {
+                    const {
+                        rental: rentalUpdate,
+                        workspaceEmail,
+                        nearExpired,
+                    } = this.checkExpiredAndUpdateStatus(rental);
+                    checks.rental.push(rentalUpdate);
                     if (workspaceEmail) {
-                        check.workspaceEmails.push(workspaceEmail);
+                        checks.workspaceEmail.push(workspaceEmail);
                     }
                     if (nearExpired) {
-                        check.rentalNearExpired.push(rental);
+                        checks.rentalNearExpired.push(rentalUpdate);
                     }
                 });
-                return check;
-            }),
-            switchMap((check) => {
                 return forkJoin([
-                    this.saveAll(check.rentals),
-                    this.workspaceEmailService.saveAll(check.workspaceEmails),
-                ]).pipe(
-                    map(() => {
-                        return check.rentalNearExpired;
-                    }),
-                );
+                    this.saveAll(checks.rental),
+                    this.workspaceEmailService.saveAll(checks.workspaceEmail),
+                    this.sendMailWithForJoin(checks.rentalNearExpired),
+                    this.pingToAdminBot(checks.rentalNearExpired[0]),
+                ]);
+            }),
+            map(() => {
+                return 'success';
             }),
         );
+    }
+    sendMailExpired(rental: Rental) {
+        return from(
+            this.mailService
+                .sendMailWarningNearExpired(rental.customer.email, {
+                    name: rental.customer.name,
+                    email: rental.customer.email,
+                    accountName: rental.accountPrice.account.name,
+                    expiredAt: rental.endDate,
+                    daysLeft: this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'),
+                })
+                .pipe(
+                    map(() => {
+                        console.log('send mail success');
+                        return rental;
+                    }),
+                ),
+        );
+    }
+    sendMailWithForJoin(rentals: Rental[]) {
+        const tasks: Observable<any>[] = [];
+        rentals.map((rental) => {
+            return tasks.push(this.sendMailExpired(rental));
+        });
+        return forkJoin(tasks);
+    }
+
+    pingToAdminBot(rental: Rental) {
+        const markDown = `
+        *Rental ${rental.id} is expired*
+        *Customer*: ${rental.customer.name}
+        *Account*: ${rental.accountPrice.account.name}
+        *Expired at*: ${rental.endDate}
+        `;
+        return from(
+            this.bot.telegram.sendMessage(this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
+                parse_mode: 'Markdown',
+            }),
+        );
+    }
+    @Cron(CronExpression.EVERY_MINUTE)
+    handleCron() {
+        this.checkExpiredAll().subscribe((result) => {
+            console.log('result', result);
+        });
     }
 }

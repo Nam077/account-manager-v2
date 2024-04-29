@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AccountPriceModule } from '../account-price/account-price.module';
 import { CaslModule } from '../casl/casl.module';
 import { CustomerModule } from '../customer/customer.module';
 import { EmailModule } from '../email/email.module';
+import { MailModule } from '../mail/mail.module';
 import { WorkspaceModule } from '../workspace/workspace.module';
 import { WorkspaceEmailModule } from '../workspace-email/workspace-email.module';
 import { Rental } from './entities/rental.entity';
@@ -22,6 +24,8 @@ import { RentalService } from './rental.service';
         CaslModule,
         WorkspaceEmailModule,
         ConfigModule,
+        MailModule,
+        ScheduleModule.forRoot(),
     ],
     controllers: [RentalController],
     providers: [RentalService],
