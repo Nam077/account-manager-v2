@@ -8,7 +8,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -20,6 +19,7 @@ import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
+import { FindAllRentalTypeDto } from './dto/find-all.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
 import { RentalType } from './entities/rental-type.entity';
 
@@ -32,7 +32,7 @@ export class RentalTypeService
             PaginatedData<RentalType>,
             CreateRentalTypeDto,
             UpdateRentalTypeDto,
-            FindAllDto,
+            FindAllRentalTypeDto,
             User
         >
 {
@@ -121,7 +121,7 @@ export class RentalTypeService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<RentalType>> {
+    findAllProcess(findAllDto: FindAllRentalTypeDto): Observable<PaginatedData<RentalType>> {
         const fields: Array<keyof RentalType> = ['id', 'name', 'maxSlots', 'description'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -133,10 +133,7 @@ export class RentalTypeService
             relations,
         );
     }
-    findAll(
-        currentUser: User,
-        findAllDto: FindAllDto,
-    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+    findAll(currentUser: User, findAllDto: FindAllRentalTypeDto): Observable<ApiResponse<PaginatedData<RentalType>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.ReadAll, RentalType)) {
             throw new BadRequestException(
@@ -188,11 +185,7 @@ export class RentalTypeService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(
-        currentUser: User,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Delete, RentalType)) {
             throw new BadRequestException(
@@ -236,10 +229,7 @@ export class RentalTypeService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+    restore(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Restore, RentalType)) {
             throw new BadRequestException(
@@ -298,11 +288,7 @@ export class RentalTypeService
             }),
         );
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateRentalTypeDto,
-    ): Observable<ApiResponse<RentalType | PaginatedData<RentalType> | RentalType[]>> {
+    update(currentUser: User, id: string, updateDto: UpdateRentalTypeDto): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Update, RentalType)) {
             throw new BadRequestException(

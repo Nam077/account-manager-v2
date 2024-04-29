@@ -16,7 +16,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -28,6 +27,7 @@ import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { User } from '../user/entities/user.entity';
 import { CreateEmailDto } from './dto/create-email.dto';
+import { FindAllEmailDto } from './dto/find-all.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Email } from './entities/email.entity';
 @Injectable()
@@ -39,7 +39,7 @@ export class EmailService
             PaginatedData<Email>,
             CreateEmailDto,
             UpdateEmailDto,
-            FindAllDto,
+            FindAllEmailDto,
             User
         >
 {
@@ -135,7 +135,7 @@ export class EmailService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<Email>> {
+    findAllProcess(findAllDto: FindAllEmailDto): Observable<PaginatedData<Email>> {
         const relations = ['customer'];
         const searchFields: SearchField[] = [
             {
@@ -146,7 +146,7 @@ export class EmailService
         const fields: Array<keyof Email> = ['id', 'email'];
         return findWithPaginationAndSearch<Email>(this.emailRepository, findAllDto, fields, searchFields, relations);
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<Email>>> {
+    findAll(currentUser: User, findAllDto: FindAllEmailDto): Observable<ApiResponse<PaginatedData<Email>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Email)) {
             throw new ForbiddenException(

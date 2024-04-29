@@ -15,7 +15,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -29,6 +28,7 @@ import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
+import { FindAllWorkspaceEmailDto } from './dto/find-all.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
 import { WorkspaceEmail } from './entities/workspace-email.entity';
 
@@ -41,7 +41,7 @@ export class WorkspaceEmailService
             PaginatedData<WorkspaceEmail>,
             CreateWorkspaceEmailDto,
             UpdateWorkspaceEmailDto,
-            FindAllDto,
+            FindAllWorkspaceEmailDto,
             User
         >
 {
@@ -133,10 +133,7 @@ export class WorkspaceEmailService
             }),
         );
     }
-    findOne(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
+    findOne(currentUser: User, id: string): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, WorkspaceEmail)) {
             throw new ForbiddenException(
@@ -169,7 +166,7 @@ export class WorkspaceEmailService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<WorkspaceEmail>> {
+    findAllProcess(findAllDto: FindAllWorkspaceEmailDto): Observable<PaginatedData<WorkspaceEmail>> {
         const fields: Array<keyof WorkspaceEmail> = ['id', 'workspaceId', 'emailId'];
         const relations = ['workspace', 'email'];
         const searchFields: SearchField[] = [];
@@ -183,8 +180,8 @@ export class WorkspaceEmailService
     }
     findAll(
         currentUser: User,
-        findAllDto: FindAllDto,
-    ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
+        findAllDto: FindAllWorkspaceEmailDto,
+    ): Observable<ApiResponse<PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.ReadAll, WorkspaceEmail)) {
             throw new ForbiddenException(
@@ -246,11 +243,7 @@ export class WorkspaceEmailService
         );
     }
 
-    remove(
-        currentUser: User,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Delete, WorkspaceEmail)) {
             throw new ForbiddenException(
@@ -293,14 +286,11 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
-                return from(this.workspaceEmailRepository.restore(workspaceEmail)).pipe(map(() => workspaceEmail));
+                return from(this.workspaceEmailRepository.restore(id)).pipe(map(() => workspaceEmail));
             }),
         );
     }
-    restore(
-        currentUser: User,
-        id: string,
-    ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
+    restore(currentUser: User, id: string): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Restore, WorkspaceEmail)) {
             throw new ForbiddenException(
@@ -421,11 +411,7 @@ export class WorkspaceEmailService
             }),
         );
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateWorkspaceEmailDto,
-    ): Observable<ApiResponse<WorkspaceEmail | WorkspaceEmail[] | PaginatedData<WorkspaceEmail>>> {
+    update(currentUser: User, id: string, updateDto: UpdateWorkspaceEmailDto): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Update, WorkspaceEmail)) {
             throw new ForbiddenException(

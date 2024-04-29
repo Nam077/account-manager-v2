@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { FindAllDto, GetCurrentUser } from '../../common';
+import { GetCurrentUser } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
+import { FindAllWorkspaceDto } from './dto/find-all.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { WorkspaceService } from './workspace.service';
 
@@ -21,7 +22,7 @@ export class WorkspaceController {
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllDto) {
+    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllWorkspaceDto) {
         return this.workspaceService.findAll(user, findAllDto);
     }
 

@@ -15,7 +15,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -28,6 +27,7 @@ import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { RentalTypeService } from '../rental-type/rental-type.service';
 import { User } from '../user/entities/user.entity';
 import { CreateAccountPriceDto } from './dto/create-account-price.dto';
+import { FindAllAccountPriceDto } from './dto/find-all.dto';
 import { UpdateAccountPriceDto } from './dto/update-account-price.dto';
 import { AccountPrice } from './entities/account-price.entity';
 
@@ -40,7 +40,7 @@ export class AccountPriceService
             PaginatedData<AccountPrice>,
             CreateAccountPriceDto,
             UpdateAccountPriceDto,
-            FindAllDto,
+            FindAllAccountPriceDto,
             User
         >
 {
@@ -157,7 +157,7 @@ export class AccountPriceService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AccountPrice>> {
+    findAllProcess(findAllDto: FindAllAccountPriceDto): Observable<PaginatedData<AccountPrice>> {
         const fields: Array<keyof AccountPrice> = ['id', 'accountId', 'rentalTypeId', 'price'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -171,7 +171,7 @@ export class AccountPriceService
     }
     findAll(
         currentUser: User,
-        findAllDto: FindAllDto,
+        findAllDto: FindAllAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, AccountPrice)) {

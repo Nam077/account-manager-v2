@@ -14,7 +14,6 @@ import { DeepPartial, Repository } from 'typeorm';
 import {
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -27,6 +26,7 @@ import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { User } from '../user/entities/user.entity';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
+import { FindAllAccountCategoryDto } from './dto/find-all.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
 import { AccountCategory } from './entities/account-category.entity';
 
@@ -39,7 +39,7 @@ export class AccountCategoryService
             PaginatedData<AccountCategory>,
             CreateAccountCategoryDto,
             UpdateAccountCategoryDto,
-            FindAllDto,
+            FindAllAccountCategoryDto,
             User
         >
 {
@@ -136,7 +136,7 @@ export class AccountCategoryService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<AccountCategory>> {
+    findAllProcess(findAllDto: FindAllAccountCategoryDto): Observable<PaginatedData<AccountCategory>> {
         const fields: Array<keyof AccountCategory> = ['id', 'name', 'description', 'slug'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -148,7 +148,10 @@ export class AccountCategoryService
             relations,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
+    findAll(
+        currentUser: User,
+        findAllDto: FindAllAccountCategoryDto,
+    ): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, AccountCategory)) {
             throw new ForbiddenException(

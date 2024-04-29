@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { FindAllDto, GetCurrentUser } from '../../common';
+import { GetCurrentUser } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { AccountCategoryService } from './account-category.service';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
+import { FindAllAccountCategoryDto } from './dto/find-all.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
 
 @Controller('account-category')
@@ -21,7 +22,7 @@ export class AccountCategoryController {
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllDto) {
+    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllAccountCategoryDto) {
         return this.accountCategoryService.findAll(user, findAllDto);
     }
 

@@ -17,7 +17,6 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
-    FindAllDto,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     JwtPayload,
@@ -31,6 +30,7 @@ import { I18nTranslations } from '../../i18n/i18n.generated';
 import { LoginDto } from '../auth/dto/login.dto';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CreateUserDto } from './dto/create-user.dto';
+import { FindAllUserDto } from './dto/find-all.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
@@ -43,7 +43,7 @@ export class UserService
             PaginatedData<User>,
             CreateUserDto,
             UpdateUserDto,
-            FindAllDto,
+            FindAllUserDto,
             User
         >
 {
@@ -145,13 +145,13 @@ export class UserService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllDto): Observable<PaginatedData<User>> {
+    findAllProcess(findAllDto: FindAllUserDto): Observable<PaginatedData<User>> {
         const fields: Array<keyof User> = ['id', 'name', 'email', 'role'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields, searchFields, relations);
     }
-    findAll(currentUser: User, findAllDto: FindAllDto): Observable<ApiResponse<PaginatedData<User>>> {
+    findAll(currentUser: User, findAllDto: FindAllUserDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, User)) {
             throw new ForbiddenException(
@@ -197,11 +197,7 @@ export class UserService
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
-    remove(
-        currentUser: User,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
@@ -255,7 +251,7 @@ export class UserService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+    restore(currentUser: User, id: string): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
@@ -327,11 +323,7 @@ export class UserService
             }),
         );
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateUserDto,
-    ): Observable<ApiResponse<User | PaginatedData<User> | User[]>> {
+    update(currentUser: User, id: string, updateDto: UpdateUserDto): Observable<ApiResponse<User>> {
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {
