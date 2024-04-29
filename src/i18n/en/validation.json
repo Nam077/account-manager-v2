@@ -210,5 +210,37 @@
             "isNotEmpty": "Email ID is required.",
             "isUUID": "Email ID must be a valid UUID."
         }
+    },
+    "createRentalRenew": {
+        "rentalId": {
+            "isNotEmpty": "Rental ID is required.",
+            "isUUID": "Rental ID must be a valid UUID."
+        },
+        "newEndDate": {
+            "isNotEmpty": "New end date is required.",
+            "isDate": "New end date must be a valid date."
+        },
+        "lastStartDate": {
+            "isNotEmpty": "Last start date is required.",
+            "isDate": "Last start date must be a valid date."
+        },
+        "totalPrice": {
+            "isNotEmpty": "Total price is required.",
+            "isNumber": "Total price must be a number."
+        },
+        "warrantyFee": {
+            "isNotEmpty": "Warranty fee is required.",
+            "isNumber": "Warranty fee must be a number."
+        },
+        "discount": {
+            "isNotEmpty": "Discount is required.",
+            "isNumber": "Discount must be a number."
+        },
+        "paymentMethod": {
+            "isString": "Payment method must be a string."
+        },
+        "note": {
+            "isString": "Note must be a string."
+        }
     }
 }

@@ -1,34 +1,44 @@
 import { PartialType } from '@nestjs/swagger';
 
+import { RentalStatus } from '../../../common';
 import { IsOptionalCustom } from '../../../common/decorator/validator.decorator';
-import { RentalStatus } from '../entities/rental.entity';
 import { CreateRentalDto } from './create-rental.dto';
 
 export class UpdateRentalDto extends PartialType(CreateRentalDto) {
     @IsOptionalCustom()
-    customerId: string;
+    customerId?: string;
+
     @IsOptionalCustom()
-    accountPriceId: string;
+    accountPriceId?: string;
 
     workspaceId?: string;
+
     @IsOptionalCustom()
-    emailId: string;
+    emailId?: string;
+
     @IsOptionalCustom()
-    startDate: Date;
+    startDate?: Date;
+
     @IsOptionalCustom()
-    endDate: Date;
+    endDate?: Date;
+
     @IsOptionalCustom()
-    status: RentalStatus;
+    status?: RentalStatus;
     @IsOptionalCustom()
     note?: string;
+
     @IsOptionalCustom()
-    totalPrice: number;
+    totalPrice?: number;
+
     @IsOptionalCustom()
-    paymentAmount: number;
+    paymentAmount?: number;
+
     @IsOptionalCustom()
-    warrantyFee: number;
+    warrantyFee?: number;
+
     @IsOptionalCustom()
-    discount: number;
+    discount?: number;
+
     @IsOptionalCustom()
-    paymentMethod: string;
+    paymentMethod?: string;
 }
