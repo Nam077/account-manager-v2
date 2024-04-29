@@ -1,10 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { FindAllDto, GetCurrentUser } from '../../common';
+import { GetCurrentUser } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateEmailDto } from './dto/create-email.dto';
+import { FindAllEmailDto } from './dto/find-all.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { EmailService } from './email.service';
 
@@ -21,7 +22,7 @@ export class EmailController {
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllDto) {
+    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllEmailDto) {
         return this.emailService.findAll(user, findAllDto);
     }
 

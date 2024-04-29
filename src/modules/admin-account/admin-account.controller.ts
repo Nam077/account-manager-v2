@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { FindAllDto, GetCurrentUser } from '../../common';
+import { GetCurrentUser } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { AdminAccountService } from './admin-account.service';
 import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
+import { FindAllAdminAccountDto } from './dto/find-all.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
 
 @UseGuards(AuthJwtGuard)
@@ -21,7 +22,7 @@ export class AdminAccountController {
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllDto) {
+    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllAdminAccountDto) {
         return this.adminAccountService.findAll(user, findAllDto);
     }
 
