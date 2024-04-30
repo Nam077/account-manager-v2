@@ -47,4 +47,27 @@ export class MailService {
             }),
         );
     }
+
+    public sendMailExpired(
+        to: string,
+        context: {
+            name: string;
+            email: string;
+            accountName: string;
+            expirationDate: Date;
+        },
+    ): Observable<void> {
+        return from(
+            this.mailerService.sendMail({
+                to,
+                from: this.configService.get('MAIL_FROM'),
+                subject: 'Expired: Account expired',
+                template: 'expired',
+                context: {
+                    ...context,
+                    company: this.configService.get('COMPANY_NAME'),
+                },
+            }),
+        );
+    }
 }

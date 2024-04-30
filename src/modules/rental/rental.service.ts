@@ -23,6 +23,7 @@ import {
     updateEntity,
     WorkspaceEmailStatus,
 } from '../../common';
+import { checkDateAfter } from '../../common/helper/date';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
@@ -478,6 +479,7 @@ export class RentalService
                 relations: {
                     workspaceEmail: { workspace: { adminAccount: true } },
                     accountPrice: { account: true },
+                    rentalRenews: true,
                 },
             }),
         ).pipe(
@@ -567,7 +569,26 @@ export class RentalService
                                 ),
                         );
                 } else tasks.push(of(null));
-
+                if (updateDto.endDate && updateDto.endDate !== rental.endDate) {
+                    if (rental.rentalRenews) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Rental.CannotUpdateEndDate', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+                }
+                if (updateDto.startDate && updateDto.startDate !== rental.startDate) {
+                    const checkDate = new Date(updateDto.startDate);
+                    const endDate = updateDto.endDate || rental.endDate;
+                    if (checkDateAfter(endDate, checkDate)) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Rental.CannotUpdateStartDate', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+                }
                 return forkJoin(tasks).pipe(
                     switchMap(([accountPrice, email, workspace]) => {
                         email;
@@ -802,11 +823,11 @@ export class RentalService
         ).pipe(
             map((rentals) => {
                 const checks: {
-                    rental: Rental[];
+                    rentalExpired: Rental[];
                     workspaceEmail: WorkspaceEmail[];
                     rentalNearExpired: Rental[];
                 } = {
-                    rental: [],
+                    rentalExpired: [],
                     workspaceEmail: [],
                     rentalNearExpired: [],
                 };
@@ -818,15 +839,16 @@ export class RentalService
                     if (nearExpired) {
                         checks.rentalNearExpired.push(rental);
                     } else {
-                        checks.rental.push(rental);
+                        checks.rentalExpired.push(rental);
                     }
                 });
                 return forkJoin([
-                    this.saveAll(checks.rental),
+                    this.saveAll(checks.rentalExpired),
                     this.workspaceEmailService.saveAll(checks.workspaceEmail),
-                    this.sendMailWithForJoin(checks.rentalNearExpired),
+                    this.sendMailExpiredWithForJoin(checks.rentalExpired),
+                    this.sendMailWarningNearExpiredMany(checks.rentalNearExpired),
                     this.pingToAdminBotMany(checks.rentalNearExpired, true),
-                    this.pingToAdminBotMany(checks.rental),
+                    this.pingToAdminBotMany(checks.rentalExpired),
                 ]);
             }),
             map(() => {
@@ -834,7 +856,7 @@ export class RentalService
             }),
         );
     }
-    sendMailExpired(rental: Rental) {
+    sendMailWarningNearExpired(rental: Rental) {
         return from(
             this.mailService
                 .sendMailWarningNearExpired(rental.customer.email, {
@@ -852,10 +874,34 @@ export class RentalService
                 ),
         );
     }
-    sendMailWithForJoin(rentals: Rental[]) {
+    sendMailExpired(rental: Rental) {
+        return from(
+            this.mailService
+                .sendMailExpired(rental.customer.email, {
+                    name: rental.customer.name,
+                    email: rental.customer.email,
+                    accountName: rental.accountPrice.account.name,
+                    expirationDate: rental.endDate,
+                })
+                .pipe(
+                    map(() => {
+                        console.log('send mail success');
+                        return rental;
+                    }),
+                ),
+        );
+    }
+    sendMailExpiredWithForJoin(rentals: Rental[]) {
         const tasks: Observable<any>[] = [];
         rentals.map((rental) => {
             return tasks.push(this.sendMailExpired(rental));
+        });
+        return forkJoin(tasks);
+    }
+    sendMailWarningNearExpiredMany(rentals: Rental[]) {
+        const tasks: Observable<any>[] = [];
+        rentals.map((rental) => {
+            return tasks.push(this.sendMailWarningNearExpired(rental));
         });
         return forkJoin(tasks);
     }
@@ -868,18 +914,43 @@ export class RentalService
     }
 
     pingToAdminBot(rental: Rental, nearExpired = false) {
-        const markDown = `<b>📄 Thông Tin Thuê Tài Khoản</b>\n
-        - Trạng thái thuê: ${nearExpired ? '<b>🔔 Sắp hết hạn</b>' : '<b>⏳ Đã hết hạn</b>'}\n
-        - Tên khách hàng: <b>${rental.customer.name}</b>\n
-        - Tên tài khoản: <b>${rental.accountPrice.account.name}</b>\n
-        - Email khách hàng: <b>${rental.customer.email}</b>\n
-        - Ngày hết hạn thuê: <b>${rental.endDate}</b>\n
-        ${nearExpired ? `- Số ngày còn lại: <b>${this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS')} ngày</b>\n` : ''}
-        ${rental.workspaceEmail ? `- Thông tin workspace: <b>${rental.workspaceEmail.workspace.adminAccount.email} - ${rental.workspaceEmail.workspace.adminAccount.account.name}</b>\n` : ''}
-<b>💳 Chi Tiết Thanh Toán</b>\n
-        - Loại thuê: <b>${rental.accountPrice.rentalType.name}</b>\n
-        - Tổng giá tiền: <b>${rental.totalPrice}</b>\n
-        - Phương thức thanh toán: <b>${rental.paymentMethod}</b>\n`;
+        const markDown =
+            '<b>📄 Thông Tin Thuê Tài Khoản</b>\n' +
+            '- Trạng thái thuê: ' +
+            (nearExpired ? '<b>🔔 Sắp hết hạn</b>' : '<b>⏳ Đã hết hạn</b>') +
+            '\n' +
+            '- Tên khách hàng: <b>' +
+            rental.customer.name +
+            '</b>\n' +
+            '- Tên tài khoản: <b>' +
+            rental.accountPrice.account.name +
+            '</b>\n' +
+            '- Email khách hàng: <b>' +
+            rental.customer.email +
+            '</b>\n' +
+            '- Ngày hết hạn thuê: <b>' +
+            rental.endDate +
+            '</b>\n' +
+            (nearExpired
+                ? '- Số ngày còn lại: <b>' + this.configService.get('RENTAL_NEAR_EXPIRED_DAYS') + ' ngày</b>\n'
+                : '') +
+            (rental.workspaceEmail
+                ? '- Thông tin workspace: <b>' +
+                  rental.workspaceEmail.workspace.adminAccount.email +
+                  ' - ' +
+                  rental.workspaceEmail.workspace.adminAccount.account.name +
+                  '</b>\n'
+                : '') +
+            '<b>💳 Chi Tiết Thanh Toán</b>\n' +
+            '- Loại thuê: <b>' +
+            rental.accountPrice.rentalType.name +
+            '</b>\n' +
+            '- Tổng giá tiền: <b>' +
+            rental.totalPrice +
+            '</b>\n' +
+            '- Phương thức thanh toán: <b>' +
+            rental.paymentMethod +
+            '</b>\n';
 
         return from(
             this.bot.telegram.sendMessage(this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID'), markDown, {

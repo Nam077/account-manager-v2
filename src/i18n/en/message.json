@@ -114,7 +114,9 @@
         "Restored": "Rental {name} restored successfully",
         "Deleted": "Rental {name} deleted successfully",
         "NotDeleted": "Rental {name} cannot be deleted",
-        "NotRestored": "Rental {name} cannot be restored"
+        "NotRestored": "Rental {name} cannot be restored",
+        "CannotUpdateEndDate": "End date cannot be updated",
+        "CannotUpdateStartDate": "Start date cannot be updated"
     },
     "RefreshToken": {
         "NotFound": "Refresh token not found",
@@ -150,7 +152,8 @@
         "Deleted": "Rental renew {name} deleted successfully",
         "NotDeleted": "Rental renew {name} cannot be deleted",
         "NotRestored": "Rental renew {name} cannot be restored",
-        "InvalidDate": "New end date must be greater than current end date"
+        "InvalidDate": "New end date must be greater than current end date",
+        "CannotUpdateRentalId": "Rental id cannot be updated"
     },
     "Authentication": {
         "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",

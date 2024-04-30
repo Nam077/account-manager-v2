@@ -11,6 +11,7 @@ import {
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalStatus,
     SearchField,
     WorkspaceEmailStatus,
 } from '../../common';
@@ -72,6 +73,7 @@ export class RentalRenewService
                     return this.rentalService
                         .updateProcess(rentalId, {
                             endDate: newEndDate,
+                            status: RentalStatus.ACTIVE,
                         })
                         .pipe(map(() => rental));
                 }),
@@ -201,10 +203,23 @@ export class RentalRenewService
             }),
         );
     }
+    findLastByIdRentalOrderByEndDate(id: string): Observable<RentalRenew> {
+        return from(
+            this.rentalRenewRepository.findOne({
+                where: { rentalId: id },
+                order: {
+                    newEndDate: 'DESC',
+                },
+                relations: {
+                    rental: true,
+                },
+            }),
+        );
+    }
     removeProcess(id: string, hardRemove?: boolean): Observable<RentalRenew> {
         return this.findOneProcess(id, {
             withDeleted: hardRemove,
-            relations: { rental: true },
+            relations: { rental: { rentalRenews: true } },
         }).pipe(
             map((rentalRenew) => {
                 if (!rentalRenew) {
@@ -225,8 +240,6 @@ export class RentalRenewService
                     );
                 }
                 if (hardRemove) {
-                    console.log(rentalRenew);
-
                     if (!rentalRenew.deletedAt) {
                         throw new ForbiddenException(
                             this.i18nService.translate('message.RentalRenew.NotDeleted', {
@@ -235,12 +248,20 @@ export class RentalRenewService
                         );
                     }
                     if (rentalRenew.rental) {
-                        return this.rentalService
-                            .updateProcess(rentalRenew.rentalId, {
-                                endDate: rentalRenew.lastStartDate,
-                            })
-                            .pipe(map(() => rentalRenew));
+                        return this.findLastByIdRentalOrderByEndDate(rentalRenew.rental.id).pipe(
+                            switchMap((rentalRenewCheck) => {
+                                if (rentalRenew.newEndDate === rentalRenewCheck.rental.endDate) {
+                                    return this.rentalService
+                                        .updateProcess(rentalRenew.rental.id, {
+                                            endDate: rentalRenew.lastStartDate,
+                                        })
+                                        .pipe(map(() => rentalRenew));
+                                }
+                                return of(rentalRenew);
+                            }),
+                        );
                     }
+                    return of(rentalRenew);
                 }
                 return of(rentalRenew);
             }),
@@ -252,6 +273,7 @@ export class RentalRenewService
             }),
         );
     }
+
     remove(
         currentUser: User,
         id: string,
@@ -330,12 +352,54 @@ export class RentalRenewService
         );
     }
     updateProcess(id: string, updateDto: UpdateRentalRenewDto): Observable<RentalRenew> | any {
-        return of({
-            id,
-            ...updateDto,
-        });
+        if (updateDto.rentalId) {
+            throw new BadRequestException(
+                this.i18nService.translate('message.RentalRenew.CannotUpdateRentalId', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+        return this.findOneProcess(id, {
+            relations: { rental: true },
+        }).pipe(
+            switchMap((rentalRenew) => {
+                if (!rentalRenew) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.RentalRenew.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                if (updateDto.newEndDate && !this.checkDate(rentalRenew.rental.endDate, updateDto.newEndDate)) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.RentalRenew.InvalidDate', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return from(this.rentalRenewRepository.save({ ...rentalRenew, ...updateDto }));
+            }),
+        );
     }
     update(currentUser: User, id: string, updateDto: UpdateRentalRenewDto): Observable<ApiResponse<RentalRenew>> {
-        return this.updateProcess(id, updateDto);
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        if (ability.cannot(ActionCasl.Update, RentalRenew)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+        return this.updateProcess(id, updateDto).pipe(
+            map((rentalRenew) => {
+                return {
+                    message: this.i18nService.translate('message.RentalRenew.Updated', {
+                        lang: I18nContext.current().lang,
+                    }),
+                    data: rentalRenew,
+                    status: HttpStatus.OK,
+                };
+            }),
+        );
     }
 }

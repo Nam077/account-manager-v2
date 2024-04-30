@@ -11,3 +11,7 @@ export const checkDaysDifference = (checkDate: Date, days: number): boolean => {
     const dayBefore = moment(date).subtract(days, 'days');
     return moment(currentDate).isSame(dayBefore);
 };
+
+export const checkDateAfter = (date: Date, date2: Date): boolean => {
+    return moment(date).isAfter(date2);
+};
