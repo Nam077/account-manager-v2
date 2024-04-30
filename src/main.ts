@@ -4,7 +4,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 
 import { AppModule } from './app.module';
-
 const bootstrap = async () => {
     const app = await NestFactory.create(AppModule, {});
     app.useGlobalPipes(new I18nValidationPipe());
@@ -32,8 +31,8 @@ const bootstrap = async () => {
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
-
-    await app.listen(3000);
+    const PORT = process.env.PORT || 3000;
+    await app.listen(PORT);
 };
 
 (async () => {
