@@ -56,9 +56,7 @@ export class WorkspaceEmailService
     createProcess(createDto: CreateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const { emailId, workspaceId } = createDto;
         return from(
-            this.workspaceService.findOneProcess(workspaceId, {
-                relations: { workspaceEmails: true },
-            }),
+            this.workspaceService.findOneAndGetWorkspaceEmailHaveStatus(workspaceId, WorkspaceEmailStatus.ACTIVE),
         ).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
@@ -342,9 +340,7 @@ export class WorkspaceEmailService
                 if (updateDto.workspaceId && updateDto.workspaceId !== workspaceEmail.workspaceId) {
                     tasks.push(
                         this.workspaceService
-                            .findOneProcess(updateDto.workspaceId, {
-                                relations: { workspaceEmails: true },
-                            })
+                            .findOneAndGetWorkspaceEmailHaveStatus(updateDto.workspaceId, WorkspaceEmailStatus.ACTIVE)
                             .pipe(
                                 tap((workspace) => {
                                     if (!workspace) {
@@ -388,6 +384,36 @@ export class WorkspaceEmailService
                         ),
                     );
                 } else tasks.push(of(null));
+                if (updateDto.status !== WorkspaceEmailStatus.INACTIVE && updateDto.status !== workspaceEmail.status) {
+                    tasks.push(
+                        this.workspaceService
+                            .findOneAndGetWorkspaceEmailHaveStatus(
+                                updateDto.workspaceId || workspaceEmail.workspaceId,
+                                WorkspaceEmailStatus.ACTIVE,
+                            )
+                            .pipe(
+                                tap((workspace) => {
+                                    if (!workspace) {
+                                        throw new NotFoundException(
+                                            this.i18nService.translate('message.Workspace.NotFound', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
+                                    }
+                                    if (
+                                        workspace.workspaceEmails &&
+                                        workspace.workspaceEmails.length === workspace.maxSlots
+                                    ) {
+                                        throw new BadRequestException(
+                                            this.i18nService.translate('message.Workspace.Full', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
+                                    }
+                                }),
+                            ),
+                    );
+                }
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<WorkspaceEmail>(this.workspaceEmailRepository, workspaceEmail, updateData);

@@ -20,6 +20,7 @@ import {
     PaginatedData,
     SearchField,
     updateEntity,
+    WorkspaceEmailStatus,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AdminAccountService } from '../admin-account/admin-account.service';
@@ -94,6 +95,17 @@ export class WorkspaceService
 
     findOneProcess(id: string, options?: FindOneOptionsCustom<Workspace>): Observable<Workspace> {
         return from(this.workspaceRepository.findOne({ where: { id }, ...options }));
+    }
+    findOneAndGetWorkspaceEmailHaveStatus(id: string, status: WorkspaceEmailStatus): Observable<Workspace> {
+        return from(
+            this.workspaceRepository
+                .createQueryBuilder('workspace')
+                .leftJoinAndSelect('workspace.workspaceEmails', 'workspaceEmails', 'workspaceEmails.status = :status', {
+                    status: status,
+                })
+                .where('workspace.id = :id', { id })
+                .getOne(),
+        );
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
