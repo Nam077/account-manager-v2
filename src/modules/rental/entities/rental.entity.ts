@@ -86,7 +86,7 @@ export class Rental {
 
     @Column({
         type: 'decimal',
-        precision: 10,
+        precision: 20,
         scale: 2,
         nullable: false,
         comment: 'Payment amount',
@@ -96,7 +96,7 @@ export class Rental {
 
     @Column({
         type: 'decimal',
-        precision: 10,
+        precision: 20,
         scale: 2,
         nullable: false,
         comment: 'Total price of the rental',
@@ -106,7 +106,7 @@ export class Rental {
 
     @Column({
         type: 'decimal',
-        precision: 10,
+        precision: 20,
         scale: 2,
         nullable: false,
         comment: 'Warranty fee',

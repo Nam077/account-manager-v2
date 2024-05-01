@@ -38,3 +38,20 @@ export const formatDateTime = (date: Date): string => {
 export const addLifeTime = (date: Date): Date => {
     return addYears(date, 100);
 };
+
+export const addDate = (date: Date, days: number): Date => {
+    switch (days) {
+        case 30:
+            return addMonths(date, 1);
+        case 90:
+            return addMonths(date, 3);
+        case 180:
+            return addMonths(date, 6);
+        case 365:
+            return addYears(date, 1);
+        case -9999:
+            return addLifeTime(date);
+        default:
+            return addDays(date, days);
+    }
+};

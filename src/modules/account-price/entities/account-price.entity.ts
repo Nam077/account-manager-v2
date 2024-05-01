@@ -22,12 +22,30 @@ export class AccountPrice {
 
     @Column({
         type: 'decimal',
-        precision: 10,
+        precision: 15,
         scale: 2,
         nullable: false,
         comment: 'Price of the account',
     })
     price: number;
+
+    @Column({
+        type: 'int',
+        nullable: false,
+        comment: 'Duration of the account validity in days',
+        name: 'validity_duration',
+        default: 30,
+    })
+    validityDuration: number;
+
+    @Column({
+        type: 'boolean',
+        nullable: false,
+        comment: 'Is lifetime account',
+        name: 'is_lifetime',
+        default: false,
+    })
+    isLifetime: boolean;
 
     @Column({
         type: 'uuid',

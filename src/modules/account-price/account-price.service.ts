@@ -14,6 +14,7 @@ import { DeepPartial, Repository } from 'typeorm';
 import {
     ActionCasl,
     ApiResponse,
+    CheckForForkJoin,
     CrudService,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
@@ -53,7 +54,8 @@ export class AccountPriceService
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     createProcess(createDto: CreateAccountPriceDto): Observable<AccountPrice> {
-        const { accountId, rentalTypeId, price } = createDto;
+        const { accountId, rentalTypeId, price, validityDuration, isLifetime } = createDto;
+        const nomalizeDuration = isLifetime ? -9999 : validityDuration;
         return this.accountService.findOneProcess(accountId).pipe(
             switchMap((account) => {
                 if (!account) {
@@ -73,7 +75,7 @@ export class AccountPriceService
                         }),
                     );
                 }
-                return this.checkExistByAccountIdAndRentalTypeId(accountId, rentalTypeId);
+                return this.checkExistByAccountIdAndRentalTypeIdAndDuration(accountId, rentalTypeId, nomalizeDuration);
             }),
             switchMap((isExist) => {
                 if (isExist) {
@@ -87,6 +89,8 @@ export class AccountPriceService
                 accountPrice.accountId = accountId;
                 accountPrice.rentalTypeId = rentalTypeId;
                 accountPrice.price = price;
+                accountPrice.isLifetime = isLifetime;
+                accountPrice.validityDuration = nomalizeDuration;
                 const accountPriceCreated = this.accountPriceRepository.create(accountPrice);
                 return from(this.accountPriceRepository.save(accountPriceCreated));
             }),
@@ -299,7 +303,7 @@ export class AccountPriceService
         );
     }
     updateProcess(id: string, updateDto: UpdateAccountPriceDto): Observable<AccountPrice> {
-        const updateData: DeepPartial<AccountPrice> = {};
+        const updateData: DeepPartial<AccountPrice> = { ...updateDto };
         return from(this.findOneProcess(id)).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
@@ -310,6 +314,7 @@ export class AccountPriceService
                     );
                 }
                 const tasks: Observable<any>[] = [];
+                const check: CheckForForkJoin = {};
                 if (updateDto.accountId && accountPrice.accountId !== updateDto.accountId) {
                     tasks.push(
                         this.accountService.findOneProcess(updateData.accountId).pipe(
@@ -321,9 +326,11 @@ export class AccountPriceService
                                         }),
                                     );
                                 }
+                                delete updateData.account;
                             }),
                         ),
                     );
+                    check.accountId = true;
                 } else tasks.push(of(null));
 
                 if (updateDto.rentalTypeId && accountPrice.rentalTypeId !== updateDto.rentalTypeId) {
@@ -337,18 +344,28 @@ export class AccountPriceService
                                         }),
                                     );
                                 }
+                                delete updateData.rentalType;
                             }),
                         ),
                     );
+                    check.rentalTypeId = true;
                 } else tasks.push(of(null));
                 if (
-                    (updateDto.accountId && accountPrice.accountId !== updateDto.accountId && updateDto.rentalTypeId) ||
-                    (updateDto.rentalTypeId && accountPrice.rentalTypeId !== updateDto.rentalTypeId)
+                    check.accountId ||
+                    check.rentalTypeId ||
+                    (updateDto.validityDuration && accountPrice.validityDuration !== updateDto.validityDuration) ||
+                    (updateDto.isLifetime && accountPrice.isLifetime !== updateDto.isLifetime)
                 ) {
                     const checkAccountId = updateDto.accountId || accountPrice.accountId;
                     const checkRentalTypeId = updateDto.rentalTypeId || accountPrice.rentalTypeId;
+                    let checkValidityDuration = updateDto.validityDuration || accountPrice.validityDuration;
+                    updateDto.isLifetime && (checkValidityDuration = -9999);
                     tasks.push(
-                        this.checkExistByAccountIdAndRentalTypeId(checkAccountId, checkRentalTypeId).pipe(
+                        this.checkExistByAccountIdAndRentalTypeIdAndDuration(
+                            checkAccountId,
+                            checkRentalTypeId,
+                            checkValidityDuration,
+                        ).pipe(
                             tap((isExist) => {
                                 if (isExist) {
                                     throw new ConflictException(
@@ -369,11 +386,7 @@ export class AccountPriceService
             }),
         );
     }
-    update(
-        currentUser: User,
-        id: string,
-        updateDto: UpdateAccountPriceDto,
-    ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
+    update(currentUser: User, id: string, updateDto: UpdateAccountPriceDto): Observable<ApiResponse<AccountPrice>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, AccountPrice)) {
             throw new ForbiddenException(
@@ -394,7 +407,11 @@ export class AccountPriceService
             ),
         );
     }
-    checkExistByAccountIdAndRentalTypeId(accountId: string, rentalTypeId: string): Observable<boolean> {
-        return from(this.accountPriceRepository.existsBy({ accountId, rentalTypeId }));
+    checkExistByAccountIdAndRentalTypeIdAndDuration(
+        accountId: string,
+        rentalTypeId: string,
+        duration: number,
+    ): Observable<boolean> {
+        return from(this.accountPriceRepository.existsBy({ accountId, rentalTypeId, validityDuration: duration }));
     }
 }

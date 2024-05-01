@@ -39,6 +39,15 @@
         "rentalTypeId": {
             "required": "ID of the associated rental type is required.",
             "isUUID": "ID of the associated rental type must be a valid UUID."
+        },
+        "validityDuration": {
+            "required": "Validity duration is required.",
+            "isInt": "Validity duration must be an integer.",
+            "min": "Validity duration must be at least 1 day."
+        },
+        "isLifetime": {
+            "required": "Lifetime status is required.",
+            "isBoolean": "Lifetime status must be a boolean value."
         }
     },
     "createAdminAccount": {

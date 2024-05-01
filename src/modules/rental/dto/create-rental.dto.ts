@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
-import { IsEarlierThanDate, RentalStatus } from '../../../common';
+import { RentalStatus } from '../../../common';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
 
 export class CreateRentalDto {
@@ -47,20 +47,7 @@ export class CreateRentalDto {
     })
     @Type(() => Date)
     @IsDate({ message: i18nValidationMessage<I18nTranslations>('validation.createRental.startDate.isDate') })
-    @IsEarlierThanDate('endDate', {
-        message: i18nValidationMessage<I18nTranslations>('validation.createRental.startDate.isEarlierThanDate'),
-    })
     startDate: Date;
-
-    @ApiProperty({
-        description: 'End date of the rental',
-        type: 'string',
-        format: 'date',
-        example: '2024-04-30',
-    })
-    @Type(() => Date)
-    @IsDate({ message: i18nValidationMessage<I18nTranslations>('validation.createRental.endDate.isDate') })
-    endDate: Date;
 
     @ApiProperty({
         description: 'Status of the rental',
@@ -77,17 +64,6 @@ export class CreateRentalDto {
     @IsOptional()
     @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createRental.note.isString') })
     note?: string;
-
-    @ApiProperty({
-        description: 'Total price of the rental',
-        type: 'number',
-        example: 299.99,
-    })
-    @IsNumber(
-        { maxDecimalPlaces: 2 },
-        { message: i18nValidationMessage<I18nTranslations>('validation.createRental.totalPrice.isNumber') },
-    )
-    totalPrice: number;
 
     @ApiProperty({
         description: 'Payment amount',

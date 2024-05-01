@@ -23,9 +23,10 @@ import {
     updateEntity,
     WorkspaceEmailStatus,
 } from '../../common';
-import { checkDateAfter } from '../../common/helper/date';
+import { addDate, checkDateAfter } from '../../common/helper/date';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
+import { AccountPrice } from '../account-price/entities/account-price.entity';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
@@ -93,24 +94,21 @@ export class RentalService
         );
     }
     createProcess(createDto: CreateRentalDto): Observable<Rental> {
-        console.log('createDto', createDto);
-
         const {
             customerId,
             accountPriceId,
             discount,
             emailId,
-            endDate,
             note,
             paymentAmount,
             paymentMethod,
             startDate,
             status,
-            totalPrice,
             warrantyFee,
             workspaceId,
         } = createDto;
         const tasks: Observable<any>[] = [];
+        let accountPriceData: AccountPrice;
         tasks.push(
             this.customerService.findOneProcess(customerId).pipe(
                 switchMap((customer) => {
@@ -148,6 +146,7 @@ export class RentalService
                     return accountPrice;
                 }),
                 switchMap((accountPrice) => {
+                    accountPriceData = accountPrice;
                     if (createDto.workspaceId) {
                         return this.workspaceService
                             .findOneProcess(workspaceId, {
@@ -188,13 +187,13 @@ export class RentalService
                 rental.accountPriceId = accountPriceId;
                 rental.discount = discount;
                 rental.emailId = emailId;
-                rental.endDate = endDate;
+                rental.endDate = addDate(startDate, accountPriceData.validityDuration);
                 rental.note = note;
                 rental.paymentAmount = paymentAmount;
                 rental.paymentMethod = paymentMethod;
                 rental.startDate = startDate;
                 rental.status = status;
-                rental.totalPrice = totalPrice;
+                rental.totalPrice = accountPriceData.price;
                 rental.warrantyFee = warrantyFee;
                 if (workspaceEmailId) {
                     rental.workspaceEmailId = workspaceEmailId;

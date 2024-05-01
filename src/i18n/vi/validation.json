@@ -39,6 +39,15 @@
         "rentalTypeId": {
             "required": "ID của loại cho thuê liên kết là bắt buộc.",
             "isUUID": "ID của loại cho thuê liên kết phải là một UUID hợp lệ."
+        },
+        "validityDuration": {
+            "required": "Thời hạn hiệu lực của tài khoản là bắt buộc.",
+            "isInt": "Thời hạn hiệu lực của tài khoản phải là một số nguyên.",
+            "min": "Thời hạn hiệu lực của tài khoản phải ít nhất là 1 ngày."
+        },
+        "isLifetime": {
+            "required": "Trạng thái vĩnh viễn của tài khoản là bắt buộc.",
+            "isBoolean": "Trạng thái vĩnh viễn của tài khoản phải là giá trị boolean (đúng hoặc sai)."
         }
     },
     "createAdminAccount": {
