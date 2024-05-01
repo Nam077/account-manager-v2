@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser, RemoveFieldInterceptor } from '../../common';
-import { RemoveFields } from '../../common/decorator/remove-field.decorator';
+import { GetCurrentUser, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
+import { RemoveFieldInterceptor } from '../../common/intercepter/remove-field.interceptor';
 import { User } from '../user/entities/user.entity';
 import { AccountCategoryService } from './account-category.service';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
