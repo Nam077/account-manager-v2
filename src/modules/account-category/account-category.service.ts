@@ -285,7 +285,8 @@ export class AccountCategoryService
                     );
                 }
                 if (updateData.name && accountCategory.name !== updateData.name) {
-                    return from(this.checkExistBySlug(slugifyString(updateData.name))).pipe(
+                    const slug = slugifyString(updateData.name);
+                    return from(this.checkExistBySlug(slug)).pipe(
                         switchMap((isExist) => {
                             if (isExist) {
                                 throw new ConflictException(
@@ -295,7 +296,7 @@ export class AccountCategoryService
                                     }),
                                 );
                             }
-                            updateData.slug = slugifyString(updateData.name);
+                            updateData.slug = slug;
                             return of(accountCategory);
                         }),
                     );

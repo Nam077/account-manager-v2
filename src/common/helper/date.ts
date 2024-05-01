@@ -15,3 +15,26 @@ export const checkDaysDifference = (checkDate: Date, days: number): boolean => {
 export const checkDateAfter = (date: Date, date2: Date): boolean => {
     return moment(date).isAfter(date2);
 };
+
+export const addMonths = (date: Date, months: number): Date => {
+    return moment(date).add(months, 'months').toDate();
+};
+
+export const addDays = (date: Date, days: number): Date => {
+    return moment(date).add(days, 'days').toDate();
+};
+
+export const addYears = (date: Date, years: number): Date => {
+    return moment(date).add(years, 'years').toDate();
+};
+
+export const formatDate = (date: Date): string => {
+    return moment(date).format('YYYY-MM-DD');
+};
+export const formatDateTime = (date: Date): string => {
+    return moment(date).format('YYYY-MM-DD HH:mm:ss');
+};
+
+export const addLifeTime = (date: Date): Date => {
+    return addYears(date, 100);
+};

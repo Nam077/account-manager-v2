@@ -1,13 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { GetCurrentUser } from '../../common';
+import { RemoveFields } from '../../common/decorator/remove-field.decorator';
 import { AuthJwtGuard } from '../../common/guard';
+import { RemoveFieldInterceptor } from '../../common/intercepter/remove-field.interceptor';
 import { User } from '../user/entities/user.entity';
 import { AccountCategoryService } from './account-category.service';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
 import { FindAllAccountCategoryDto } from './dto/find-all.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
+import { AccountCategory } from './entities/account-category.entity';
 
 @Controller('account-category')
 @ApiTags('Account Category')
@@ -36,6 +39,8 @@ export class AccountCategoryController {
         return this.accountCategoryService.restore(user, id);
     }
 
+    @RemoveFields<AccountCategory>(['accounts', 'slug'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(
         @GetCurrentUser() user: User,

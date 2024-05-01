@@ -64,10 +64,12 @@ export class Customer {
         comment: 'Date and time when the customer was created',
         name: 'created_at',
     })
+    createdAt: Date;
     @UpdateDateColumn({
         comment: 'Date and time when the customer was last updated',
         name: 'updated_at',
     })
+    updatedAt: Date;
     @DeleteDateColumn({
         comment: 'Date and time when the customer was deleted',
         name: 'deleted_at',

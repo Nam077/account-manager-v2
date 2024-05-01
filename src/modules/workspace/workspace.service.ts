@@ -314,6 +314,9 @@ export class WorkspaceService
                 status: HttpStatus.OK,
                 message: this.i18nService.translate('message.Workspace.Updated', {
                     lang: I18nContext.current().lang,
+                    args: {
+                        name: id,
+                    },
                 }),
             })),
         );
