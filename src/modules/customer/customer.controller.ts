@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { FindAllCustomerDto } from './dto/find-all.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { Customer } from './entities/customer.entity';
 
 @ApiTags('Customer')
 @UseGuards(AuthJwtGuard)
@@ -36,6 +37,8 @@ export class CustomerController {
         return this.customerService.restore(user, id);
     }
 
+    @RemoveFields<Customer>(['emails', 'rentals'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
         return this.customerService.update(user, id, updateCustomerDto);

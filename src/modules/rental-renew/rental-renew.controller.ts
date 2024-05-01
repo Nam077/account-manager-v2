@@ -1,12 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateRentalRenewDto } from './dto/create-rental-renew.dto';
 import { FindAllRentalRenewDto } from './dto/find-all.dto';
 import { UpdateRentalRenewDto } from './dto/update-rental-renew.dto';
+import { RentalRenew } from './entities/rental-renew.entity';
 import { RentalRenewService } from './rental-renew.service';
 @ApiTags('RentalRenew')
 @ApiBearerAuth()
@@ -30,6 +31,8 @@ export class RentalRenewController {
         return this.rentalRenewService.findOne(user, id);
     }
 
+    @RemoveFields<RentalRenew>(['rental'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch('restore/:id')
     restore(@GetCurrentUser() user: User, @Param('id') id: string) {
         return this.rentalRenewService.restore(user, id);

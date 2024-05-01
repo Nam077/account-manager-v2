@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindAllUserDto } from './dto/find-all.dto';
@@ -30,16 +30,18 @@ export class UserController {
     findOne(@GetCurrentUser() user: User, @Param('id') id: string) {
         return this.userService.findOne(user, id);
     }
+    @Patch('restore/:id')
+    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
+        return this.userService.restore(user, id);
+    }
 
+    @RemoveFields<User>(['refreshTokens'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
         return this.userService.update(user, id, updateUserDto);
     }
 
-    @Patch('restore/:id')
-    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
-        return this.userService.restore(user, id);
-    }
     @Delete('hard-delete/:id')
     hardRemove(@GetCurrentUser() user: User, @Param('id') id: string) {
         return this.userService.remove(user, id, true);

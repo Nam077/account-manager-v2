@@ -1,12 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateRentalDto } from './dto/create-rental.dto';
 import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
+import { Rental } from './entities/rental.entity';
 import { RentalService } from './rental.service';
 
 @ApiTags('Rental')
@@ -40,6 +41,8 @@ export class RentalController {
         return this.rentalService.restore(user, id);
     }
 
+    @RemoveFields<Rental>(['customer', 'accountPrice', 'customerId', 'workspaceEmail', 'totalPrice', 'rentalRenews'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateRentalDto: UpdateRentalDto) {
         return this.rentalService.update(user, id, updateRentalDto);

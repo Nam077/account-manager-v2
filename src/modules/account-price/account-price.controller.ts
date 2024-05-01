@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { AccountPriceService } from './account-price.service';
 import { CreateAccountPriceDto } from './dto/create-account-price.dto';
 import { FindAllAccountPriceDto } from './dto/find-all.dto';
 import { UpdateAccountPriceDto } from './dto/update-account-price.dto';
+import { AccountPrice } from './entities/account-price.entity';
 
 @ApiTags('Account Price')
 @ApiBearerAuth()
@@ -36,6 +37,8 @@ export class AccountPriceController {
         return this.accountPriceService.restore(user, id);
     }
 
+    @RemoveFields<AccountPrice>(['account', 'rentalType'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(
         @GetCurrentUser() user: User,

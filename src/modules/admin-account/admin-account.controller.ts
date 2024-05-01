@@ -1,13 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { AdminAccountService } from './admin-account.service';
 import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { FindAllAdminAccountDto } from './dto/find-all.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
+import { AdminAccount } from './entities/admin-account.entity';
 
 @UseGuards(AuthJwtGuard)
 @ApiBearerAuth()
@@ -36,6 +37,8 @@ export class AdminAccountController {
         return this.adminAccountService.restore(user, id);
     }
 
+    @RemoveFields<AdminAccount>(['account', 'workspaces'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(
         @GetCurrentUser() user: User,

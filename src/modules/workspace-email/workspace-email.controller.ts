@@ -1,12 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateWorkspaceEmailDto } from './dto/create-workspace-email.dto';
 import { FindAllWorkspaceEmailDto } from './dto/find-all.dto';
 import { UpdateWorkspaceEmailDto } from './dto/update-workspace-email.dto';
+import { WorkspaceEmail } from './entities/workspace-email.entity';
 import { WorkspaceEmailService } from './workspace-email.service';
 
 @ApiTags('Workspace Email')
@@ -36,6 +37,8 @@ export class WorkspaceEmailController {
         return this.workspaceEmailService.restore(user, id);
     }
 
+    @RemoveFields<WorkspaceEmail>(['workspace', 'email'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(
         @GetCurrentUser() user: User,

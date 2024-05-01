@@ -1,12 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
 import { User } from '../user/entities/user.entity';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
 import { FindAllRentalTypeDto } from './dto/find-all.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
+import { RentalType } from './entities/rental-type.entity';
 import { RentalTypeService } from './rental-type.service';
 
 @ApiTags('Rental Type')
@@ -36,6 +37,8 @@ export class RentalTypeController {
         return this.rentalTypeService.restore(user, id);
     }
 
+    @RemoveFields<RentalType>(['accountPrices'])
+    @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateRentalTypeDto: UpdateRentalTypeDto) {
         return this.rentalTypeService.update(user, id, updateRentalTypeDto);
