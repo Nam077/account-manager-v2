@@ -41,7 +41,7 @@ export class RentalController {
         return this.rentalService.restore(user, id);
     }
 
-    @RemoveFields<Rental>(['customer', 'accountPrice', 'customerId', 'workspaceEmail', 'totalPrice', 'rentalRenews'])
+    @RemoveFields<Rental>(['customer', 'account', 'customerId', 'workspaceEmail', 'rentalRenews', 'accountId'])
     @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateRentalDto: UpdateRentalDto) {

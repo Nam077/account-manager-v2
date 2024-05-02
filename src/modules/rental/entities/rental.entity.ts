@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 import { RentalStatus } from '../../../common';
-import { AccountPrice } from '../../account-price/entities/account-price.entity';
+import { Account } from '../../account/entities/account.entity';
 import { Customer } from '../../customer/entities/customer.entity';
 import { Email } from '../../email/entities/email.entity';
 import { RentalRenew } from '../../rental-renew/entities/rental-renew.entity';
@@ -35,10 +35,10 @@ export class Rental {
     @Column({
         type: 'uuid',
         nullable: false,
-        comment: 'Account price id',
-        name: 'account_price_id',
+        comment: 'Account id',
+        name: 'account_id',
     })
-    accountPriceId: string;
+    accountId: string;
 
     @Column({
         type: 'uuid',
@@ -84,55 +84,6 @@ export class Rental {
     @Column({ type: 'text', nullable: true, comment: 'Note of the rental' })
     note: string;
 
-    @Column({
-        type: 'decimal',
-        precision: 20,
-        scale: 2,
-        nullable: false,
-        comment: 'Payment amount',
-        name: 'payment_amount',
-    })
-    paymentAmount: number;
-
-    @Column({
-        type: 'decimal',
-        precision: 20,
-        scale: 2,
-        nullable: false,
-        comment: 'Total price of the rental',
-        name: 'total_price',
-    })
-    totalPrice: number;
-
-    @Column({
-        type: 'decimal',
-        precision: 20,
-        scale: 2,
-        nullable: false,
-        comment: 'Warranty fee',
-        name: 'warranty_fee',
-    })
-    warrantyFee: number;
-
-    @Column({
-        type: 'decimal',
-        precision: 10,
-        scale: 2,
-        nullable: false,
-        comment: 'Discount',
-    })
-    discount: number;
-
-    @Column({
-        type: 'varchar',
-        length: 255,
-        nullable: false,
-        comment: 'Payment method',
-        name: 'payment_method',
-        default: 'cash',
-    })
-    paymentMethod: string;
-
     @CreateDateColumn({
         comment: 'Date and time when the rental was created',
         name: 'created_at',
@@ -156,9 +107,9 @@ export class Rental {
     @JoinColumn({ name: 'customer_id' })
     customer: Customer;
 
-    @ManyToOne(() => AccountPrice, (accountPrice) => accountPrice.rentals)
-    @JoinColumn({ name: 'account_price_id' })
-    accountPrice: AccountPrice;
+    @ManyToOne(() => Account, (account) => account.rentals)
+    @JoinColumn({ name: 'account_id' })
+    account: Account;
 
     @ManyToOne(() => Email, (email) => email.workspaceEmails)
     @JoinColumn({ name: 'email_id' })

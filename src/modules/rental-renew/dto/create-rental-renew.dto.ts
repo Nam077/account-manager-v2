@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { I18nTranslations } from '../../../i18n/i18n.generated';
@@ -13,23 +12,14 @@ export class CreateRentalRenewDto {
     @IsUUID('all', { message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.rentalId.isUUID') })
     readonly rentalId: string;
 
-    @ApiProperty({ description: 'New end date of the rental', type: 'string', format: 'date', example: '2024-04-01' })
-    @IsNotEmpty({
-        message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.newEndDate.isNotEmpty'),
+    @ApiProperty({
+        description: 'Account price id',
+        example: '123e4567-e89b-12d3-a456-426614174001',
     })
-    @Type(() => Date)
-    @IsDate({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.newEndDate.isDate') })
-    readonly newEndDate: Date;
-
-    @ApiProperty({ description: 'Total price of the rental', example: 299.99 })
-    @IsNotEmpty({
-        message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.totalPrice.isNotEmpty'),
+    @IsUUID('all', {
+        message: i18nValidationMessage<I18nTranslations>('validation.createRental.accountPriceId.isUUID'),
     })
-    @IsNumber(
-        {},
-        { message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.totalPrice.isNumber') },
-    )
-    readonly totalPrice: number;
+    accountPriceId: string;
 
     @ApiProperty({ description: 'Warranty fee', example: 50.0 })
     @IsNotEmpty({

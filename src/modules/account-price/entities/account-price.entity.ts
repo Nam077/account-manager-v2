@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 import { Account } from '../../account/entities/account.entity';
-import { Rental } from '../../rental/entities/rental.entity';
+import { RentalRenew } from '../../rental-renew/entities/rental-renew.entity';
 import { RentalType } from '../../rental-type/entities/rental-type.entity';
 @Entity({ name: 'account_prices' })
 export class AccountPrice {
@@ -90,6 +90,6 @@ export class AccountPrice {
     @JoinColumn({ name: 'rental_type_id' })
     rentalType: RentalType;
 
-    @OneToMany(() => Rental, (rental) => rental.accountPrice)
-    rentals: Rental[];
+    @OneToMany(() => RentalRenew, (rentalRenew) => rentalRenew.accountPrice)
+    rentalRenews: RentalRenew[];
 }

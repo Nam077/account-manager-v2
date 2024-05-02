@@ -11,6 +11,7 @@ export class UpdateRentalDto extends PartialType(CreateRentalDto) {
     @IsOptionalCustom()
     accountPriceId?: string;
 
+    @IsOptionalCustom()
     workspaceId?: string;
 
     @IsOptionalCustom()

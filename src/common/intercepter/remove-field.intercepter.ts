@@ -1,11 +1,13 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 
 import { REMOVE_FIELDS } from '../decorator';
 
 @Injectable()
 export class RemoveFieldInterceptor implements NestInterceptor {
-    constructor() {}
+    constructor(private reflector: Reflector) {}
+
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request = context.switchToHttp().getRequest();
         const removeFields: string[] = [
@@ -13,8 +15,9 @@ export class RemoveFieldInterceptor implements NestInterceptor {
             'createdAt',
             'updatedAt',
             'deletedAt',
-            ...(Reflect.getMetadata(REMOVE_FIELDS, request.body.constructor) || []),
+            ...(this.reflector.get<string[]>(REMOVE_FIELDS, context.getHandler()) || []),
         ];
+
         removeFields.forEach((field) => {
             if (request.body[field]) {
                 delete request.body[field];

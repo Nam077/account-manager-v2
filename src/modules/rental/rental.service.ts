@@ -31,16 +31,18 @@ import {
     updateEntity,
     WorkspaceEmailStatus,
 } from '../../common';
-import { addDate, checkDateAfter } from '../../common/helper/date';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
 import { AccountPrice } from '../account-price/entities/account-price.entity';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
+import { Customer } from '../customer/entities/customer.entity';
 import { EmailService } from '../email/email.service';
+import { Email } from '../email/entities/email.entity';
 import { MailService } from '../mail/mail.service';
 import { RentalRenewService } from '../rental-renew/rental-renew.service';
 import { User } from '../user/entities/user.entity';
+import { Workspace } from '../workspace/entities/workspace.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
 import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
@@ -64,6 +66,8 @@ export class RentalService
         >
 {
     constructor(
+        @Inject(forwardRef(() => RentalRenewService))
+        private readonly rentalRenewService: RentalRenewService,
         @InjectRepository(Rental)
         private readonly rentalRepository: Repository<Rental>,
         private readonly workspaceService: WorkspaceService,
@@ -75,12 +79,8 @@ export class RentalService
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
-        @Inject(forwardRef(() => RentalRenewService))
-        private readonly rentalRenewService: RentalRenewService,
         @InjectBot() private bot: Telegraf<TelegrafContext>,
-    ) {
-        this.rentalRenewService;
-    }
+    ) {}
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
         if (accountId !== accountId2) {
@@ -113,107 +113,122 @@ export class RentalService
             discount,
             emailId,
             note,
-            paymentAmount,
-            paymentMethod,
             startDate,
             status,
-            warrantyFee,
             workspaceId,
+            paymentMethod,
+            warrantyFee,
         } = createDto;
-        const tasks: Observable<any>[] = [];
-        let accountPriceData: AccountPrice;
-        tasks.push(
-            this.customerService.findOneProcess(customerId).pipe(
-                switchMap((customer) => {
-                    if (!customer) {
-                        throw new NotFoundException(
-                            this.i18nService.translate('message.Customer.NotFound', {
-                                lang: I18nContext.current().lang,
-                            }),
-                        );
-                    }
-                    return this.emailService.findOneProcess(emailId);
-                }),
-                switchMap((email) => {
-                    if (!email) {
-                        throw new NotFoundException(
-                            this.i18nService.translate('message.Email.NotFound', {
-                                lang: I18nContext.current().lang,
-                            }),
-                        );
-                    }
-                    return this.checkEmailBelongToCustomer(email.email, customerId);
-                }),
-            ),
-        );
-        tasks.push(
-            this.accountPriceService.findOneProcess(accountPriceId).pipe(
-                map((accountPrice) => {
-                    if (!accountPrice) {
-                        throw new NotFoundException(
-                            this.i18nService.translate('message.AccountPrice.NotFound', {
-                                lang: I18nContext.current().lang,
-                            }),
-                        );
-                    }
-                    return accountPrice;
-                }),
-                switchMap((accountPrice) => {
-                    accountPriceData = accountPrice;
-                    if (createDto.workspaceId) {
-                        return this.workspaceService
-                            .findOneProcess(workspaceId, {
-                                relations: {
-                                    adminAccount: true,
-                                },
-                            })
-                            .pipe(
-                                map((workspace) => {
-                                    if (!workspace) {
-                                        throw new NotFoundException(
-                                            this.i18nService.translate('message.Workspace.NotFound', {
-                                                lang: I18nContext.current().lang,
-                                            }),
-                                        );
-                                    }
-                                    this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
-                                    return workspace;
-                                }),
-                                switchMap(() => {
-                                    return this.workspaceEmailService.createProcessAndGetId({
-                                        workspaceId: createDto.workspaceId,
-                                        emailId: createDto.emailId,
-                                    });
-                                }),
-                            );
-                    }
-                    return of(null);
-                }),
-            ),
-        );
-
-        return forkJoin(tasks).pipe(
-            map(([isExist, workspaceEmailId]) => {
-                isExist;
-                const rental = new Rental();
-                rental.customerId = customerId;
-                rental.accountPriceId = accountPriceId;
-                rental.discount = discount;
-                rental.emailId = emailId;
-                rental.endDate = addDate(startDate, accountPriceData.validityDuration);
-                rental.note = note;
-                rental.paymentAmount = paymentAmount;
-                rental.paymentMethod = paymentMethod;
-                rental.startDate = startDate;
-                rental.status = status;
-                rental.totalPrice = accountPriceData.price;
-                rental.warrantyFee = warrantyFee;
-                if (workspaceEmailId) {
-                    rental.workspaceEmailId = workspaceEmailId;
+        const recordContext: {
+            customer: Customer;
+            email: Email;
+            accountPrice: AccountPrice;
+            workspace: Workspace;
+            workspaceEmailId: string;
+        } = {
+            customer: null,
+            email: null,
+            accountPrice: null,
+            workspace: null,
+            workspaceEmailId: null,
+        };
+        return this.customerService.findOneProcess(customerId).pipe(
+            switchMap((customer) => {
+                if (!customer) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Customer.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
-                return this.rentalRepository.create(rental);
+                recordContext.customer = customer;
+                console.log(recordContext);
+
+                return this.emailService.findOneProcess(emailId);
             }),
-            switchMap((rental) => from(this.rentalRepository.save(rental))),
+            switchMap((email) => {
+                if (!email) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                if (email.customerId !== recordContext.customer.id) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotBelongToCustomer', {
+                            args: { name: email.email, customer: customerId },
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                recordContext.email = email;
+                return this.accountPriceService.findOneProcess(accountPriceId, {
+                    relations: {
+                        rentalType: true,
+                    },
+                });
+            }),
+            switchMap((accountPrice) => {
+                if (!accountPrice) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.AccountPrice.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                recordContext.accountPrice = accountPrice;
+                if (workspaceId && workspaceId) {
+                    console.log(accountPrice);
+
+                    if (!accountPrice.rentalType.isWorkspace) {
+                        throw new BadRequestException('Account price is not for workspace');
+                    }
+                    return this.workspaceService.findOneProcess(workspaceId, {
+                        relations: {
+                            adminAccount: true,
+                        },
+                    });
+                } else {
+                    return of(null);
+                }
+            }),
+            switchMap((workspace) => {
+                if (workspace) {
+                    recordContext.workspace = workspace;
+                    return this.workspaceEmailService.createProcessAndGetId({
+                        emailId: emailId,
+                        workspaceId: workspace.id,
+                    });
+                }
+                return of(null);
+            }),
+            switchMap((workspaceEmailId) => {
+                recordContext.workspaceEmailId = workspaceEmailId;
+                const rental = new Rental();
+                rental.customer = recordContext.customer;
+                rental.email = recordContext.email;
+                rental.accountId = recordContext.accountPrice.accountId;
+                rental.workspaceEmailId = workspaceEmailId;
+                rental.startDate = startDate;
+                rental.endDate = new Date();
+                rental.note = note;
+                rental.status = status;
+                const newRental = this.rentalRepository.create(rental);
+                return from(this.rentalRepository.save(newRental));
+            }),
+            map((rental) => {
+                return this.rentalRenewService
+                    .createProcess({
+                        accountPriceId: accountPriceId,
+                        rentalId: rental.id,
+                        discount: discount,
+                        paymentMethod: paymentMethod,
+                        warrantyFee: warrantyFee,
+                        note: note,
+                    })
+                    .pipe(map(() => rental));
+            }),
         );
     }
     create(currentUser: User, createDto: CreateRentalDto): Observable<ApiResponse<Rental>> {
@@ -280,16 +295,10 @@ export class RentalService
             'status',
             'startDate',
             'endDate',
-            'totalPrice',
-            'discount',
-            'paymentAmount',
-            'paymentMethod',
             'note',
             'createdAt',
             'updatedAt',
             'deletedAt',
-            'accountPriceId',
-            'customerId',
             'emailId',
             'workspaceEmailId',
         ];
@@ -462,7 +471,7 @@ export class RentalService
             }),
         );
     }
-    updateEmailWorkspaceId(rental: Rental, idEmail: string, create = false, workSpaceId?: string): Observable<string> {
+    updateEmailWorkspaceId(rental: Rental, idEmail: string, workSpaceId?: string): Observable<string> {
         if (rental.workspaceEmailId) {
             return this.removeWorkSpaceEmailAndCreateNew(rental, {
                 emailId: idEmail,
@@ -472,29 +481,20 @@ export class RentalService
                     return workspaceEmailId;
                 }),
             );
-        } else {
-            if (create) {
-                return this.workspaceEmailService.createProcessAndGetId({
-                    emailId: idEmail,
-                    workspaceId: workSpaceId,
-                });
-            }
         }
         return of(null);
     }
     updateProcess(id: string, updateDto: UpdateRentalDto): Observable<Rental> {
-        const { accountPriceId, emailId, customerId, workspaceId, ...rest } = updateDto;
-
+        const { emailId, workspaceId, ...rest } = updateDto;
         const updateData: DeepPartial<Rental> = { ...rest };
-        return from(
-            this.findOneProcess(id, {
-                relations: {
-                    workspaceEmail: { workspace: { adminAccount: true } },
-                    accountPrice: { account: true },
-                    rentalRenews: true,
-                },
-            }),
-        ).pipe(
+        console.log(updateData);
+
+        return this.findOneProcess(id, {
+            relations: {
+                account: true,
+                workspaceEmail: true,
+            },
+        }).pipe(
             switchMap((rental) => {
                 if (!rental) {
                     throw new NotFoundException(
@@ -503,237 +503,103 @@ export class RentalService
                         }),
                     );
                 }
-                if (customerId && rental.customerId !== customerId) {
-                    throw new BadRequestException(
-                        this.i18nService.translate('message.Authentication.Forbidden', {
-                            lang: I18nContext.current().lang,
-                        }),
-                    );
-                }
-                const tasks: Observable<any>[] = [];
                 const checkForForkJoin: CheckForForkJoin = {};
-                if (accountPriceId && rental.accountPriceId !== accountPriceId) {
-                    tasks.push(
-                        this.accountPriceService
-                            .findOneProcess(accountPriceId, {
-                                relations: {
-                                    account: true,
-                                    rentalType: true,
-                                },
-                            })
-                            .pipe(
-                                map((accountPrice) => {
-                                    if (!accountPrice) {
-                                        throw new NotFoundException(
-                                            this.i18nService.translate('message.AccountPrice.NotFound', {
-                                                lang: I18nContext.current().lang,
-                                            }),
-                                        );
-                                    }
-                                    checkForForkJoin.accountPrice = true;
-                                    return accountPrice;
-                                }),
-                            ),
-                    );
-                } else tasks.push(of(null));
-                if (emailId && rental.emailId !== emailId) {
+                const tasks: Observable<any>[] = [];
+                if (emailId && emailId !== rental.emailId) {
                     tasks.push(
                         this.emailService.findOneProcess(emailId).pipe(
-                            map((email) => {
+                            tap((email) => {
                                 if (!email) {
-                                    throw new NotFoundException(
+                                    throw new BadRequestException(
                                         this.i18nService.translate('message.Email.NotFound', {
                                             lang: I18nContext.current().lang,
                                         }),
                                     );
                                 }
-                                checkForForkJoin.email = true;
-                                return email;
+                                checkForForkJoin.email = email;
                             }),
                         ),
                     );
-                } else tasks.push(of(null));
+                } else {
+                    tasks.push(of(null));
+                }
+                if (workspaceId && workspaceId !== rental.workspaceEmail?.workspaceId && rental.workspaceEmailId) {
+                    tasks.push(
+                        this.workspaceService
+                            .findOneProcess(workspaceId, {
+                                relations: {
+                                    adminAccount: true,
+                                },
+                            })
+                            .pipe(
+                                tap((workspace) => {
+                                    if (!workspace) {
+                                        throw new BadRequestException(
+                                            this.i18nService.translate('message.Workspace.NotFound', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
+                                    }
+                                    this.checkAccount(rental.accountId, workspace.adminAccount.accountId);
+                                }),
+                            ),
+                    );
+                } else {
+                    tasks.push(of(null));
+                }
+                console.log(tasks.length);
 
-                if ((workspaceId || workspaceId === null) && rental.workspaceEmail?.workspaceId !== workspaceId) {
-                    if (workspaceId === null) {
-                        checkForForkJoin.workspace = true;
-                        tasks.push(of(null));
-                    } else
-                        tasks.push(
-                            this.workspaceService
-                                .findOneProcess(workspaceId, {
-                                    relations: {
-                                        adminAccount: true,
-                                    },
-                                })
-                                .pipe(
-                                    map((workspace) => {
-                                        if (!workspace) {
-                                            throw new NotFoundException(
-                                                this.i18nService.translate('message.Workspace.NotFound', {
-                                                    lang: I18nContext.current().lang,
-                                                }),
-                                            );
-                                        }
-                                        checkForForkJoin.workspace = true;
-                                        return workspace;
-                                    }),
-                                ),
-                        );
-                } else tasks.push(of(null));
-                if (updateDto.endDate && updateDto.endDate !== rental.endDate) {
-                    if (rental.rentalRenews) {
-                        throw new BadRequestException(
-                            this.i18nService.translate('message.Rental.CannotUpdateEndDate', {
-                                lang: I18nContext.current().lang,
-                            }),
-                        );
-                    }
-                }
-                if (updateDto.startDate && updateDto.startDate !== rental.startDate) {
-                    const checkDate = new Date(updateDto.startDate);
-                    const endDate = updateDto.endDate || rental.endDate;
-                    if (checkDateAfter(endDate, checkDate)) {
-                        throw new BadRequestException(
-                            this.i18nService.translate('message.Rental.CannotUpdateStartDate', {
-                                lang: I18nContext.current().lang,
-                            }),
-                        );
-                    }
-                }
                 return forkJoin(tasks).pipe(
-                    switchMap(([accountPrice, email, workspace]) => {
-                        email;
-                        if (checkForForkJoin.accountPrice && checkForForkJoin.email && checkForForkJoin.workspace) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
-                            if (workspaceId === null) {
-                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
-                                    switchMap(() => {
-                                        delete rental.workspaceEmail;
-                                        delete rental.accountPrice;
-                                        updateData.emailId = emailId;
-                                        updateData.accountPriceId = accountPriceId;
-                                        return of(updateData);
-                                    }),
-                                );
-                            }
-                            this.checkAccount(accountPrice.accountId, workspace.adminAccount.accountId);
-                            return this.updateEmailWorkspaceId(rental, emailId, true, workspaceId).pipe(
+                    switchMap(() => {
+                        if (checkForForkJoin.email && checkForForkJoin.workspace) {
+                            return this.updateEmailWorkspaceId(rental, emailId, workspaceId).pipe(
                                 map((workspaceEmailId) => {
+                                    delete rental.workspaceEmail;
                                     delete rental.email;
-                                    delete rental.workspaceEmail;
-                                    delete rental.accountPrice;
-                                    updateData.emailId = emailId;
-                                    updateData.accountPriceId = accountPriceId;
                                     updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
                                 }),
                             );
-                        } else if (checkForForkJoin.accountPrice && checkForForkJoin.email) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
-                            this.checkAccount(
-                                accountPrice.accountId,
-                                rental.workspaceEmail.workspace.adminAccount.accountId,
-                            );
-                            return this.updateEmailWorkspaceId(rental, emailId).pipe(
-                                map((workspaceEmailId) => {
-                                    delete rental.email;
-                                    delete rental.workspaceEmail;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    updateData.emailId = emailId;
-                                    updateData.accountPriceId = accountPriceId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (checkForForkJoin.accountPrice && checkForForkJoin.workspace) {
-                            if (workspaceId === null) {
-                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
-                                    switchMap(() => {
-                                        delete rental.workspaceEmail;
-                                        delete rental.accountPrice;
-                                        updateData.emailId = emailId;
-                                        updateData.accountPriceId = accountPriceId;
-                                        return of(updateData);
-                                    }),
-                                );
-                            }
-                            this.checkAccount(workspace.adminAccount.accountId, accountPrice.accountId);
-                            return this.updateEmailWorkspaceId(rental, rental.emailId, true, workspaceId).pipe(
-                                map((workspaceEmailId) => {
-                                    delete rental.workspaceEmail;
-                                    delete rental.accountPrice;
-                                    updateData.accountPriceId = accountPriceId;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (checkForForkJoin.email && checkForForkJoin.workspace) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
-                            if (workspaceId === null) {
-                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
-                                    switchMap(() => {
-                                        delete rental.workspaceEmail;
-                                        delete rental.email;
-                                        updateData.emailId = emailId;
-                                        return of(updateData);
-                                    }),
-                                );
-                            }
-                            this.checkAccount(
-                                workspace.adminAccount.accountId,
-                                rental.workspaceEmail?.workspace.adminAccount.accountId,
-                            );
-                            return this.updateEmailWorkspaceId(rental, emailId, true, workspaceId).pipe(
-                                map((workspaceEmailId) => {
-                                    delete rental.email;
-                                    delete rental.workspaceEmail;
-                                    updateData.emailId = emailId;
-                                    updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
-                                }),
-                            );
-                        } else if (checkForForkJoin.accountPrice) {
-                            if (rental.workspaceEmailId) {
-                                this.checkAccount(
-                                    accountPrice.accountId,
-                                    rental.workspaceEmail.workspace.adminAccount.accountId,
-                                );
-                                updateData.accountPriceId = accountPriceId;
-                                return of(updateData);
-                            }
-                            delete updateData.accountPrice;
                         } else if (checkForForkJoin.email) {
-                            this.checkEmailBelongToCustomer(emailId, rental.customerId);
                             return this.updateEmailWorkspaceId(rental, emailId).pipe(
                                 map((workspaceEmailId) => {
                                     delete rental.email;
                                     delete rental.workspaceEmail;
                                     updateData.workspaceEmailId = workspaceEmailId;
-                                    updateData.emailId = emailId;
-                                    return updateData;
                                 }),
                             );
                         } else if (checkForForkJoin.workspace) {
-                            if (workspaceId === null) {
-                                return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
-                                    switchMap(() => {
-                                        delete rental.workspaceEmail;
-                                        return of(updateData);
-                                    }),
-                                );
-                            }
-                            this.checkAccount(workspace.adminAccount.accountId, rental.accountPrice.accountId);
-                            return this.updateEmailWorkspaceId(rental, rental.emailId, true, workspaceId).pipe(
+                            return this.updateEmailWorkspaceId(rental, rental.emailId, workspaceId).pipe(
                                 map((workspaceEmailId) => {
                                     delete rental.workspaceEmail;
                                     updateData.workspaceEmailId = workspaceEmailId;
-                                    return updateData;
                                 }),
                             );
-                        } else return of(updateData);
+                        }
+                        return of(null);
                     }),
-                    switchMap((updateData) => {
-                        return updateEntity<Rental>(this.rentalRepository, rental, updateData);
+                    switchMap(() => {
+                        console.log(updateData);
+
+                        return updateEntity<Rental>(this.rentalRepository, rental, updateData).pipe(
+                            switchMap((updatedRental) => {
+                                if (updateData.status) {
+                                    if (rental.workspaceEmailId) {
+                                        let status: WorkspaceEmailStatus;
+                                        if (updateData.status === RentalStatus.ACTIVE) {
+                                            status = WorkspaceEmailStatus.ACTIVE;
+                                        } else if (updateData.status === RentalStatus.INACTIVE) {
+                                            status = WorkspaceEmailStatus.INACTIVE;
+                                        } else {
+                                            status = WorkspaceEmailStatus.EXPIRED;
+                                        }
+                                        return this.workspaceEmailService
+                                            .updateStatusProcess(rental.workspaceEmailId, status)
+                                            .pipe(map(() => updatedRental));
+                                    }
+                                }
+                                return of(updatedRental);
+                            }),
+                        );
                     }),
                 );
             }),
@@ -829,7 +695,7 @@ export class RentalService
                         },
                     },
                     customer: true,
-                    accountPrice: { account: true, rentalType: true },
+                    account: true,
                 },
             }),
         ).pipe(
@@ -874,7 +740,7 @@ export class RentalService
                 .sendMailWarningNearExpired(rental.customer.email, {
                     name: rental.customer.name,
                     email: rental.customer.email,
-                    accountName: rental.accountPrice.account.name,
+                    accountName: rental.account.name,
                     expiredAt: rental.endDate,
                     daysLeft: this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'),
                 })
@@ -892,7 +758,7 @@ export class RentalService
                 .sendMailExpired(rental.customer.email, {
                     name: rental.customer.name,
                     email: rental.customer.email,
-                    accountName: rental.accountPrice.account.name,
+                    accountName: rental.account.name,
                     expirationDate: rental.endDate,
                 })
                 .pipe(
@@ -935,7 +801,7 @@ export class RentalService
             rental.customer.name +
             '</b>\n' +
             '- Tên tài khoản: <b>' +
-            rental.accountPrice.account.name +
+            rental.account.name +
             '</b>\n' +
             '- Email khách hàng: <b>' +
             rental.customer.email +
@@ -952,17 +818,7 @@ export class RentalService
                   ' - ' +
                   rental.workspaceEmail.workspace.adminAccount.account.name +
                   '</b>\n'
-                : '') +
-            '<b>💳 Chi Tiết Thanh Toán</b>\n' +
-            '- Loại thuê: <b>' +
-            rental.accountPrice.rentalType.name +
-            '</b>\n' +
-            '- Tổng giá tiền: <b>' +
-            rental.totalPrice +
-            '</b>\n' +
-            '- Phương thức thanh toán: <b>' +
-            rental.paymentMethod +
-            '</b>\n';
+                : '');
 
         return from(
             this.bot.telegram.sendMessage(this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID'), markDown, {

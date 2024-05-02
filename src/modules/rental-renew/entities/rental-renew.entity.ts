@@ -9,6 +9,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { AccountPrice } from '../../account-price/entities/account-price.entity';
 import { Rental } from '../../rental/entities/rental.entity';
 
 @Entity({ name: 'rental_renews' })
@@ -96,14 +97,25 @@ export class RentalRenew {
     })
     updatedAt: Date;
 
-    //relations
-    @ManyToOne(() => Rental, (rental) => rental.rentalRenews)
-    @JoinColumn({ name: 'rental_id' })
-    rental: Rental;
-
     @DeleteDateColumn({
         comment: 'Date and time when the renewal was deleted',
         name: 'deleted_at',
     })
     deletedAt: Date;
+
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Account price id',
+        name: 'account_price_id',
+    })
+    accountPriceId: string;
+
+    @ManyToOne(() => Rental, (rental) => rental.rentalRenews)
+    @JoinColumn({ name: 'rental_id' })
+    rental: Rental;
+
+    @ManyToOne(() => AccountPrice, (accountPrice) => accountPrice.rentalRenews)
+    @JoinColumn({ name: 'account_price_id' })
+    accountPrice: AccountPrice;
 }

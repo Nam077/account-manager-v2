@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AccountPriceModule } from '../account-price/account-price.module';
 import { CaslModule } from '../casl/casl.module';
 import { RentalModule } from '../rental/rental.module';
 import { WorkspaceEmailModule } from '../workspace-email/workspace-email.module';
@@ -14,6 +15,7 @@ import { RentalRenewService } from './rental-renew.service';
         CaslModule,
         forwardRef(() => RentalModule),
         WorkspaceEmailModule,
+        AccountPriceModule,
     ],
     controllers: [RentalRenewController],
     providers: [RentalRenewService],
