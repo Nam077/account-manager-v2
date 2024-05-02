@@ -2,7 +2,9 @@ import {
     BadRequestException,
     ConflictException,
     ForbiddenException,
+    forwardRef,
     HttpStatus,
+    Inject,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
@@ -23,6 +25,7 @@ import {
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { EmailService } from '../email/email.service';
 import { User } from '../user/entities/user.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { FindAllCustomerDto } from './dto/find-all.dto';
@@ -47,6 +50,8 @@ export class CustomerService
         private readonly customerRepository: Repository<Customer>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
+        @Inject(forwardRef(() => EmailService))
+        private readonly emailService: EmailService,
     ) {}
     checkExitsByEmail(email: string): Observable<boolean> {
         return from(
@@ -74,9 +79,14 @@ export class CustomerService
                 newCustomer.company = company;
                 newCustomer.description = description;
                 newCustomer.phone = phone;
-                const customer = this.customerRepository.create(newCustomer);
-                return from(this.customerRepository.save(customer));
+                return of(this.customerRepository.create(newCustomer));
             }),
+            switchMap((customer) => from(this.customerRepository.save(customer))),
+            switchMap((customer) =>
+                this.emailService
+                    .createProcess({ email: customer.email, customerId: customer.id })
+                    .pipe(map(() => customer)),
+            ),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }

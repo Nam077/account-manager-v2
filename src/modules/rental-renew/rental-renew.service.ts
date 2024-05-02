@@ -1,4 +1,12 @@
-import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    forwardRef,
+    HttpStatus,
+    Inject,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { from, map, Observable, of, switchMap } from 'rxjs';
@@ -40,10 +48,11 @@ export class RentalRenewService
 {
     constructor(
         @InjectRepository(RentalRenew) private readonly rentalRenewRepository: Repository<RentalRenew>,
-        private readonly rentalService: RentalService,
         private readonly workspaceEmailService: WorkspaceEmailService,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
+        @Inject(forwardRef(() => RentalService))
+        private readonly rentalService: RentalService,
     ) {}
     checkDate(currentDate: Date, newEndDate: Date): boolean {
         return Date.parse(currentDate.toString()) < Date.parse(newEndDate.toString());

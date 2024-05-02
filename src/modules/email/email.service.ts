@@ -2,7 +2,9 @@ import {
     BadRequestException,
     ConflictException,
     ForbiddenException,
+    forwardRef,
     HttpStatus,
+    Inject,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
@@ -47,6 +49,7 @@ export class EmailService
         @InjectRepository(Email)
         private readonly emailRepository: Repository<Email>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
+        @Inject(forwardRef(() => CustomerService))
         private readonly customerService: CustomerService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}

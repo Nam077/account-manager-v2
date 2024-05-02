@@ -48,6 +48,15 @@ export class RentalType {
     })
     maxSlots: number;
 
+    @Column({
+        type: 'boolean',
+        nullable: false,
+        default: false,
+        comment: 'Indicates if the rental type is a workspace',
+        name: 'is_workspace',
+    })
+    isWorkspace: boolean;
+
     @CreateDateColumn({
         comment: 'Date and time when the rental type was created',
         name: 'created_at',

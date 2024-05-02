@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,6 +8,7 @@ import { CaslModule } from '../casl/casl.module';
 import { CustomerModule } from '../customer/customer.module';
 import { EmailModule } from '../email/email.module';
 import { MailModule } from '../mail/mail.module';
+import { RentalRenewModule } from '../rental-renew/rental-renew.module';
 import { WorkspaceModule } from '../workspace/workspace.module';
 import { WorkspaceEmailModule } from '../workspace-email/workspace-email.module';
 import { Rental } from './entities/rental.entity';
@@ -26,6 +27,7 @@ import { RentalService } from './rental.service';
         ConfigModule,
         MailModule,
         ScheduleModule.forRoot(),
+        forwardRef(() => RentalRenewModule),
     ],
     controllers: [RentalController],
     providers: [RentalService],

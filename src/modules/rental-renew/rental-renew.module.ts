@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CaslModule } from '../casl/casl.module';
@@ -9,7 +9,12 @@ import { RentalRenewController } from './rental-renew.controller';
 import { RentalRenewService } from './rental-renew.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([RentalRenew]), CaslModule, RentalModule, WorkspaceEmailModule],
+    imports: [
+        TypeOrmModule.forFeature([RentalRenew]),
+        CaslModule,
+        forwardRef(() => RentalModule),
+        WorkspaceEmailModule,
+    ],
     controllers: [RentalRenewController],
     providers: [RentalRenewService],
     exports: [RentalRenewService],

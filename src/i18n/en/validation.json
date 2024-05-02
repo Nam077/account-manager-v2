@@ -177,6 +177,10 @@
         "maxSlots": {
             "isInt": "Maximum slots allowed in the rental type must be an integer.",
             "min": "Maximum slots allowed in the rental type must be at least 1."
+        },
+        "isWorkspace": {
+            "isBoolean": "Workspace indicator must be a boolean value.",
+            "isNotEmpty": "Workspace indicator is required."
         }
     },
     "createUser": {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { ToCapitalize } from '../../../common';
@@ -29,4 +29,16 @@ export class CreateRentalTypeDto {
     @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.maxSlots.isInt') })
     @Min(1, { message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.maxSlots.min') })
     maxSlots: number;
+
+    @ApiProperty({
+        description: 'Indicates if the rental type is a workspace',
+        example: false,
+    })
+    @IsNotEmpty({
+        message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.isWorkspace.isNotEmpty'),
+    })
+    @IsBoolean({
+        message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.isWorkspace.isBoolean'),
+    })
+    isWorkspace: boolean;
 }

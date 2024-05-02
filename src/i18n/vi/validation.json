@@ -177,6 +177,10 @@
         "maxSlots": {
             "isInt": "Số lượng khe cắm tối đa trong loại thuê phải là một số nguyên.",
             "min": "Số lượng khe cắm tối đa trong loại thuê phải ít nhất là 1."
+        },
+        "isWorkspace": {
+            "isBoolean": "Chỉ số không gian làm việc phải là một giá trị boolean.",
+            "isNotEmpty": "Chỉ số không gian làm việc là bắt buộc."
         }
     },
     "createUser": {

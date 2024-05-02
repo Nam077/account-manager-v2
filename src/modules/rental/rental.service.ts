@@ -1,4 +1,12 @@
-import { BadRequestException, ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    forwardRef,
+    HttpStatus,
+    Inject,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -31,6 +39,7 @@ import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
 import { EmailService } from '../email/email.service';
 import { MailService } from '../mail/mail.service';
+import { RentalRenewService } from '../rental-renew/rental-renew.service';
 import { User } from '../user/entities/user.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
@@ -66,8 +75,12 @@ export class RentalService
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
+        @Inject(forwardRef(() => RentalRenewService))
+        private readonly rentalRenewService: RentalRenewService,
         @InjectBot() private bot: Telegraf<TelegrafContext>,
-    ) {}
+    ) {
+        this.rentalRenewService;
+    }
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
         if (accountId !== accountId2) {

@@ -380,6 +380,10 @@ export type I18nTranslations = {
                 "isInt": string;
                 "min": string;
             };
+            "isWorkspace": {
+                "isBoolean": string;
+                "isNotEmpty": string;
+            };
         };
         "createUser": {
             "name": {
