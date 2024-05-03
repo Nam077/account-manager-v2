@@ -106,8 +106,8 @@ export class EmailService
         );
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<Email>): Observable<Email> {
-        return from(this.emailRepository.findOne({ where: { id }, ...options }));
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Email>, isWithDeleted?: boolean): Observable<Email> {
+        return from(this.emailRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -118,7 +118,16 @@ export class EmailService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Email);
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    customer: true,
+                },
+            },
+            isCanReadWithDeleted,
+        ).pipe(
             map((email) => {
                 if (!email) {
                     throw new NotFoundException(
@@ -138,7 +147,7 @@ export class EmailService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllEmailDto): Observable<PaginatedData<Email>> {
+    findAllProcess(findAllDto: FindAllEmailDto, isWithDeleted?: boolean): Observable<PaginatedData<Email>> {
         const relations = ['customer'];
         const searchFields: SearchField[] = [
             {
@@ -147,7 +156,14 @@ export class EmailService
             },
         ];
         const fields: Array<keyof Email> = ['id', 'email'];
-        return findWithPaginationAndSearch<Email>(this.emailRepository, findAllDto, fields, searchFields, relations);
+        return findWithPaginationAndSearch<Email>(
+            this.emailRepository,
+            findAllDto,
+            fields,
+            isWithDeleted,
+            relations,
+            searchFields,
+        );
     }
     findAll(currentUser: User, findAllDto: FindAllEmailDto): Observable<ApiResponse<PaginatedData<Email>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -158,7 +174,8 @@ export class EmailService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Email);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map(
                 (data): ApiResponse<PaginatedData<Email>> => ({
                     status: HttpStatus.OK,

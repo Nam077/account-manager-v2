@@ -8,4 +8,5 @@ export enum ActionCasl {
     HardDelete = 'hardDelete',
     Restore = 'restore',
     AddAdmin = 'addAdmin',
+    ReadWithDeleted = 'readWithDeleted',
 }

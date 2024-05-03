@@ -123,11 +123,16 @@ export class WorkspaceEmailService
         );
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<WorkspaceEmail>): Observable<WorkspaceEmail> {
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<WorkspaceEmail>,
+        isWithDeleted?: boolean,
+    ): Observable<WorkspaceEmail> {
         return from(
             this.workspaceEmailRepository.findOne({
                 where: { id },
                 ...options,
+                withDeleted: isWithDeleted,
             }),
         );
     }
@@ -140,12 +145,17 @@ export class WorkspaceEmailService
                 }),
             );
         }
-        return this.findOneProcess(id, {
-            relations: {
-                email: true,
-                workspace: true,
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, WorkspaceEmail);
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    email: true,
+                    workspace: true,
+                },
             },
-        }).pipe(
+            isCanReadWithDeleted,
+        ).pipe(
             map((workspaceEmail) => {
                 if (!workspaceEmail) {
                     throw new NotFoundException(
@@ -164,7 +174,10 @@ export class WorkspaceEmailService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllWorkspaceEmailDto): Observable<PaginatedData<WorkspaceEmail>> {
+    findAllProcess(
+        findAllDto: FindAllWorkspaceEmailDto,
+        isWithDeleted?: boolean,
+    ): Observable<PaginatedData<WorkspaceEmail>> {
         const fields: Array<keyof WorkspaceEmail> = ['id', 'workspaceId', 'emailId'];
         const relations = ['workspace', 'email'];
         const searchFields: SearchField[] = [];
@@ -172,8 +185,9 @@ export class WorkspaceEmailService
             this.workspaceEmailRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(
@@ -188,7 +202,8 @@ export class WorkspaceEmailService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, WorkspaceEmail);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((workspaceEmails) => {
                 return {
                     status: HttpStatus.OK,

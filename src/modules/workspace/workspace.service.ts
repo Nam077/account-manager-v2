@@ -93,8 +93,12 @@ export class WorkspaceService
         return this.createProcess(createDto).pipe(map((data) => ({ data, status: HttpStatus.CREATED })));
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<Workspace>): Observable<Workspace> {
-        return from(this.workspaceRepository.findOne({ where: { id }, ...options }));
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<Workspace>,
+        isWithDeleted?: boolean,
+    ): Observable<Workspace> {
+        return from(this.workspaceRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
     findOneAndGetWorkspaceEmailHaveStatus(id: string, status: WorkspaceEmailStatus): Observable<Workspace> {
         return from(
@@ -116,7 +120,8 @@ export class WorkspaceService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Workspace);
+        return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException(
@@ -135,7 +140,7 @@ export class WorkspaceService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllWorkspaceDto): Observable<PaginatedData<Workspace>> {
+    findAllProcess(findAllDto: FindAllWorkspaceDto, isWithDeleted?: boolean): Observable<PaginatedData<Workspace>> {
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
         const relations = ['adminAccount'];
         const searchFields: SearchField[] = [];
@@ -143,8 +148,9 @@ export class WorkspaceService
             this.workspaceRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(currentUser: User, findAllDto: FindAllWorkspaceDto): Observable<ApiResponse<PaginatedData<Workspace>>> {
@@ -156,7 +162,8 @@ export class WorkspaceService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Workspace);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => ({
                 data,
                 status: HttpStatus.OK,

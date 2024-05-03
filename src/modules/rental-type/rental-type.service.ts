@@ -90,8 +90,12 @@ export class RentalTypeService
         );
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<RentalType>): Observable<RentalType> {
-        return from(this.rentalTypeRepository.findOne({ where: { id }, ...options }));
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<RentalType>,
+        isWithDeleted?: boolean,
+    ): Observable<RentalType> {
+        return from(this.rentalTypeRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -102,7 +106,8 @@ export class RentalTypeService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, RentalType);
+        return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((rentalType) => {
                 if (!rentalType) {
                     throw new NotFoundException(
@@ -122,7 +127,7 @@ export class RentalTypeService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllRentalTypeDto): Observable<PaginatedData<RentalType>> {
+    findAllProcess(findAllDto: FindAllRentalTypeDto, isWithDeleted?: boolean): Observable<PaginatedData<RentalType>> {
         const fields: Array<keyof RentalType> = ['id', 'name', 'maxSlots', 'description'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -130,8 +135,9 @@ export class RentalTypeService
             this.rentalTypeRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(currentUser: User, findAllDto: FindAllRentalTypeDto): Observable<ApiResponse<PaginatedData<RentalType>>> {
@@ -143,7 +149,8 @@ export class RentalTypeService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, RentalType);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((rentalTypes) => {
                 return {
                     status: HttpStatus.OK,

@@ -168,11 +168,16 @@ export class RentalRenewService
             }),
         );
     }
-    findOneProcess(id: string, options?: FindOneOptionsCustom<RentalRenew>): Observable<RentalRenew> {
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<RentalRenew>,
+        isWithDeleted?: boolean,
+    ): Observable<RentalRenew> {
         return from(
             this.rentalRenewRepository.findOne({
                 where: { id },
                 ...options,
+                withDeleted: isWithDeleted,
             }),
         );
     }
@@ -188,7 +193,14 @@ export class RentalRenewService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, RentalRenew);
+        return this.findOneProcess(
+            id,
+            {
+                relations: { rental: true },
+            },
+            isCanReadWithDeleted,
+        ).pipe(
             map((rentalRenew) => {
                 if (!rentalRenew) {
                     throw new ForbiddenException(
@@ -207,7 +219,7 @@ export class RentalRenewService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllRentalRenewDto): Observable<PaginatedData<RentalRenew>> {
+    findAllProcess(findAllDto: FindAllRentalRenewDto, isWithDeleted?: boolean): Observable<PaginatedData<RentalRenew>> {
         const fields: Array<keyof RentalRenew> = ['id', 'rentalId'];
         const relations = ['rental'];
         const searchFields: SearchField[] = [];
@@ -215,8 +227,9 @@ export class RentalRenewService
             this.rentalRenewRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(currentUser: User, findAllDto: FindAllRentalRenewDto): Observable<ApiResponse<PaginatedData<RentalRenew>>> {
@@ -228,7 +241,8 @@ export class RentalRenewService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Rental);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((rentalRenews) => {
                 return {
                     message: this.i18nService.translate('message.RentalRenew.Found', {

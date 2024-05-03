@@ -32,9 +32,10 @@ export interface CrudService<API, ENTITY, PAGINATE, CREATE_DTO, UPDATE_DTO, FIND
      * Finds an entity by its ID and returns the API response.
      * @param id - The ID of the entity.
      * @param options - Optional. The find one options.
+     * @param isWithDeleted - Optional. Specifies whether to include deleted entities. Default is false.
      * @returns An observable of the API response.
      */
-    findOneProcess(id: string, options?: FindOneOptionsCustom<ENTITY>): Observable<ENTITY>;
+    findOneProcess(id: string, options?: FindOneOptionsCustom<ENTITY>, isWithDeleted?: boolean): Observable<ENTITY>;
 
     /**
      * Finds an entity by its ID and returns the API response.
@@ -47,9 +48,10 @@ export interface CrudService<API, ENTITY, PAGINATE, CREATE_DTO, UPDATE_DTO, FIND
     /**
      * Finds all entities based on the find all DTO.
      * @param findAllDto - The find all DTO.
+     * @param isWithDeleted - Optional. Specifies whether to include deleted entities. Default is false.
      * @returns An observable of the paginated result.
      */
-    findAllProcess(findAllDto: FIND_ALL_DTO): Observable<PAGINATE>;
+    findAllProcess(findAllDto: FIND_ALL_DTO, withDeleted?: boolean): Observable<PAGINATE>;
 
     /**
      * Finds all entities based on the find all DTO and returns the API response.

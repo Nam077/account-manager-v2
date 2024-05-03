@@ -112,26 +112,20 @@ export class CustomerService
             ),
         );
     }
-    findOneProcess(id: string, options?: FindOneOptionsCustom<Customer>): Observable<Customer> {
-        return from(this.customerRepository.findOne({ where: { id }, ...options })).pipe(
-            map((customer) => {
-                if (!customer) {
-                    throw new NotFoundException(
-                        this.i18nService.translate('message.Customer.NotFound', {
-                            lang: I18nContext.current().lang,
-                        }),
-                    );
-                }
-                return customer;
-            }),
-        );
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<Customer>,
+        isWithDeleted?: boolean,
+    ): Observable<Customer> {
+        return from(this.customerRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<Customer>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, Customer)) {
             throw new ForbiddenException('You are not allowed to read customer');
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Customer);
+        return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((customer) => {
                 if (!customer) {
                     throw new NotFoundException(
@@ -150,7 +144,7 @@ export class CustomerService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllCustomerDto): Observable<PaginatedData<Customer>> {
+    findAllProcess(findAllDto: FindAllCustomerDto, isWithDeleted?: boolean): Observable<PaginatedData<Customer>> {
         const relations = [];
         const searchFields: SearchField[] = [];
         const fields: Array<keyof Customer> = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
@@ -158,8 +152,9 @@ export class CustomerService
             this.customerRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(currentUser: User, findAllDto: FindAllCustomerDto): Observable<ApiResponse<PaginatedData<Customer>>> {
@@ -171,7 +166,8 @@ export class CustomerService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Customer);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map(
                 (data): ApiResponse<PaginatedData<Customer>> => ({
                     status: HttpStatus.OK,

@@ -83,8 +83,9 @@ export const findWithPaginationAndSearch = <T>(
     repository: Repository<T>,
     findAllDto: FindAllParams,
     fields: Array<keyof T>,
+    isWithDeleted = false,
+    relations: string[],
     searchFieldsInRelations: SearchField[] = [],
-    relations?: string[],
 ): Observable<PaginatedData<T>> => {
     if (!validateRelations(searchFieldsInRelations, relations)) {
         throw new HttpException(
@@ -126,6 +127,9 @@ export const findWithPaginationAndSearch = <T>(
     queryBuilder.skip((pageNew - 1) * limitNew).take(limitNew);
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);
+    }
+    if (!isWithDeleted) {
+        queryBuilder.andWhere(`${nameTable}.deletedAt IS NULL`);
     }
 
     return from(queryBuilder.getManyAndCount()).pipe(

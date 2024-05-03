@@ -123,11 +123,12 @@ export class AccountService
         );
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<Account>): Observable<Account> {
+    findOneProcess(id: string, options?: FindOneOptionsCustom<Account>, isWithDeleted?: boolean): Observable<Account> {
         return from(
             this.accountRepository.findOne({
                 where: { id },
                 ...options,
+                withDeleted: isWithDeleted,
             }),
         );
     }
@@ -145,7 +146,16 @@ export class AccountService
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to read account');
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Account);
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    accountCategory: true,
+                },
+            },
+            isCanReadWithDeleted,
+        ).pipe(
             map((account) => {
                 if (!account) {
                     throw new NotFoundException(
@@ -171,7 +181,7 @@ export class AccountService
      * @return {Observable<PaginatedData<Account>} An observable that emits the paginated data of accounts.
      */
 
-    findAllProcess(findAllDto: FindAllAccountDto): Observable<PaginatedData<Account>> {
+    findAllProcess(findAllDto: FindAllAccountDto, isWithDeleted?: boolean): Observable<PaginatedData<Account>> {
         const fields: Array<keyof Account> = ['id', 'name', 'description', 'slug'];
         const relations = ['accountCategory'];
         const searchRelation: SearchField[] = [
@@ -184,8 +194,9 @@ export class AccountService
             this.accountRepository,
             findAllDto,
             fields,
-            searchRelation,
+            isWithDeleted,
             relations,
+            searchRelation,
         );
     }
     findAll(currentUser: User, findAllDto: FindAllAccountDto): Observable<ApiResponse<PaginatedData<Account>>> {
@@ -197,7 +208,8 @@ export class AccountService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Account);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => ({
                 message: this.i18nService.translate('message.Account.Found', {
                     lang: I18nContext.current().lang,
@@ -209,13 +221,15 @@ export class AccountService
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<Account> {
         return from(
-            this.accountRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-                relations: {
-                    adminAccounts: !hardRemove,
+            this.findOneProcess(
+                id,
+                {
+                    relations: {
+                        adminAccounts: !hardRemove,
+                    },
                 },
-            }),
+                hardRemove,
+            ),
         ).pipe(
             switchMap((account) => {
                 if (!account) {

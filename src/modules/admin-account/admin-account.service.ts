@@ -103,19 +103,12 @@ export class AdminAccountService
         );
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<AdminAccount>): Observable<AdminAccount> {
-        return from(this.adminAccountRepository.findOne({ where: { id }, ...options })).pipe(
-            map((adminAccount) => {
-                if (!adminAccount) {
-                    throw new NotFoundException(
-                        this.i18nService.translate('message.AdminAccount.NotFound', {
-                            lang: I18nContext.current().lang,
-                        }),
-                    );
-                }
-                return adminAccount;
-            }),
-        );
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<AdminAccount>,
+        isWithDeleted?: boolean,
+    ): Observable<AdminAccount> {
+        return from(this.adminAccountRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -126,7 +119,16 @@ export class AdminAccountService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AdminAccount);
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    account: true,
+                },
+            },
+            isCanReadWithDeleted,
+        ).pipe(
             map((adminAccount) => {
                 if (!adminAccount) {
                     throw new NotFoundException(
@@ -145,7 +147,10 @@ export class AdminAccountService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllAdminAccountDto): Observable<PaginatedData<AdminAccount>> {
+    findAllProcess(
+        findAllDto: FindAllAdminAccountDto,
+        isWithDeleted?: boolean,
+    ): Observable<PaginatedData<AdminAccount>> {
         const fields: Array<keyof AdminAccount> = ['id', 'email', 'value'];
         const relations = ['account'];
         const searchFields: SearchField[] = [
@@ -158,8 +163,9 @@ export class AdminAccountService
             this.adminAccountRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(

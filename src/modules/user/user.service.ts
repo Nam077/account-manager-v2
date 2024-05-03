@@ -108,16 +108,19 @@ export class UserService
             }),
         );
     }
-    findOneProcess(id: string, options?: FindOneOptionsCustom<User>): Observable<User> {
+    findOneProcess(id: string, options?: FindOneOptionsCustom<User>, isWithDeleted?: boolean): Observable<User> {
         return from(
             this.userRepository.findOne({
                 where: { id },
                 ...options,
+                withDeleted: isWithDeleted,
             }),
         );
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<User>> {
-        return this.findOneProcess(id).pipe(
+        const ability = this.caslAbilityFactory.createForUser(currentUser);
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, User);
+        return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((user) => {
                 if (!user) {
                     throw new NotFoundException(
@@ -126,7 +129,6 @@ export class UserService
                         }),
                     );
                 }
-                const ability = this.caslAbilityFactory.createForUser(currentUser);
                 if (!ability.can(ActionCasl.Read, user)) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.Authentication.Forbidden', {
@@ -145,11 +147,18 @@ export class UserService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllUserDto): Observable<PaginatedData<User>> {
+    findAllProcess(findAllDto: FindAllUserDto, isWithDeleted?: boolean): Observable<PaginatedData<User>> {
         const fields: Array<keyof User> = ['id', 'name', 'email', 'role'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
-        return findWithPaginationAndSearch<User>(this.userRepository, findAllDto, fields, searchFields, relations);
+        return findWithPaginationAndSearch<User>(
+            this.userRepository,
+            findAllDto,
+            fields,
+            isWithDeleted,
+            relations,
+            searchFields,
+        );
     }
     findAll(currentUser: User, findAllDto: FindAllUserDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -160,7 +169,8 @@ export class UserService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, User);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => {
                 return {
                     status: HttpStatus.OK,

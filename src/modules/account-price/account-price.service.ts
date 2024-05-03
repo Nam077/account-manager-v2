@@ -122,11 +122,16 @@ export class AccountPriceService
         );
     }
 
-    findOneProcess(id: string, options?: FindOneOptionsCustom<AccountPrice>): Observable<AccountPrice> {
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<AccountPrice>,
+        isWithDeleted?: boolean,
+    ): Observable<AccountPrice> {
         return from(
             this.accountPriceRepository.findOne({
                 where: { id },
                 ...options,
+                withDeleted: isWithDeleted,
             }),
         );
     }
@@ -142,7 +147,17 @@ export class AccountPriceService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountPrice);
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    account: true,
+                    rentalType: true,
+                },
+            },
+            isCanReadWithDeleted,
+        ).pipe(
             map((accountPrice): ApiResponse<AccountPrice> => {
                 if (!accountPrice) {
                     throw new NotFoundException(
@@ -161,7 +176,10 @@ export class AccountPriceService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllAccountPriceDto): Observable<PaginatedData<AccountPrice>> {
+    findAllProcess(
+        findAllDto: FindAllAccountPriceDto,
+        isWithDeleted?: boolean,
+    ): Observable<PaginatedData<AccountPrice>> {
         const fields: Array<keyof AccountPrice> = ['id', 'accountId', 'rentalTypeId', 'price'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -169,8 +187,9 @@ export class AccountPriceService
             this.accountPriceRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(
@@ -185,7 +204,8 @@ export class AccountPriceService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountPrice);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
                     data,

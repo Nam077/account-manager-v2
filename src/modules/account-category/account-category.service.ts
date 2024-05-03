@@ -93,20 +93,12 @@ export class AccountCategoryService
             ),
         );
     }
-    findOneProcess(id: string, options?: FindOneOptionsCustom<AccountCategory>): Observable<AccountCategory> {
-        return from(this.accountCategoryRepository.findOne({ where: { id }, ...options })).pipe(
-            map((accountCategory) => {
-                if (!accountCategory) {
-                    throw new NotFoundException(
-                        this.i18nService.translate('message.AccountCategory.NotFound', {
-                            lang: I18nContext.current().lang,
-                        }),
-                    );
-                }
-                return accountCategory;
-            }),
-            catchError((error) => throwError(() => new BadRequestException(error.message))),
-        );
+    findOneProcess(
+        id: string,
+        options?: FindOneOptionsCustom<AccountCategory>,
+        isWithDeleted?: boolean,
+    ): Observable<AccountCategory> {
+        return from(this.accountCategoryRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
     findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -117,7 +109,8 @@ export class AccountCategoryService
                 }),
             );
         }
-        return this.findOneProcess(id).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountCategory);
+        return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((accountCategory): ApiResponse<AccountCategory> => {
                 if (!accountCategory) {
                     throw new NotFoundException(
@@ -136,7 +129,10 @@ export class AccountCategoryService
             }),
         );
     }
-    findAllProcess(findAllDto: FindAllAccountCategoryDto): Observable<PaginatedData<AccountCategory>> {
+    findAllProcess(
+        findAllDto: FindAllAccountCategoryDto,
+        isWithDeleted?: boolean,
+    ): Observable<PaginatedData<AccountCategory>> {
         const fields: Array<keyof AccountCategory> = ['id', 'name', 'description', 'slug'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
@@ -144,8 +140,9 @@ export class AccountCategoryService
             this.accountCategoryRepository,
             findAllDto,
             fields,
-            searchFields,
+            isWithDeleted,
             relations,
+            searchFields,
         );
     }
     findAll(
@@ -160,7 +157,8 @@ export class AccountCategoryService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountCategory);
+        return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
