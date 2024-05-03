@@ -142,8 +142,6 @@ export class RentalService
                     );
                 }
                 recordContext.customer = customer;
-                console.log(recordContext);
-
                 return this.emailService.findOneProcess(emailId);
             }),
             switchMap((email) => {
@@ -179,8 +177,6 @@ export class RentalService
                 }
                 recordContext.accountPrice = accountPrice;
                 if (workspaceId && workspaceId) {
-                    console.log(accountPrice);
-
                     if (!accountPrice.rentalType.isWorkspace) {
                         throw new BadRequestException('Account price is not for workspace');
                     }
@@ -217,7 +213,7 @@ export class RentalService
                 const newRental = this.rentalRepository.create(rental);
                 return from(this.rentalRepository.save(newRental));
             }),
-            map((rental) => {
+            switchMap((rental) => {
                 return this.rentalRenewService
                     .createProcess({
                         accountPriceId: accountPriceId,
@@ -487,8 +483,6 @@ export class RentalService
     updateProcess(id: string, updateDto: UpdateRentalDto): Observable<Rental> {
         const { emailId, workspaceId, ...rest } = updateDto;
         const updateData: DeepPartial<Rental> = { ...rest };
-        console.log(updateData);
-
         return this.findOneProcess(id, {
             relations: {
                 account: true,
@@ -547,8 +541,6 @@ export class RentalService
                 } else {
                     tasks.push(of(null));
                 }
-                console.log(tasks.length);
-
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         if (checkForForkJoin.email && checkForForkJoin.workspace) {
@@ -578,8 +570,6 @@ export class RentalService
                         return of(null);
                     }),
                     switchMap(() => {
-                        console.log(updateData);
-
                         return updateEntity<Rental>(this.rentalRepository, rental, updateData).pipe(
                             switchMap((updatedRental) => {
                                 if (updateData.status) {
@@ -746,7 +736,6 @@ export class RentalService
                 })
                 .pipe(
                     map(() => {
-                        console.log('send mail success');
                         return rental;
                     }),
                 ),
@@ -763,7 +752,6 @@ export class RentalService
                 })
                 .pipe(
                     map(() => {
-                        console.log('send mail success');
                         return rental;
                     }),
                 ),

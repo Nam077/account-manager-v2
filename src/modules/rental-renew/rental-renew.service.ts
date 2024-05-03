@@ -21,8 +21,8 @@ import {
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
-    RentalStatus,
     SearchField,
+    WorkspaceEmailStatus,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
@@ -31,6 +31,7 @@ import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { Rental } from '../rental/entities/rental.entity';
 import { RentalService } from '../rental/rental.service';
 import { User } from '../user/entities/user.entity';
+import { WorkspaceEmailService } from '../workspace-email/workspace-email.service';
 import { CreateRentalRenewDto } from './dto/create-rental-renew.dto';
 import { FindAllRentalRenewDto } from './dto/find-all.dto';
 import { UpdateRentalRenewDto } from './dto/update-rental-renew.dto';
@@ -54,13 +55,14 @@ export class RentalRenewService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly accountPriceService: AccountPriceService,
+        private readonly workspaceEmailService: WorkspaceEmailService,
         @Inject(forwardRef(() => RentalService))
         private readonly rentalService: RentalService,
     ) {}
     checkDate(currentDate: Date, newEndDate: Date): boolean {
         return Date.parse(currentDate.toString()) < Date.parse(newEndDate.toString());
     }
-    createProcess(createDto: CreateRentalRenewDto): Observable<RentalRenew> | any {
+    createProcess(createDto: CreateRentalRenewDto): Observable<RentalRenew> {
         const { rentalId, warrantyFee, note, discount, paymentMethod, accountPriceId } = createDto;
         const recordContext: {
             rental: Rental;
@@ -84,8 +86,6 @@ export class RentalRenewService
                         );
                     }
                     recordContext.rental = rental;
-                    console.log(recordContext);
-
                     return this.accountPriceService.findOneProcess(accountPriceId, {
                         relations: { rentalType: true },
                     });
@@ -123,13 +123,27 @@ export class RentalRenewService
                 switchMap((rentalRenew) => {
                     return from(this.rentalRenewRepository.save(rentalRenew));
                 }),
-                map((rentalRenew) => {
+                switchMap((rentalRenew) => {
                     return this.rentalService
                         .updateProcess(recordContext.rental.id, {
                             endDate: rentalRenew.newEndDate,
-                            status: RentalStatus.ACTIVE,
                         })
-                        .pipe(map(() => rentalRenew));
+                        .pipe(
+                            switchMap(() => {
+                                if (
+                                    recordContext.rental.workspaceEmail &&
+                                    recordContext.rental.workspaceEmail.status !== WorkspaceEmailStatus.ACTIVE
+                                ) {
+                                    return this.workspaceEmailService
+                                        .updateProcess(recordContext.rental.workspaceEmail.id, {
+                                            status: WorkspaceEmailStatus.ACTIVE,
+                                        })
+                                        .pipe(map(() => rentalRenew));
+                                } else {
+                                    return of(rentalRenew);
+                                }
+                            }),
+                        );
                 }),
             );
     }
