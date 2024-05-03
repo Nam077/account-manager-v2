@@ -1,8 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { I18nService } from 'nestjs-i18n/dist/services/i18n.service';
 import { from, Observable, of, switchMap } from 'rxjs';
 
 import { GeoIpI, JwtPayload } from '../../common';
+import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CreateRefreshTokenDto } from '../refresh-token/dto/create-refresh-token.dto';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service';
 import { User } from '../user/entities/user.entity';
@@ -17,6 +19,7 @@ export class AuthService {
         private readonly userService: UserService,
         private readonly jwtServiceCustom: JwtServiceCustom,
         private readonly refreshTokenService: RefreshTokenService,
+        private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
     login(loginDto: LoginDto, ipGeo: GeoIpI) {
         return from(this.userService.login(loginDto)).pipe(

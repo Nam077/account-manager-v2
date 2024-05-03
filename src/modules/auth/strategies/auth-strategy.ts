@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { I18nService } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { JwtPayload } from '../../../common/interface/jwt-payload.interface';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
@@ -25,10 +25,17 @@ export class AuthStrategy extends PassportStrategy(Strategy, 'auth-strategy') {
     }
 
     validate(payload: JwtPayload): Observable<User> {
-        const user = this.authService.validateUser(payload);
-        if (!user) {
-            throw new UnauthorizedException(this.i18nService.translate('message.Authentication.Unauthorized'));
-        }
-        return user;
+        return this.authService.validateUser(payload).pipe(
+            map((user) => {
+                if (!user) {
+                    throw new UnauthorizedException(
+                        this.i18nService.translate('message.Authentication.Unauthorized', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return user;
+            }),
+        );
     }
 }

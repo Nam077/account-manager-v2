@@ -4,7 +4,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AccountPriceModule } from '../account-price/account-price.module';
-import { CaslModule } from '../casl/casl.module';
 import { CustomerModule } from '../customer/customer.module';
 import { EmailModule } from '../email/email.module';
 import { MailModule } from '../mail/mail.module';
@@ -22,7 +21,6 @@ import { RentalService } from './rental.service';
         WorkspaceModule,
         AccountPriceModule,
         EmailModule,
-        CaslModule,
         WorkspaceEmailModule,
         ConfigModule,
         MailModule,

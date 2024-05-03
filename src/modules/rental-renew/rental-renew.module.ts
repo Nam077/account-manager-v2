@@ -2,7 +2,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AccountPriceModule } from '../account-price/account-price.module';
-import { CaslModule } from '../casl/casl.module';
 import { RentalModule } from '../rental/rental.module';
 import { WorkspaceEmailModule } from '../workspace-email/workspace-email.module';
 import { RentalRenew } from './entities/rental-renew.entity';
@@ -12,7 +11,6 @@ import { RentalRenewService } from './rental-renew.service';
 @Module({
     imports: [
         TypeOrmModule.forFeature([RentalRenew]),
-        CaslModule,
         forwardRef(() => RentalModule),
         WorkspaceEmailModule,
         AccountPriceModule,
