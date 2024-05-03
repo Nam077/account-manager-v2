@@ -1,73 +1,74 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Account Manager v2
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🌟 Overview
+**Account Manager v2** is a sophisticated platform designed to automate the management and distribution of rented accounts. This system is engineered using **NestJS** and **TypeORM**, featuring a **Telegram Bot** for dynamic and seamless user interactions. The aim is to streamline operations and enhance the efficiency of account rentals.
 
-## Description
+## 🚀 Features
+- **Automated Management**: Streamlines all aspects of account rental processes.
+- **Telegram Bot Interface**: Provides a user-friendly interface for easy interactions.
+- **Comprehensive Technology Stack**: Utilizes a suite of modern tools and frameworks to ensure top performance and reliability.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠 Technologies Used
+- **NestJS**: A progressive Node.js framework for scalable server-side applications.
+- **TypeORM**: An ORM framework compatible across various platforms including NodeJS and Electron.
+- **MySQL**: Robust open-source relational database management system.
+- **Swagger**: Powerful tool for documenting APIs.
+- **Jest**: Framework for performing delightful JavaScript testing.
+- **Casl**: Simplifies handling access control in NestJS applications.
+- **Nodemailer**: Facilitates easy email sending through Node.js applications.
+- **Class Validator & Class Transformer**: Enhances validation and transformation in NestJS.
 
-## Installation
+## 🔧 Getting Started
 
-```bash
-$ yarn install
-```
+### Prerequisites
+- Ensure you have **Node.js**, **NestJS**, and **TypeORM** installed.
+- A **MySQL** instance is required for database operations.
+- A configured **Telegram Bot** and **Mail Server** are necessary for full functionality.
 
-## Running the app
+### 🛠 Installation
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Nam077/account-manager-v2.git
+   ```
+2. **Install dependencies** (using npm or yarn):
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+3. **Set up environment variables**:
+   ```bash
+   cp .env.example .env
+   cp .env.development.example .env.development.local
+   ```
+4. **Start the application** (using npm or yarn):
+   ```bash
+   npm run start:dev
+   # or
+   yarn start:dev
+   ```
 
-```bash
-# development
-$ yarn run start
+### 🌐 Access
+Navigate to `http://localhost:[PORT]` as defined in your `.env` settings.
 
-# watch mode
-$ yarn run start:dev
+## ⚙️ Configuration
+Details about configuring database, JWT, scheduler, mail, and Telegram Bot through environment variables.
 
-# production mode
-$ yarn run start:prod
-```
+## 📝 Usage
+Guidance on operating the bot and managing accounts effectively.
 
-## Test
+## 🤝 Contributing
+Interested in contributing? Please see [CONTRIBUTING.md](CONTRIBUTING.md) for how to help improve Account Manager v2.
 
-```bash
-# unit tests
-$ yarn run test
+## 📜 License
+This project is under the MIT License - see [LICENSE.md](LICENSE.md) for more details.
 
-# e2e tests
-$ yarn run test:e2e
+## 📞 Support
+For support inquiries, contact via Telegram or open an issue on GitHub.
 
-# test coverage
-$ yarn run test:cov
-```
+## 👤 Authors
+- **Nam077** - [GitHub](http://github.com/Nam077)
+- **Nguyen Van Nam** - [Facebook](http://facebook.com/nam077.me)
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Nam077](https://github.com/Nam077)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+🌐 Visit the [GitHub page](https://github.com/Nam077/account-manager-v2) for the latest updates.
