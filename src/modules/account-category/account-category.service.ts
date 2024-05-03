@@ -136,6 +136,7 @@ export class AccountCategoryService
         const fields: Array<keyof AccountCategory> = ['id', 'name', 'description', 'slug'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
+
         return findWithPaginationAndSearch<AccountCategory>(
             this.accountCategoryRepository,
             findAllDto,
@@ -194,7 +195,8 @@ export class AccountCategoryService
                     }
                     return from(this.accountCategoryRepository.remove(accountCategory));
                 }
-                if (accountCategory.accounts) {
+
+                if (accountCategory.accounts && accountCategory.accounts.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.AccountCategory.NotDeleted', {
                             lang: I18nContext.current().lang,

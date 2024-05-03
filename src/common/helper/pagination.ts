@@ -30,6 +30,41 @@ export interface SearchField {
     tableName: string;
     fields: string[];
 }
+
+/**
+ * Custom condition for additional where clauses.
+ */
+export interface CustomCondition {
+    field: string;
+    value: any;
+    operator?: 'EQUAL' | 'LIKE' | 'LT' | 'GT'; // Add more operators as needed
+}
+/**
+ * Applies multiple additional `where` conditions to the query builder.
+ * @param queryBuilder - The query builder to modify.
+ * @param conditions - The conditions for the query.
+ */
+const applyAdditionalConditions = <T>(queryBuilder: SelectQueryBuilder<T>, conditions: CustomCondition[]): void => {
+    conditions.forEach(({ field, value, operator = 'EQUAL' }, index) => {
+        const paramName = `${field}${index}`;
+        const conditionString = `${queryBuilder.alias}.${field}`;
+        switch (operator) {
+            case 'LIKE':
+                queryBuilder.andWhere(`${conditionString} LIKE :${paramName}`, { [paramName]: `%${value}%` });
+                break;
+            case 'LT':
+                queryBuilder.andWhere(`${conditionString} < :${paramName}`, { [paramName]: value });
+                break;
+            case 'GT':
+                queryBuilder.andWhere(`${conditionString} > :${paramName}`, { [paramName]: value });
+                break;
+            default:
+                queryBuilder.andWhere(`${conditionString} = :${paramName}`, { [paramName]: value });
+                break;
+        }
+    });
+};
+
 /**
  * Adds relations to the query builder.
  * @param queryBuilder - The query builder to modify.
@@ -86,6 +121,7 @@ export const findWithPaginationAndSearch = <T>(
     isWithDeleted = false,
     relations: string[],
     searchFieldsInRelations: SearchField[] = [],
+    additionalConditions: CustomCondition[] = [],
 ): Observable<PaginatedData<T>> => {
     if (!validateRelations(searchFieldsInRelations, relations)) {
         throw new HttpException(
@@ -96,7 +132,9 @@ export const findWithPaginationAndSearch = <T>(
     const nameTable = repository.metadata.tableName;
     const { query, page = 1, limit = 10, sort, sortField } = findAllDto;
     const queryBuilder = repository.createQueryBuilder(nameTable);
-    if (query) {
+    if (additionalConditions.length > 0) {
+        applyAdditionalConditions(queryBuilder, additionalConditions);
+    } else if (query) {
         const lowercaseQuery = `%${query.toLowerCase()}%`;
         queryBuilder.where(
             new Brackets((qb) => {
@@ -119,19 +157,16 @@ export const findWithPaginationAndSearch = <T>(
             }),
         );
     }
-
     addRelationsToQueryBuilder(queryBuilder, nameTable, relations);
-
     const pageNew = Math.max(page, 1);
     const limitNew = limit > 0 ? limit : 10;
     queryBuilder.skip((pageNew - 1) * limitNew).take(limitNew);
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);
     }
-    if (!isWithDeleted) {
-        queryBuilder.andWhere(`${nameTable}.deletedAt IS NULL`);
+    if (isWithDeleted) {
+        queryBuilder.withDeleted();
     }
-
     return from(queryBuilder.getManyAndCount()).pipe(
         map(([data, total]) => {
             return {

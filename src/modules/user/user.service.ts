@@ -16,6 +16,7 @@ import { DeepPartial, Repository } from 'typeorm';
 import {
     ActionCasl,
     ApiResponse,
+    BcryptServiceInstance,
     CrudService,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
@@ -25,7 +26,6 @@ import {
     updateEntity,
     UserRole,
 } from '../../common';
-import { BcryptServiceInstance } from '../../common/helper/hash';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { LoginDto } from '../auth/dto/login.dto';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
