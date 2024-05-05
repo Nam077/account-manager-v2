@@ -20,11 +20,11 @@ import {
     SearchField,
     slugifyString,
     updateEntity,
+    UserAuth,
 } from '../../common';
 import { ActionCasl } from '../../common/enum/action-casl.enum';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { User } from '../user/entities/user.entity';
 import { CreateAccountCategoryDto } from './dto/create-account-category.dto';
 import { FindAllAccountCategoryDto } from './dto/find-all.dto';
 import { UpdateAccountCategoryDto } from './dto/update-account-category.dto';
@@ -40,7 +40,7 @@ export class AccountCategoryService
             CreateAccountCategoryDto,
             UpdateAccountCategoryDto,
             FindAllAccountCategoryDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -71,7 +71,7 @@ export class AccountCategoryService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    create(currentUser: User, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
+    create(currentUser: UserAuth, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, AccountCategory)) {
             throw new ForbiddenException(
@@ -100,7 +100,7 @@ export class AccountCategoryService
     ): Observable<AccountCategory> {
         return from(this.accountCategoryRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, AccountCategory)) {
             throw new ForbiddenException(
@@ -147,7 +147,7 @@ export class AccountCategoryService
         );
     }
     findAll(
-        currentUser: User,
+        currentUser: UserAuth,
         findAllDto: FindAllAccountCategoryDto,
     ): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -208,7 +208,7 @@ export class AccountCategoryService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<AccountCategory>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to delete account category');
@@ -255,7 +255,7 @@ export class AccountCategoryService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<AccountCategory>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to restore account category');
@@ -309,7 +309,7 @@ export class AccountCategoryService
         );
     }
     update(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
         updateDto: UpdateAccountCategoryDto,
     ): Observable<ApiResponse<AccountCategory>> {

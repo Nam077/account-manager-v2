@@ -1,9 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields, UserAuth } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
-import { User } from '../user/entities/user.entity';
 import { CreateRentalRenewDto } from './dto/create-rental-renew.dto';
 import { FindAllRentalRenewDto } from './dto/find-all.dto';
 import { UpdateRentalRenewDto } from './dto/update-rental-renew.dto';
@@ -17,39 +16,43 @@ export class RentalRenewController {
     constructor(private readonly rentalRenewService: RentalRenewService) {}
 
     @Post()
-    create(@GetCurrentUser() user: User, @Body() createRentalRenewDto: CreateRentalRenewDto) {
+    create(@GetCurrentUser() user: UserAuth, @Body() createRentalRenewDto: CreateRentalRenewDto) {
         return this.rentalRenewService.create(user, createRentalRenewDto);
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllRentalRenewDto) {
+    findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllRentalRenewDto) {
         return this.rentalRenewService.findAll(user, findAllDto);
     }
 
     @Get(':id')
-    findOne(@GetCurrentUser() user: User, @Param('id') id: string) {
+    findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalRenewService.findOne(user, id);
     }
 
     @RemoveFields<RentalRenew>(['rental'])
     @UseInterceptors(RemoveFieldInterceptor)
     @Patch('restore/:id')
-    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
+    restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalRenewService.restore(user, id);
     }
 
     @Patch(':id')
-    update(@GetCurrentUser() user: User, @Param('id') id: string, @Body() updateRentalRenewDto: UpdateRentalRenewDto) {
+    update(
+        @GetCurrentUser() user: UserAuth,
+        @Param('id') id: string,
+        @Body() updateRentalRenewDto: UpdateRentalRenewDto,
+    ) {
         return this.rentalRenewService.update(user, id, updateRentalRenewDto);
     }
 
     @Delete('hard-delete/:id')
-    removeHard(@GetCurrentUser() user: User, @Param('id') id: string) {
+    removeHard(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalRenewService.remove(user, id, true);
     }
 
     @Delete(':id')
-    remove(@GetCurrentUser() user: User, @Param('id') id: string) {
+    remove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalRenewService.remove(user, id);
     }
 }

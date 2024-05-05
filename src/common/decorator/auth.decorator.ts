@@ -1,7 +1,7 @@
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
 import { firstValueFrom, map, Observable } from 'rxjs';
 
-import { User } from '../../modules/user/entities/user.entity';
+import { UserAuth } from '../interface';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const ROLE_KEY = 'role';
@@ -18,9 +18,10 @@ export const Role = (role: string) => SetMetadata(ROLE_KEY, role);
  * @param context - The execution context.
  * @returns A Promise that resolves to the User object or any value.
  */
+
 export const GetCurrentUser = createParamDecorator(
-    async (data: keyof User | undefined, context: ExecutionContext): Promise<User | any> => {
-        const user$: Observable<User> = context.switchToHttp().getRequest().user;
+    async (data: keyof UserAuth | undefined, context: ExecutionContext): Promise<UserAuth | any> => {
+        const user$: Observable<UserAuth> = context.switchToHttp().getRequest().user;
         const user = await firstValueFrom(user$.pipe(map((user) => (data ? user && user[data] : user))));
         return user;
     },

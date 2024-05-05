@@ -24,6 +24,7 @@ import {
     PaginatedData,
     SearchField,
     updateEntity,
+    UserAuth,
     UserRole,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
@@ -44,7 +45,7 @@ export class UserService
             CreateUserDto,
             UpdateUserDto,
             FindAllUserDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -77,7 +78,7 @@ export class UserService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    create(currentUser: User, createDto: CreateUserDto): Observable<ApiResponse<User>> {
+    create(currentUser: UserAuth, createDto: CreateUserDto): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, User)) {
             throw new ForbiddenException(
@@ -117,7 +118,7 @@ export class UserService
             }),
         );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<User>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, User);
         return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
@@ -160,7 +161,7 @@ export class UserService
             searchFields,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllUserDto): Observable<ApiResponse<PaginatedData<User>>> {
+    findAll(currentUser: UserAuth, findAllDto: FindAllUserDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, User)) {
             throw new ForbiddenException(
@@ -207,7 +208,7 @@ export class UserService
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
@@ -261,7 +262,7 @@ export class UserService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<User>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
@@ -333,7 +334,7 @@ export class UserService
             }),
         );
     }
-    update(currentUser: User, id: string, updateDto: UpdateUserDto): Observable<ApiResponse<User>> {
+    update(currentUser: UserAuth, id: string, updateDto: UpdateUserDto): Observable<ApiResponse<User>> {
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
                 if (!user) {

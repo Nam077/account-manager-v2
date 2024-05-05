@@ -1,9 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields } from '../../common';
+import { GetCurrentUser, RemoveFieldInterceptor, RemoveFields, UserAuth } from '../../common';
 import { AuthJwtGuard } from '../../common/guard';
-import { User } from '../user/entities/user.entity';
 import { AccountPriceService } from './account-price.service';
 import { CreateAccountPriceDto } from './dto/create-account-price.dto';
 import { FindAllAccountPriceDto } from './dto/find-all.dto';
@@ -18,22 +17,22 @@ export class AccountPriceController {
     constructor(private readonly accountPriceService: AccountPriceService) {}
 
     @Post()
-    create(@GetCurrentUser() user: User, @Body() createAccountPriceDto: CreateAccountPriceDto) {
+    create(@GetCurrentUser() user: UserAuth, @Body() createAccountPriceDto: CreateAccountPriceDto) {
         return this.accountPriceService.create(user, createAccountPriceDto);
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: User, @Query() findAllDto: FindAllAccountPriceDto) {
+    findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllAccountPriceDto) {
         return this.accountPriceService.findAll(user, findAllDto);
     }
 
     @Get(':id')
-    findOne(@GetCurrentUser() user: User, @Param('id') id: string) {
+    findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountPriceService.findOne(user, id);
     }
 
     @Patch('restore/:id')
-    restore(@GetCurrentUser() user: User, @Param('id') id: string) {
+    restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountPriceService.restore(user, id);
     }
 
@@ -41,7 +40,7 @@ export class AccountPriceController {
     @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
     update(
-        @GetCurrentUser() user: User,
+        @GetCurrentUser() user: UserAuth,
         @Param('id') id: string,
         @Body() updateAccountPriceDto: UpdateAccountPriceDto,
     ) {
@@ -49,12 +48,12 @@ export class AccountPriceController {
     }
 
     @Delete('hard-remove/:id')
-    removeHard(@GetCurrentUser() user: User, @Param('id') id: string) {
+    removeHard(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountPriceService.remove(user, id, true);
     }
 
     @Delete(':id')
-    remove(@GetCurrentUser() user: User, @Param('id') id: string) {
+    remove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountPriceService.remove(user, id);
     }
 }

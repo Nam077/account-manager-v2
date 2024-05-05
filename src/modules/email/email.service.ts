@@ -23,11 +23,11 @@ import {
     PaginatedData,
     SearchField,
     updateEntity,
+    UserAuth,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { CustomerService } from '../customer/customer.service';
-import { User } from '../user/entities/user.entity';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { FindAllEmailDto } from './dto/find-all.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
@@ -42,7 +42,7 @@ export class EmailService
             CreateEmailDto,
             UpdateEmailDto,
             FindAllEmailDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -83,7 +83,7 @@ export class EmailService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    create(currentUser: User, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
+    create(currentUser: UserAuth, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Create, Email)) {
             throw new ForbiddenException(
@@ -109,7 +109,7 @@ export class EmailService
     findOneProcess(id: string, options?: FindOneOptionsCustom<Email>, isWithDeleted?: boolean): Observable<Email> {
         return from(this.emailRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Email>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, Email)) {
             throw new ForbiddenException(
@@ -165,7 +165,7 @@ export class EmailService
             searchFields,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllEmailDto): Observable<ApiResponse<PaginatedData<Email>>> {
+    findAll(currentUser: UserAuth, findAllDto: FindAllEmailDto): Observable<ApiResponse<PaginatedData<Email>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Email)) {
             throw new ForbiddenException(
@@ -217,7 +217,7 @@ export class EmailService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Delete, Email)) {
             throw new ForbiddenException(
@@ -260,7 +260,7 @@ export class EmailService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Email>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, Email)) {
             throw new ForbiddenException(
@@ -338,7 +338,7 @@ export class EmailService
             }),
         );
     }
-    update(currentUser: User, id: string, updateDto: UpdateEmailDto): Observable<ApiResponse<Email>> {
+    update(currentUser: UserAuth, id: string, updateDto: UpdateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, Email)) {
             throw new ForbiddenException(

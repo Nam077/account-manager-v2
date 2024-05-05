@@ -21,12 +21,12 @@ import {
     PaginatedData,
     SearchField,
     updateEntity,
+    UserAuth,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountService } from '../account/account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
 import { RentalTypeService } from '../rental-type/rental-type.service';
-import { User } from '../user/entities/user.entity';
 import { CreateAccountPriceDto } from './dto/create-account-price.dto';
 import { FindAllAccountPriceDto } from './dto/find-all.dto';
 import { UpdateAccountPriceDto } from './dto/update-account-price.dto';
@@ -42,7 +42,7 @@ export class AccountPriceService
             CreateAccountPriceDto,
             UpdateAccountPriceDto,
             FindAllAccountPriceDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -98,7 +98,7 @@ export class AccountPriceService
         );
     }
     create(
-        currentUser: User,
+        currentUser: UserAuth,
         createDto: CreateAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -136,7 +136,7 @@ export class AccountPriceService
         );
     }
     findOne(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -193,7 +193,7 @@ export class AccountPriceService
         );
     }
     findAll(
-        currentUser: User,
+        currentUser: UserAuth,
         findAllDto: FindAllAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -249,7 +249,7 @@ export class AccountPriceService
         );
     }
     remove(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
         hardRemove?: boolean,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
@@ -299,7 +299,7 @@ export class AccountPriceService
         );
     }
     restore(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -406,7 +406,7 @@ export class AccountPriceService
             }),
         );
     }
-    update(currentUser: User, id: string, updateDto: UpdateAccountPriceDto): Observable<ApiResponse<AccountPrice>> {
+    update(currentUser: UserAuth, id: string, updateDto: UpdateAccountPriceDto): Observable<ApiResponse<AccountPrice>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Update, AccountPrice)) {
             throw new ForbiddenException(

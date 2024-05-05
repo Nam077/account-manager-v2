@@ -29,6 +29,7 @@ import {
     RentalStatus,
     SearchField,
     updateEntity,
+    UserAuth,
     WorkspaceEmailStatus,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
@@ -41,7 +42,6 @@ import { EmailService } from '../email/email.service';
 import { Email } from '../email/entities/email.entity';
 import { MailService } from '../mail/mail.service';
 import { RentalRenewService } from '../rental-renew/rental-renew.service';
-import { User } from '../user/entities/user.entity';
 import { Workspace } from '../workspace/entities/workspace.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
 import { WorkspaceEmail } from '../workspace-email/entities/workspace-email.entity';
@@ -62,7 +62,7 @@ export class RentalService
             CreateRentalDto,
             UpdateRentalDto,
             FindAllRentalDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -227,7 +227,7 @@ export class RentalService
             }),
         );
     }
-    create(currentUser: User, createDto: CreateRentalDto): Observable<ApiResponse<Rental>> {
+    create(currentUser: UserAuth, createDto: CreateRentalDto): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Create, Rental)) {
             throw new ForbiddenException(
@@ -258,7 +258,7 @@ export class RentalService
             }),
         );
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Rental>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException(
@@ -322,7 +322,7 @@ export class RentalService
             searchFields,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllRentalDto): Observable<ApiResponse<PaginatedData<Rental>>> {
+    findAll(currentUser: UserAuth, findAllDto: FindAllRentalDto): Observable<ApiResponse<PaginatedData<Rental>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException(
@@ -388,7 +388,7 @@ export class RentalService
         );
     }
     remove(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
         hardRemove?: boolean,
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
@@ -451,7 +451,7 @@ export class RentalService
             ),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Restore, Rental)) {
             throw new ForbiddenException(
@@ -650,7 +650,7 @@ export class RentalService
         return of(true);
     }
     update(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
         updateDto: UpdateRentalDto,
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> | any {

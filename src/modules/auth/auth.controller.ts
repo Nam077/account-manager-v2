@@ -2,9 +2,8 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Details } from 'express-useragent';
 
-import { GeoIp, GeoIpI, GetCurrentUser, UserAgentCustom } from '../../common';
+import { GeoIp, GeoIpI, GetCurrentUser, UserAgentCustom, UserAuth } from '../../common';
 import { AuthJwtGuard, RefreshGuard } from '../../common/guard';
-import { User } from '../user/entities/user.entity';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
@@ -26,13 +25,13 @@ export class AuthController {
 
     @Get('refresh')
     @UseGuards(RefreshGuard)
-    refresh(@GetCurrentUser() user: User) {
+    refresh(@GetCurrentUser() user: UserAuth) {
         return this.authService.refresh(user);
     }
 
     @Get('logout-all')
     @UseGuards(AuthJwtGuard)
-    logoutAll(@GetCurrentUser() user: User) {
+    logoutAll(@GetCurrentUser() user: UserAuth) {
         return this.authService.logoutAll(user);
     }
 }

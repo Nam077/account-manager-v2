@@ -14,10 +14,10 @@ import {
     SearchField,
     slugifyString,
     updateEntity,
+    UserAuth,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { User } from '../user/entities/user.entity';
 import { CreateRentalTypeDto } from './dto/create-rental-type.dto';
 import { FindAllRentalTypeDto } from './dto/find-all.dto';
 import { UpdateRentalTypeDto } from './dto/update-rental-type.dto';
@@ -33,7 +33,7 @@ export class RentalTypeService
             CreateRentalTypeDto,
             UpdateRentalTypeDto,
             FindAllRentalTypeDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -67,7 +67,7 @@ export class RentalTypeService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    create(currentUser: User, createDto: CreateRentalTypeDto): Observable<ApiResponse<RentalType>> {
+    create(currentUser: UserAuth, createDto: CreateRentalTypeDto): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Create, RentalType)) {
             throw new BadRequestException(
@@ -97,7 +97,7 @@ export class RentalTypeService
     ): Observable<RentalType> {
         return from(this.rentalTypeRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Read, RentalType)) {
             throw new BadRequestException(
@@ -140,7 +140,10 @@ export class RentalTypeService
             searchFields,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllRentalTypeDto): Observable<ApiResponse<PaginatedData<RentalType>>> {
+    findAll(
+        currentUser: UserAuth,
+        findAllDto: FindAllRentalTypeDto,
+    ): Observable<ApiResponse<PaginatedData<RentalType>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.ReadAll, RentalType)) {
             throw new BadRequestException(
@@ -193,7 +196,7 @@ export class RentalTypeService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<RentalType>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Delete, RentalType)) {
             throw new BadRequestException(
@@ -237,7 +240,7 @@ export class RentalTypeService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<RentalType>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Restore, RentalType)) {
             throw new BadRequestException(
@@ -296,7 +299,7 @@ export class RentalTypeService
             }),
         );
     }
-    update(currentUser: User, id: string, updateDto: UpdateRentalTypeDto): Observable<ApiResponse<RentalType>> {
+    update(currentUser: UserAuth, id: string, updateDto: UpdateRentalTypeDto): Observable<ApiResponse<RentalType>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (ability.cannot(ActionCasl.Update, RentalType)) {
             throw new BadRequestException(

@@ -21,11 +21,11 @@ import {
     SearchField,
     slugifyString,
     updateEntity,
+    UserAuth,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountCategoryService } from '../account-category/account-category.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { User } from '../user/entities/user.entity';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { FindAllAccountDto } from './dto/find-all.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -41,7 +41,7 @@ export class AccountService
             CreateAccountDto,
             UpdateAccountDto,
             FindAllAccountDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -102,7 +102,7 @@ export class AccountService
      * @return An observable that emits the created account
      * @throws {ForbiddenException} If the user is not allowed to create an account
      */
-    create(currentUser: User, createDto: CreateAccountDto): Observable<ApiResponse<Account>> {
+    create(currentUser: UserAuth, createDto: CreateAccountDto): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException(
@@ -141,7 +141,7 @@ export class AccountService
      * @returns An Observable that emits the found account
      * @throws {ForbiddenException} If the user is not allowed to read the account
      */
-    findOne(currentUser: User, id: string): Observable<ApiResponse<Account>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to read account');
@@ -199,7 +199,7 @@ export class AccountService
             searchRelation,
         );
     }
-    findAll(currentUser: User, findAllDto: FindAllAccountDto): Observable<ApiResponse<PaginatedData<Account>>> {
+    findAll(currentUser: UserAuth, findAllDto: FindAllAccountDto): Observable<ApiResponse<PaginatedData<Account>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.ReadAll, Account)) {
             throw new ForbiddenException(
@@ -261,7 +261,7 @@ export class AccountService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    remove(currentUser: User, id: string, hardRemove?: boolean): Observable<ApiResponse<Account>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException(
@@ -303,7 +303,7 @@ export class AccountService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<Account>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException(
@@ -380,7 +380,7 @@ export class AccountService
             }),
         );
     }
-    update(currentUser: User, id: string, updateDto: UpdateAccountDto): Observable<ApiResponse<Account>> {
+    update(currentUser: UserAuth, id: string, updateDto: UpdateAccountDto): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to update account');

@@ -20,12 +20,12 @@ import {
     PaginatedData,
     SearchField,
     updateEntity,
+    UserAuth,
 } from '../../common';
 import { FindOneOptionsCustom } from '../../common/interface/find-one.interface';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountService } from '../account/account.service';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
-import { User } from '../user/entities/user.entity';
 import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { FindAllAdminAccountDto } from './dto/find-all.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
@@ -40,7 +40,7 @@ export class AdminAccountService
             CreateAdminAccountDto,
             UpdateAdminAccountDto,
             FindAllAdminAccountDto,
-            User
+            UserAuth
         >
 {
     constructor(
@@ -82,7 +82,7 @@ export class AdminAccountService
             }),
         );
     }
-    create(currentUser: User, createDto: CreateAdminAccountDto): Observable<ApiResponse<AdminAccount>> {
+    create(currentUser: UserAuth, createDto: CreateAdminAccountDto): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Create, AdminAccount)) {
             throw new ForbiddenException(
@@ -110,7 +110,7 @@ export class AdminAccountService
     ): Observable<AdminAccount> {
         return from(this.adminAccountRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
-    findOne(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
+    findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Read, AdminAccount)) {
             throw new ForbiddenException(
@@ -169,7 +169,7 @@ export class AdminAccountService
         );
     }
     findAll(
-        currentUser: User,
+        currentUser: UserAuth,
         findAllDto: FindAllAdminAccountDto,
     ): Observable<ApiResponse<PaginatedData<AdminAccount>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -231,7 +231,7 @@ export class AdminAccountService
         );
     }
     remove(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
         hardRemove?: boolean,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
@@ -274,7 +274,7 @@ export class AdminAccountService
             }),
         );
     }
-    restore(currentUser: User, id: string): Observable<ApiResponse<AdminAccount>> {
+    restore(currentUser: UserAuth, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, AdminAccount)) {
             throw new ForbiddenException(
@@ -350,7 +350,7 @@ export class AdminAccountService
         );
     }
     update(
-        currentUser: User,
+        currentUser: UserAuth,
         id: string,
         updateDto: UpdateAdminAccountDto,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {

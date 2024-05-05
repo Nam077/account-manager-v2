@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { I18nContext } from 'nestjs-i18n';
 import { I18nService } from 'nestjs-i18n/dist/services/i18n.service';
-import { from, Observable, of, switchMap } from 'rxjs';
+import { from, map, Observable, of, switchMap } from 'rxjs';
 
 import { GeoIpI, JwtPayload } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
@@ -24,8 +25,6 @@ export class AuthService {
     login(loginDto: LoginDto, ipGeo: GeoIpI) {
         return from(this.userService.login(loginDto)).pipe(
             switchMap((user) => {
-                console.log(user);
-
                 const token = this.jwtServiceCustom.generateToken(user);
                 const createRefreshTokenDto: CreateRefreshTokenDto = {
                     token: token.refreshToken,
@@ -51,7 +50,11 @@ export class AuthService {
         if (isExpired) {
             return this.refreshTokenService.removeByToken(refreshToken).pipe(
                 switchMap(() => {
-                    throw new UnauthorizedException('Token expired');
+                    throw new UnauthorizedException(
+                        this.i18nService.translate('message.Authentication.TokenExpired', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }),
             );
         }
@@ -60,7 +63,22 @@ export class AuthService {
                 if (!refreshToken) {
                     throw new UnauthorizedException('Invalid token');
                 }
-                return this.userService.findOneProcess(refreshToken.userId);
+                return this.userService
+                    .findOneProcess(refreshToken.userId, {
+                        select: {
+                            id: true,
+                            email: true,
+                            role: true,
+                        },
+                    })
+                    .pipe(
+                        map((user) => {
+                            return {
+                                ...user,
+                                refreshToken,
+                            };
+                        }),
+                    );
             }),
         );
     }
