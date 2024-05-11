@@ -164,6 +164,11 @@
         "paymentMethod": {
             "isString": "Payment method must be a string.",
             "lengthAccept": "Payment method must be between 3 and 255 characters long."
+        }, 
+        "email": {
+            "isString": "Email must be a string.",
+            "isEmail": "Email must be a valid email address.",
+            "isNotEmpty": "Email is required."
         }
     },
     "createRentalType": {

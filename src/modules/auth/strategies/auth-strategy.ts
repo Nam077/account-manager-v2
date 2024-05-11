@@ -5,9 +5,9 @@ import { I18nContext, I18nService } from 'nestjs-i18n';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { map, Observable } from 'rxjs';
 
+import { UserAuth } from '../../../common';
 import { JwtPayload } from '../../../common/interface/jwt-payload.interface';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
-import { User } from '../../user/entities/user.entity';
 import { AuthService } from '../auth.service';
 
 @Injectable()
@@ -24,7 +24,7 @@ export class AuthStrategy extends PassportStrategy(Strategy, 'auth-strategy') {
         });
     }
 
-    validate(payload: JwtPayload): Observable<User> {
+    validate(payload: JwtPayload): Observable<UserAuth> {
         return this.authService.validateUser(payload).pipe(
             map((user) => {
                 if (!user) {

@@ -7,9 +7,9 @@ import { I18nService } from 'nestjs-i18n/dist/services/i18n.service';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Observable } from 'rxjs';
 
+import { UserAuth } from '../../../common';
 import { JwtPayload } from '../../../common/interface/jwt-payload.interface';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
-import { User } from '../../user/entities/user.entity';
 import { AuthService } from '../auth.service';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'refresh-stra
         });
     }
 
-    validate(req: Request, payload: JwtPayload): Observable<User> {
+    validate(req: Request, payload: JwtPayload): Observable<UserAuth> {
         const refreshToken = this.getTokenFromRequest(req);
         if (!refreshToken) {
             throw new UnauthorizedException(

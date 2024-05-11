@@ -1,14 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { I18nContext } from 'nestjs-i18n';
 import { I18nService } from 'nestjs-i18n/dist/services/i18n.service';
-import { from, map, Observable, of, switchMap } from 'rxjs';
+import { from, Observable, of, switchMap } from 'rxjs';
 
-import { GeoIpI, JwtPayload } from '../../common';
+import { GeoIpI, JwtPayload, UserAuth } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CreateRefreshTokenDto } from '../refresh-token/dto/create-refresh-token.dto';
 import { RefreshTokenService } from '../refresh-token/refresh-token.service';
-import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtServiceCustom } from './jwt-service';
@@ -16,7 +14,6 @@ import { JwtServiceCustom } from './jwt-service';
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly configService: ConfigService,
         private readonly userService: UserService,
         private readonly jwtServiceCustom: JwtServiceCustom,
         private readonly refreshTokenService: RefreshTokenService,
@@ -35,17 +32,18 @@ export class AuthService {
                     switchMap(() => {
                         return of({
                             token,
+                            user,
                         });
                     }),
                 );
             }),
         );
     }
-    validateUser(payload: JwtPayload): Observable<User> {
-        return this.userService.validateUser(payload);
+    validateUser(payload: JwtPayload): Observable<UserAuth> {
+        return this.userService.validateUser(payload) as Observable<UserAuth>;
     }
 
-    validateRefreshToken(refreshToken: string, payload: JwtPayload): Observable<User> {
+    validateRefreshToken(refreshToken: string, payload: JwtPayload): Observable<UserAuth> {
         const isExpired = this.jwtServiceCustom.checkTimeExpire(payload.exp);
         if (isExpired) {
             return this.refreshTokenService.removeByToken(refreshToken).pipe(
@@ -72,21 +70,31 @@ export class AuthService {
                         },
                     })
                     .pipe(
-                        map((user) => {
-                            return {
+                        switchMap((user): Observable<UserAuth> => {
+                            if (!user) {
+                                throw new UnauthorizedException(
+                                    this.i18nService.translate('message.Authentication.Unauthorized', {
+                                        lang: I18nContext.current().lang,
+                                    }),
+                                );
+                            }
+                            return of({
                                 ...user,
-                                refreshToken,
-                            };
+                                refreshToken: refreshToken.token,
+                            });
                         }),
                     );
             }),
         );
     }
-    refresh(user: User) {
+    refresh(user: UserAuth) {
         return of(this.jwtServiceCustom.generateJwtAccessToken(user));
     }
 
-    logoutAll(user: User) {
+    logoutAll(user: UserAuth) {
         return this.refreshTokenService.removeByUserId(user.id);
+    }
+    logout(user: UserAuth) {
+        return this.refreshTokenService.removeByToken(user.refreshToken);
     }
 }

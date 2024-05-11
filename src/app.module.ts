@@ -122,7 +122,7 @@ import { WorkspaceEmailModule } from './modules/workspace-email/workspace-email.
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(DefaultAuthMiddleware).forRoutes('*');
+        consumer.apply().forRoutes('*');
     }
 }
 

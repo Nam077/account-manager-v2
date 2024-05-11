@@ -164,6 +164,11 @@
         "paymentMethod": {
             "isString": "Phương thức thanh toán phải là một chuỗi.",
             "lengthAccept": "Phương thức thanh toán phải có độ dài từ 3 đến 255 ký tự."
+        },
+        "email": {
+            "isString": "Email phải là một chuỗi.",
+            "isEmail": "Email phải là một địa chỉ email hợp lệ.",
+            "isNotEmpty": "Email là bắt buộc."
         }
     },
     "createRentalType": {
