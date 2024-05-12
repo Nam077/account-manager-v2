@@ -6,6 +6,12 @@ import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import { AppModule } from './app.module';
 const bootstrap = async () => {
     const app = await NestFactory.create(AppModule, {});
+    app.enableCors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+    });
     app.useGlobalPipes(new I18nValidationPipe());
 
     app.useGlobalFilters(
