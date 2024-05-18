@@ -329,4 +329,34 @@ export class CustomerService
             }),
         );
     }
+    findEmails(user: UserAuth, id: string) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+        if (!ability.can(ActionCasl.Read, Customer)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+        return this.findEmailsProcess(id).pipe(
+            map((data) => ({
+                status: HttpStatus.OK,
+                data: data.emails,
+                message: this.i18nService.translate('message.Customer.Found', {
+                    lang: I18nContext.current().lang,
+                }),
+            })),
+        );
+    }
+
+    findEmailsProcess(id: string): Observable<Customer> {
+        return from(
+            this.customerRepository.findOne({
+                where: { id },
+                relations: {
+                    emails: true,
+                },
+            }),
+        );
+    }
 }

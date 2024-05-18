@@ -143,6 +143,7 @@ export class UserService
                     data: user,
                     message: this.i18nService.translate('message.User.Found', {
                         lang: I18nContext.current().lang,
+                        args: { name: user.name },
                     }),
                 };
             }),
@@ -184,7 +185,7 @@ export class UserService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<User> {
-        return from(this.userRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
+        return from(this.findOneProcess(id, {}, hardRemove)).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException(
@@ -201,16 +202,16 @@ export class UserService
                             }),
                         );
                     }
-                    return this.userRepository.remove(user);
+                    return from(this.userRepository.remove(user));
                 }
-                return this.userRepository.softRemove(user);
+                return from(this.userRepository.softRemove(user));
             }),
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        return this.findOneProcess(id).pipe(
+        return this.findOneProcess(id, {}, hardRemove).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException(
@@ -233,6 +234,7 @@ export class UserService
                             data,
                             message: this.i18nService.translate('message.User.Deleted', {
                                 lang: I18nContext.current().lang,
+                                args: { name: user.name },
                             }),
                         };
                     }),
@@ -241,12 +243,13 @@ export class UserService
         );
     }
     restoreProcess(id: string): Observable<User> {
-        return from(this.userRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+        return this.findOneProcess(id, {}, true).pipe(
             switchMap((user) => {
                 if (!user) {
                     throw new NotFoundException(
                         this.i18nService.translate('message.User.NotFound', {
                             lang: I18nContext.current().lang,
+                            args: { name: user.name },
                         }),
                     );
                 }
@@ -254,6 +257,7 @@ export class UserService
                     throw new BadRequestException(
                         this.i18nService.translate('message.User.NotRestored', {
                             lang: I18nContext.current().lang,
+                            args: { name: user.name },
                         }),
                     );
                 }
@@ -264,9 +268,10 @@ export class UserService
     }
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
-        return this.findOneProcess(id).pipe(
+        return this.findOneProcess(id, {}, true).pipe(
             switchMap((user) => {
                 if (!user) {
+                    console.log('user not found');
                     throw new NotFoundException(
                         this.i18nService.translate('message.User.NotFound', {
                             lang: I18nContext.current().lang,
@@ -287,6 +292,7 @@ export class UserService
                             data,
                             message: this.i18nService.translate('message.User.Restored', {
                                 lang: I18nContext.current().lang,
+                                args: { name: user.name },
                             }),
                         };
                     }),
@@ -359,6 +365,7 @@ export class UserService
                             data,
                             message: this.i18nService.translate('message.User.Updated', {
                                 lang: I18nContext.current().lang,
+                                args: { name: user.name },
                             }),
                         };
                     }),

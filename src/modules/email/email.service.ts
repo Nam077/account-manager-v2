@@ -192,6 +192,9 @@ export class EmailService
             this.emailRepository.findOne({
                 where: { id },
                 withDeleted: hardRemove,
+                relations: {
+                    customer: true,
+                },
             }),
         ).pipe(
             switchMap((email) => {
@@ -202,11 +205,20 @@ export class EmailService
                         }),
                     );
                 }
+                if (email.customer.email === email.email) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                            args: { name: email.email },
+                        }),
+                    );
+                }
                 if (hardRemove) {
                     if (!email.deletedAt) {
                         throw new BadRequestException(
                             this.i18nService.translate('message.Email.NotDeleted', {
                                 lang: I18nContext.current().lang,
+                                args: { name: email.email },
                             }),
                         );
                     }
@@ -232,6 +244,7 @@ export class EmailService
                     status: HttpStatus.OK,
                     message: this.i18nService.translate('message.Email.Deleted', {
                         lang: I18nContext.current().lang,
+                        args: { name: data.email },
                     }),
                     data,
                 }),
@@ -252,6 +265,7 @@ export class EmailService
                     throw new BadRequestException(
                         this.i18nService.translate('message.Email.NotRestored', {
                             lang: I18nContext.current().lang,
+                            args: { name: email.email },
                         }),
                     );
                 }
@@ -275,6 +289,7 @@ export class EmailService
                     status: HttpStatus.OK,
                     message: this.i18nService.translate('message.Email.Restored', {
                         lang: I18nContext.current().lang,
+                        args: { name: data.email },
                     }),
                     data,
                 }),
@@ -372,5 +387,32 @@ export class EmailService
     }
     checkExistByEmailAndCustomerId(email: string, customerId: string): Observable<boolean> {
         return from(this.emailRepository.existsBy({ email, customerId }));
+    }
+
+    findEmails(user: UserAuth, id: string) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Email);
+        if (!ability.can(ActionCasl.Read, Email)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+        return this.findEmailsProcess(user, id, isCanReadWithDeleted).pipe(
+            map((emails) => {
+                return {
+                    status: HttpStatus.OK,
+                    message: this.i18nService.translate('message.Email.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                    data: emails,
+                };
+            }),
+        );
+    }
+
+    findEmailsProcess(user: UserAuth, id: string, isWithDeleted?: boolean): Observable<Email[]> {
+        return from(this.emailRepository.find({ where: { customerId: id }, withDeleted: isWithDeleted }));
     }
 }

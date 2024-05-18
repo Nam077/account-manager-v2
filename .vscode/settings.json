@@ -3,4 +3,8 @@
         "geoip",
         "typeorm"
     ],
+    // eslint on save
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    },
 }

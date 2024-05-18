@@ -26,6 +26,11 @@ export class EmailController {
         return this.emailService.findAll(user, findAllDto);
     }
 
+    @Get('/customer/:id')
+    findEmails(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+        return this.emailService.findEmails(user, id);
+    }
+
     @Get(':id')
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.emailService.findOne(user, id);

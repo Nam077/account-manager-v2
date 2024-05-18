@@ -32,6 +32,8 @@ export class UserController {
     }
     @Patch('restore/:id')
     restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+        console.log(id);
+
         return this.userService.restore(user, id);
     }
 

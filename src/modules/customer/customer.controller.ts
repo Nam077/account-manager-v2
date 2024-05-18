@@ -26,6 +26,11 @@ export class CustomerController {
         return this.customerService.findAll(user, findAllDto);
     }
 
+    @Get(':id/email')
+    findEmails(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+        return this.customerService.findEmails(user, id);
+    }
+
     @Get(':id')
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.customerService.findOne(user, id);
