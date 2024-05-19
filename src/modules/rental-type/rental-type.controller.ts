@@ -47,7 +47,7 @@ export class RentalTypeController {
         return this.rentalTypeService.update(user, id, updateRentalTypeDto);
     }
 
-    @Delete('hard-remove/:id')
+    @Delete('hard-delete/:id')
     removeHard(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalTypeService.remove(user, id, true);
     }

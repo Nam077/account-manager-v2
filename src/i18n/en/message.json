@@ -53,6 +53,7 @@
         "Conflict": "Email already in use",
         "Created": "Email {name} created successfully",
         "Updated": "Email {name} updated successfully",
+        "NotUpdated": "Email {name} cannot be updated", 
         "Restored": "Email {name} restored successfully",
         "Deleted": "Email {name} deleted successfully",
         "NotDeleted": "Email {name} cannot be deleted",

@@ -178,7 +178,7 @@ export class AccountService
      * Retrieves all accounts based on the provided data.
      * @author Nam077
      * @param {FindAllDto} findAllDto - The data required to retrieve all accounts.
-     * @return {Observable<PaginatedData<Account>} An observable that emits the paginated data of accounts.
+     * @return {Observable<PaginatedData<Account>>} An observable that emits the paginated data of accounts.
      */
 
     findAllProcess(findAllDto: FindAllAccountDto, isWithDeleted?: boolean): Observable<PaginatedData<Account>> {
@@ -226,6 +226,7 @@ export class AccountService
                 {
                     relations: {
                         adminAccounts: !hardRemove,
+                        rentals: !hardRemove,
                     },
                 },
                 hardRemove,
@@ -249,7 +250,14 @@ export class AccountService
                     }
                     return from(this.accountRepository.remove(account));
                 }
-                if (account.adminAccounts) {
+                if (account.adminAccounts && account.adminAccounts.length > 0) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Account.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                if (account.rentals && account.rentals.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Account.NotDeleted', {
                             lang: I18nContext.current().lang,
@@ -354,7 +362,7 @@ export class AccountService
                 } else {
                     tasks.push(of(null));
                 }
-                if (updateDto.accountCategoryId && updateDto.accountCategoryId !== account.accountCategory.id) {
+                if (updateDto.accountCategoryId && updateDto.accountCategoryId !== account.accountCategoryId) {
                     tasks.push(
                         this.accountCategoryService.findOneProcess(updateDto.accountCategoryId).pipe(
                             tap((accountCategory) => {
@@ -403,5 +411,17 @@ export class AccountService
 
     async findOneBySlug(slug: string): Promise<Account> {
         return this.accountRepository.findOne({ where: { slug } });
+    }
+
+    findAllAccount(user: UserAuth) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+        if (!ability.can(ActionCasl.Manage, Account)) {
+            throw new ForbiddenException('You are not allowed to read account');
+        }
+        return this.findAllAccountProcess();
+    }
+
+    findAllAccountProcess() {
+        return this.accountRepository.find();
     }
 }

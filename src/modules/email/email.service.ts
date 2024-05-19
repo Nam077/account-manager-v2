@@ -187,6 +187,7 @@ export class EmailService
             ),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<Email> {
         return from(
             this.emailRepository.findOne({
@@ -251,13 +252,48 @@ export class EmailService
             ),
         );
     }
+    removeByCustomerIdProcess(customerId: string, hardRemove?: boolean): Observable<Email[]> {
+        return from(this.emailRepository.find({ where: { customerId }, withDeleted: hardRemove })).pipe(
+            switchMap((emails) => {
+                if (emails.length === 0) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                if (hardRemove) {
+                    return from(this.emailRepository.remove(emails));
+                }
+                return from(this.emailRepository.softRemove(emails));
+            }),
+        );
+    }
     restoreProcess(id: string): Observable<Email> {
-        return from(this.emailRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+        return from(
+            this.findOneProcess(
+                id,
+                {
+                    relations: {
+                        customer: true,
+                    },
+                },
+                true,
+            ),
+        ).pipe(
             switchMap((email) => {
                 if (!email) {
                     throw new NotFoundException(
                         this.i18nService.translate('message.Email.NotFound', {
                             lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                if (email.customer.deletedAt) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Customer.NotRestored', {
+                            lang: I18nContext.current().lang,
+                            args: { name: email.customer.name },
                         }),
                     );
                 }
@@ -274,6 +310,22 @@ export class EmailService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
+    restoreByCustomerIdProcess(customerId: string) {
+        return from(this.emailRepository.find({ where: { customerId }, withDeleted: true })).pipe(
+            switchMap((emails) => {
+                if (emails.length === 0) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Email.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+                return from(this.emailRepository.restore(emails.map((email) => email.id)));
+            }),
+        );
+    }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         if (!ability.can(ActionCasl.Restore, Email)) {
@@ -298,7 +350,13 @@ export class EmailService
     }
     updateProcess(id: string, updateDto: UpdateEmailDto): Observable<Email> {
         const updateData: DeepPartial<Email> = { ...updateDto };
-        return from(this.findOneProcess(id)).pipe(
+        return from(
+            this.findOneProcess(id, {
+                relations: {
+                    customer: true,
+                },
+            }),
+        ).pipe(
             switchMap((email) => {
                 if (!email) {
                     throw new NotFoundException(
@@ -307,6 +365,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 const tasks: Observable<any>[] = [];
 
                 if (updateDto.customerId && updateDto.customerId !== email.customerId) {
@@ -325,6 +384,14 @@ export class EmailService
                         ),
                     );
                 } else tasks.push(of(null));
+                if (email.email === email.customer.email) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotUpdated', {
+                            lang: I18nContext.current().lang,
+                            args: { name: email.email },
+                        }),
+                    );
+                }
                 if (
                     (updateDto.customerId && updateDto.customerId !== email.customerId) ||
                     (updateDto.email && updateDto.email !== email.email)

@@ -21,6 +21,11 @@ export class AccountController {
         return this.accountService.create(user, createAccountDto);
     }
 
+    @Get('all')
+    findAllAccount(@GetCurrentUser() user: UserAuth) {
+        return this.accountService.findAllAccount(user);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllAccountDto) {
         return this.accountService.findAll(user, findAllDto);

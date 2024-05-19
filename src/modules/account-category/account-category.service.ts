@@ -336,4 +336,15 @@ export class AccountCategoryService
     checkExistBySlug(slug: string): Observable<boolean> {
         return from(this.accountCategoryRepository.existsBy({ slug }));
     }
+    findAllAccountCategory(user: UserAuth) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+        if (!ability.can(ActionCasl.ReadAll, AccountCategory)) {
+            throw new ForbiddenException('You are not allowed to read account category');
+        }
+        return this.findAllAccountCategoryProcess();
+    }
+
+    findAllAccountCategoryProcess() {
+        return from(this.accountCategoryRepository.find());
+    }
 }

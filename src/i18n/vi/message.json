@@ -53,6 +53,7 @@
         "Conflict": "Email đã được sử dụng",
         "Created": "Email {name} đã được tạo thành công",
         "Updated": "Email {name} đã được cập nhật thành công",
+        "NotUpdated": "Email {name} không thể được cập nhật",
         "Restored": "Email {name} đã được khôi phục thành công",
         "Deleted": "Email {name} đã bị xóa thành công",
         "NotDeleted": "Không thể xóa email {name}",

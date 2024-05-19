@@ -22,6 +22,11 @@ export class AccountCategoryController {
         return this.accountCategoryService.create(user, createAccountCategoryDto);
     }
 
+    @Get('all')
+    findAllAccount(@GetCurrentUser() user: UserAuth) {
+        return this.accountCategoryService.findAllAccountCategory(user);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllAccountCategoryDto) {
         return this.accountCategoryService.findAll(user, findAllDto);

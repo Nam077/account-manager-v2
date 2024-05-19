@@ -186,6 +186,7 @@ export class CustomerService
                 withDeleted: hardRemove,
                 relations: {
                     emails: !hardRemove,
+                    rentals: !hardRemove,
                 },
             }),
         ).pipe(
@@ -195,20 +196,31 @@ export class CustomerService
                         throw new BadRequestException(
                             this.i18nService.translate('message.Customer.NotDeleted', {
                                 lang: I18nContext.current().lang,
+                                args: { name: customer.name },
                             }),
                         );
                     }
 
-                    return from(this.customerRepository.remove(customer));
+                    return this.emailService
+                        .removeByCustomerIdProcess(customer.id, true)
+                        .pipe(
+                            switchMap(() => from(this.customerRepository.remove(customer)).pipe(map(() => customer))),
+                        );
                 }
-                if (customer.emails) {
+                if (customer.rentals && customer.rentals.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Customer.NotDeleted', {
                             lang: I18nContext.current().lang,
+                            args: { name: customer.name },
                         }),
                     );
                 }
-                return from(this.customerRepository.softRemove(customer));
+
+                return this.emailService
+                    .removeByCustomerIdProcess(customer.id)
+                    .pipe(
+                        switchMap(() => from(this.customerRepository.softRemove(customer)).pipe(map(() => customer))),
+                    );
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
@@ -223,10 +235,11 @@ export class CustomerService
             );
         }
         return this.removeProcess(id, hardRemove).pipe(
-            map(() => ({
+            map((customer) => ({
                 status: HttpStatus.OK,
                 message: this.i18nService.translate('message.Customer.Deleted', {
                     lang: I18nContext.current().lang,
+                    args: { name: customer.name },
                 }),
             })),
         );
@@ -249,7 +262,11 @@ export class CustomerService
                     );
                 }
 
-                return from(this.customerRepository.restore(customer.id)).pipe(map(() => customer));
+                return from(this.customerRepository.restore(customer.id)).pipe(
+                    switchMap(() => {
+                        return this.emailService.restoreByCustomerIdProcess(customer.id).pipe(map(() => customer));
+                    }),
+                );
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
@@ -264,10 +281,11 @@ export class CustomerService
             );
         }
         return this.restoreProcess(id).pipe(
-            map(() => ({
+            map((customer) => ({
                 status: HttpStatus.OK,
                 message: this.i18nService.translate('message.Customer.Restored', {
                     lang: I18nContext.current().lang,
+                    args: { name: customer.name },
                 }),
             })),
         );
