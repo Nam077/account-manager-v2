@@ -216,14 +216,14 @@ export class WorkspaceEmailService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<WorkspaceEmail> {
-        return from(
-            this.workspaceEmailRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
+        return this.findOneProcess(
+            id,
+            {
                 relations: {
-                    rentals: true,
+                    rentals: !hardRemove,
                 },
-            }),
+            },
+            hardRemove,
         ).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
@@ -243,7 +243,7 @@ export class WorkspaceEmailService
                     }
                     return from(this.workspaceEmailRepository.remove(workspaceEmail));
                 }
-                if (workspaceEmail.rentals) {
+                if (workspaceEmail.rentals && workspaceEmail.rentals.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.WorkspaceEmail.NotDeleted', {
                             lang: I18nContext.current().lang,

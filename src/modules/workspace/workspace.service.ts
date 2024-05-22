@@ -187,7 +187,7 @@ export class WorkspaceService
             id,
             {
                 relations: {
-                    workspaceEmails: true,
+                    workspaceEmails: !hardRemove,
                 },
             },
             hardRemove,

@@ -166,11 +166,14 @@ export class RentalTypeService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<RentalType> {
-        return from(
-            this.rentalTypeRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-            }),
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    accountPrices: !hardRemove,
+                },
+            },
+            hardRemove,
         ).pipe(
             switchMap((rentalType: RentalType) => {
                 if (!rentalType) {
@@ -180,6 +183,7 @@ export class RentalTypeService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!rentalType.deletedAt) {
                         throw new NotFoundException(
@@ -189,6 +193,14 @@ export class RentalTypeService
                         );
                     }
                     return from(this.rentalTypeRepository.remove(rentalType));
+                }
+
+                if (rentalType.accountPrices && rentalType.accountPrices.length > 0) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Rental.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
 
                 return from(this.rentalTypeRepository.softRemove(rentalType));

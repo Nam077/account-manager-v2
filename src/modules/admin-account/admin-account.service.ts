@@ -198,12 +198,14 @@ export class AdminAccountService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<AdminAccount> {
-        return from(
-            this.adminAccountRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-                relations: { workspaces: !hardRemove },
-            }),
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    workspaces: !hardRemove,
+                },
+            },
+            hardRemove,
         ).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
@@ -224,7 +226,7 @@ export class AdminAccountService
                     }
                     return from(this.adminAccountRepository.remove(adminAccount));
                 }
-                if (adminAccount.workspaces) {
+                if (adminAccount.workspaces && adminAccount.workspaces.length > 0) {
                     if (adminAccount.workspaces.length > 0) {
                         throw new BadRequestException(
                             this.i18nService.translate('message.AdminAccount.NotDeleted', {

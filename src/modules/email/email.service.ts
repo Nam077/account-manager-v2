@@ -189,14 +189,15 @@ export class EmailService
     }
 
     removeProcess(id: string, hardRemove?: boolean): Observable<Email> {
-        return from(
-            this.emailRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
+        return this.findOneProcess(
+            id,
+            {
                 relations: {
-                    customer: true,
+                    customer: !hardRemove,
+                    rentals: !hardRemove,
                 },
-            }),
+            },
+            hardRemove,
         ).pipe(
             switchMap((email) => {
                 if (!email) {
@@ -214,6 +215,16 @@ export class EmailService
                         }),
                     );
                 }
+
+                if (email.rentals && email.rentals.length > 0) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Email.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                            args: { name: email.email },
+                        }),
+                    );
+                }
+
                 if (hardRemove) {
                     if (!email.deletedAt) {
                         throw new BadRequestException(

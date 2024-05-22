@@ -1,3 +1,4 @@
+import { Rental } from 'src/modules/rental/entities/rental.entity';
 import {
     Column,
     CreateDateColumn,
@@ -58,11 +59,13 @@ export class Email {
     })
     customerId: string;
 
-    // relation with customer
     @ManyToOne(() => Customer, (customer) => customer.emails)
     @JoinColumn({ name: 'customer_id' })
     customer: Customer;
 
     @OneToMany(() => WorkspaceEmail, (workspaceEmail) => workspaceEmail.email)
     workspaceEmails: WorkspaceEmail[];
+
+    @OneToMany(() => Rental, (rental) => rental.email)
+    rentals: Rental[];
 }

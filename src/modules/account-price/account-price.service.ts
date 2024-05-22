@@ -218,7 +218,15 @@ export class AccountPriceService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<AccountPrice> {
-        return this.findOneProcess(id, {}, hardRemove).pipe(
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    rentalRenews: !hardRemove,
+                },
+            },
+            hardRemove,
+        ).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
                     throw new NotFoundException(
@@ -236,6 +244,14 @@ export class AccountPriceService
                         );
                     }
                     return from(this.accountPriceRepository.remove(accountPrice));
+                }
+
+                if (accountPrice.rentalRenews && accountPrice.rentalRenews.length > 0) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.AccountPrice.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
 
                 return from(this.accountPriceRepository.softRemove(accountPrice));
