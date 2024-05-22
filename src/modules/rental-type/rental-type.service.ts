@@ -324,4 +324,20 @@ export class RentalTypeService
     checkExistBySlug(slug: string): Observable<boolean> {
         return from(this.rentalTypeRepository.existsBy({ slug }));
     }
+
+    findAllData(user: UserAuth) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+        if (ability.cannot(ActionCasl.ReadAll, RentalType)) {
+            throw new BadRequestException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+        return this.findAllDataProcess();
+    }
+
+    findAllDataProcess() {
+        return from(this.rentalTypeRepository.find());
+    }
 }

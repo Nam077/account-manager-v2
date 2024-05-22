@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { I18nTranslations } from '../../../i18n/i18n.generated';
@@ -35,4 +35,17 @@ export class CreateWorkspaceDto {
         message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.adminAccountId.isUUID'),
     })
     readonly adminAccountId: string;
+
+    // isShared
+    @ApiProperty({
+        description: 'Indicates if the workspace is shared',
+        example: false,
+    })
+    @IsNotEmpty({
+        message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.isShared.isNotEmpty'),
+    })
+    @IsBoolean({
+        message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.isShared.isBoolean'),
+    })
+    readonly isShared: boolean;
 }

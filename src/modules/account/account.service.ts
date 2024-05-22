@@ -227,6 +227,7 @@ export class AccountService
                     relations: {
                         adminAccounts: !hardRemove,
                         rentals: !hardRemove,
+                        accountPrices: !hardRemove,
                     },
                 },
                 hardRemove,
@@ -250,6 +251,15 @@ export class AccountService
                     }
                     return from(this.accountRepository.remove(account));
                 }
+
+                if (account.accountPrices && account.accountPrices.length > 0) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Account.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+
                 if (account.adminAccounts && account.adminAccounts.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Account.NotDeleted', {
@@ -290,7 +300,7 @@ export class AccountService
         );
     }
     restoreProcess(id: string): Observable<Account> {
-        return from(this.accountRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+        return this.findOneProcess(id, {}, true).pipe(
             switchMap((account) => {
                 if (!account) {
                     throw new NotFoundException(

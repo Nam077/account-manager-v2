@@ -217,6 +217,10 @@
         "adminAccountId": {
             "isNotEmpty": "Admin account ID associated with the workspace is required.",
             "isUUID": "Admin account ID associated with the workspace must be a valid UUID."
+        },
+        "isShared": {
+            "isBoolean": "Shared indicator must be a boolean value.",
+            "isNotEmpty": "Shared indicator is required."
         }
     },
     "createWorkspaceEmail": {

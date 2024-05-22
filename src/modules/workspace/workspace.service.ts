@@ -76,6 +76,7 @@ export class WorkspaceService
                 workspace.adminAccountId = adminAccountId;
                 workspace.description = description;
                 workspace.maxSlots = maxSlots;
+                workspace.isShared = createDto.isShared;
                 return from(this.workspaceRepository.save(workspace));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
@@ -121,7 +122,15 @@ export class WorkspaceService
             );
         }
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Workspace);
-        return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    adminAccount: true,
+                },
+            },
+            isCanReadWithDeleted,
+        ).pipe(
             map((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException(
@@ -142,7 +151,7 @@ export class WorkspaceService
     }
     findAllProcess(findAllDto: FindAllWorkspaceDto, isWithDeleted?: boolean): Observable<PaginatedData<Workspace>> {
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
-        const relations = ['adminAccount'];
+        const relations = ['adminAccount', 'adminAccount.account'];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<Workspace>(
             this.workspaceRepository,
@@ -174,12 +183,14 @@ export class WorkspaceService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<Workspace> {
-        return from(
-            this.workspaceRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-                relations: { workspaceEmails: !hardRemove },
-            }),
+        return this.findOneProcess(
+            id,
+            {
+                relations: {
+                    workspaceEmails: true,
+                },
+            },
+            hardRemove,
         ).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
@@ -199,7 +210,7 @@ export class WorkspaceService
                     }
                     return from(this.workspaceRepository.remove(workspace));
                 }
-                if (workspace.workspaceEmails) {
+                if (workspace.workspaceEmails && workspace.workspaceEmails.length > 0) {
                     throw new BadRequestException('Workspace has workspace emails');
                 }
                 return from(this.workspaceRepository.softRemove(workspace));

@@ -37,6 +37,15 @@ export class Workspace {
     })
     maxSlots: number;
 
+    @Column({
+        type: 'boolean',
+        nullable: false,
+        default: 1,
+        comment: 'Is workspace shared',
+        name: 'is_shared',
+    })
+    isShared: boolean;
+
     @CreateDateColumn({
         comment: 'Date and time when the workspace was created',
         name: 'created_at',

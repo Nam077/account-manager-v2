@@ -7,8 +7,9 @@
         "Updated": "Loại tài khoản {name} đã được cập nhật thành công",
         "Restored": "Loại tài khoản {name} đã được khôi phục thành công",
         "Deleted": "Loại tài khoản {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa loại tài khoản {name}",
-        "NotRestored": "Không thể khôi phục loại tài khoản {name}"
+        "NotDeleted": "Không thể xóa loại tài khoản {name} vì {reason}",
+        "NotRestored": "Không thể khôi phục loại tài khoản {name}",
+        "HasAccount" : "chứa tài khoản đang hoạt động"
     },
     "Account": {
         "NotFound": "Không tìm thấy tài khoản",
@@ -20,7 +21,7 @@
         "Deleted": "Tài khoản {name} đã bị xóa thành công",
         "Activated": "Tài khoản {name} đã được kích hoạt thành công",
         "Deactivated": "Tài khoản {name} đã bị vô hiệu hóa thành công",
-        "NotDeleted": "Không thể xóa tài khoản {name}",
+        "NotDeleted": "Không thể xóa tài khoản {name} vì {reason}",
         "NotRestored": "Không thể khôi phục tài khoản {name}"
     },
     "AdminAccount": {
@@ -31,7 +32,7 @@
         "Updated": "Tài khoản quản trị viên {name} đã được cập nhật thành công",
         "Restored": "Tài khoản quản trị viên {name} đã được khôi phục thành công",
         "Deleted": "Tài khoản quản trị viên {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa tài khoản quản trị viên {name}",
+        "NotDeleted": "Không thể xóa tài khoản quản trị viên {name} vì {reason}",
         "NotRestored": "Không thể khôi phục tài khoản quản trị viên {name}"
     },
     "Customer": {
@@ -44,7 +45,7 @@
         "Deleted": "Khách hàng {name} đã bị xóa thành công",
         "Activated": "Khách hàng {name} đã được kích hoạt thành công",
         "Deactivated": "Khách hàng {name} đã bị vô hiệu hóa thành công",
-        "NotDeleted": "Không thể xóa khách hàng {name}",
+        "NotDeleted": "Không thể xóa khách hàng {name} vì {reason}",
         "NotRestored": "Không thể khôi phục khách hàng {name}"
     },
     "Email": {
@@ -56,7 +57,7 @@
         "NotUpdated": "Email {name} không thể được cập nhật",
         "Restored": "Email {name} đã được khôi phục thành công",
         "Deleted": "Email {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa email {name}",
+        "NotDeleted": "Không thể xóa email {name} vì {reason}",
         "NotRestored": "Không thể khôi phục email {name}",
         "NotBelongToCustomer": "Email {name} không phải của khách hàng {customer}"
     },
@@ -69,7 +70,7 @@
         "Updated": "Không gian làm việc {name} đã được cập nhật thành công",
         "Restored": "Không gian làm việc {name} đã được khôi phục thành công",
         "Deleted": "Không gian làm việc {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa không gian làm việc {name}",
+        "NotDeleted": "Không thể xóa không gian làm việc {name} vì {reason}",
         "NotRestored": "Không thể khôi phục không gian làm việc {name}",
         "NotBelongToAccount": "Không gian làm việc {name} không thuộc tài khoản {account}"
     },
@@ -81,7 +82,7 @@
         "Updated": "Loại cho thuê {name} đã được cập nhật thành công",
         "Restored": "Loại cho thuê {name} đã được khôi phục thành công",
         "Deleted": "Loại cho thuê {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa loại cho thuê {name}",
+        "NotDeleted": "Không thể xóa loại cho thuê {name} vì {reason}",
         "NotRestored": "Không thể khôi phục loại cho thuê {name}"
     },
     "AccountPrice": {
@@ -92,7 +93,7 @@
         "Updated": "Giá tài khoản {name} đã được cập nhật thành công",
         "Restored": "Giá tài khoản {name} đã được khôi phục thành công",
         "Deleted": "Giá tài khoản {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa giá tài khoản {name}",
+        "NotDeleted": "Không thể xóa giá tài khoản {name} vì {reason}",
         "NotRestored": "Không thể khôi phục giá tài khoản {name}"
     },
     "WorkspaceEmail": {
@@ -103,7 +104,7 @@
         "Updated": "Email của không gian làm việc {name} đã được cập nhật thành công",
         "Restored": "Email của không gian làm việc {name} đã được khôi phục thành công",
         "Deleted": "Email của không gian làm việc {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa email của không gian làm việc {name}",
+        "NotDeleted": "Không thể xóa email của không gian làm việc {name} vì {reason}",
         "NotRestored": "Không thể khôi phục email của không gian làm việc {name}"
     },
     "Rental": {
@@ -114,7 +115,7 @@
         "Updated": "Cho thuê {name} đã được cập nhật thành công",
         "Restored": "Cho thuê {name} đã được khôi phục thành công",
         "Deleted": "Cho thuê {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa cho thuê {name}",
+        "NotDeleted": "Không thể xóa cho thuê {name} vì {reason}",
         "NotRestored": "Không thể khôi phục cho thuê {name}",
         "CannotUpdateEndDate": "Không thể cập nhật ngày kết thúc cho thuê",
         "CannotUpdateStartDate": "Không thể cập nhật ngày bắt đầu cho thuê"
@@ -127,7 +128,7 @@
         "Updated": "Token làm mới {name} đã được cập nhật thành công",
         "Restored": "Token làm mới {name} đã được khôi phục thành công",
         "Deleted": "Token làm mới {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa token làm mới {name}",
+        "NotDeleted": "Không thể xóa token làm mới {name} vì {reason}",
         "NotRestored": "Không thể khôi phục token làm mới {name}"
     },
     "User": {
@@ -140,7 +141,7 @@
         "Deleted": "Người dùng {name} đã bị xóa thành công",
         "Activated": "Người dùng {name} đã được kích hoạt thành công",
         "Deactivated": "Người dùng {name} đã bị vô hiệu hóa thành công",
-        "NotDeleted": "Không thể xóa người dùng {name}",
+        "NotDeleted": "Không thể xóa người dùng {name} vì {reason}",
         "NotRestored": "Không thể khôi phục người dùng {name}"
     },
     "RentalRenew": {
@@ -151,7 +152,7 @@
         "Updated": "Gia hạn cho thuê {name} đã được cập nhật thành công",
         "Restored": "Gia hạn cho thuê {name} đã được khôi phục thành công",
         "Deleted": "Gia hạn cho thuê {name} đã bị xóa thành công",
-        "NotDeleted": "Không thể xóa gia hạn cho thuê {name}",
+        "NotDeleted": "Không thể xóa gia hạn cho thuê {name} vì {reason}",
         "NotRestored": "Không thể khôi phục gia hạn cho thuê {name}",
         "InvalidDate": "Ngày gia hạn không hợp lệ, vui lòng chọn ngày sau ngày hết hạn",
         "CannotUpdateRentalId": "Không thể cập nhật mã cho thuê"

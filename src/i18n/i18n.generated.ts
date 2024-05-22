@@ -24,6 +24,7 @@ export type I18nTranslations = {
             "Deleted": string;
             "NotDeleted": string;
             "NotRestored": string;
+            "HasAccount": string;
         };
         "Account": {
             "NotFound": string;
@@ -420,6 +421,10 @@ export type I18nTranslations = {
             "adminAccountId": {
                 "isNotEmpty": string;
                 "isUUID": string;
+            };
+            "isShared": {
+                "isBoolean": string;
+                "isNotEmpty": string;
             };
         };
         "createWorkspaceEmail": {

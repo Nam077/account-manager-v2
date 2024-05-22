@@ -217,6 +217,10 @@
         "adminAccountId": {
             "isNotEmpty": "ID tài khoản quản trị liên kết với không gian làm việc phải được cung cấp.",
             "isUUID": "ID tài khoản quản trị liên kết với không gian làm việc phải là một UUID hợp lệ."
+        },
+        "isShared": {
+            "isBoolean": "Chỉ số không gian làm việc chia sẻ phải là một giá trị boolean.",
+            "isNotEmpty": "Chỉ số không gian làm việc chia sẻ là bắt buộc."
         }
     },
     "createWorkspaceEmail": {

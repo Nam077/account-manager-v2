@@ -25,8 +25,7 @@ export class AccountCategory {
     name: string;
 
     @Column({
-        type: 'varchar',
-        length: 255,
+        type: 'longtext',
         nullable: false,
         comment: 'Description of the account category',
     })

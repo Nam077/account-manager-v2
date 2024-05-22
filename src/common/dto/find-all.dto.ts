@@ -1,14 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
-import { SORT_ORDER } from '../enum';
+import { IS_WITH_DELETED, SORT_ORDER } from '../enum';
 
 export abstract class FindAllDtoAbstract {
     @ApiPropertyOptional({ description: 'Search query', example: '' })
     @IsOptional()
     @IsString({ message: 'Query must be a string' })
-    @IsNotEmpty({ message: 'Query cannot be empty' })
     query?: string;
 
     @ApiPropertyOptional({ description: 'Page number', example: 1 })
@@ -24,6 +23,15 @@ export abstract class FindAllDtoAbstract {
     @Min(1)
     @IsNumber({}, { message: 'Limit must be a number' })
     limit?: number;
+
+    @ApiPropertyOptional({
+        description: 'Is with deleted items',
+        example: false,
+        enum: IS_WITH_DELETED,
+    })
+    @IsOptional()
+    @IsIn(Object.values(IS_WITH_DELETED))
+    withDeleted?: IS_WITH_DELETED;
 
     @ApiPropertyOptional({
         description: 'Sort order',

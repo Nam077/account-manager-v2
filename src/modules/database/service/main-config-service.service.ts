@@ -43,7 +43,7 @@ export class MainConfigServiceService implements TypeOrmOptionsFactory {
                 RentalRenew,
             ],
             synchronize: true,
-            logging: true,
+            // logging: true,
         };
     }
 }

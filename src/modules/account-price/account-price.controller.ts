@@ -47,7 +47,7 @@ export class AccountPriceController {
         return this.accountPriceService.update(user, id, updateAccountPriceDto);
     }
 
-    @Delete('hard-remove/:id')
+    @Delete('hard-delete/:id')
     removeHard(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountPriceService.remove(user, id, true);
     }

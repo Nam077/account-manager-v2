@@ -7,8 +7,9 @@
         "Updated": "Account category {name} updated successfully",
         "Restored": "Account category {name} restored successfully",
         "Deleted": "Account category {name} deleted successfully",
-        "NotDeleted": "Account category {name} cannot be deleted",
-        "NotRestored": "Account category {name} cannot be restored"
+        "NotDeleted": "Account category {name} cannot be deleted because {reason}",
+        "NotRestored": "Account category {name} cannot be restored",
+        "HasAccount" : "has account"
     },
     "Account": {
         "NotFound": "Account not found",
@@ -20,7 +21,7 @@
         "Deleted": "Account {name} deleted successfully",
         "Activated": "Account {name} activated successfully",
         "Deactivated": "Account {name} deactivated successfully",
-        "NotDeleted": "Account {name} cannot be deleted",
+        "NotDeleted": "Account {name} cannot be deleted because {reason}",
         "NotRestored": "Account {name} cannot be restored"
     },
     "AdminAccount": {
@@ -31,7 +32,7 @@
         "Updated": "Admin account {name} updated successfully",
         "Restored": "Admin account {name} restored successfully",
         "Deleted": "Admin account {name} deleted successfully",
-        "NotDeleted": "Admin account {name} cannot be deleted",
+        "NotDeleted": "Admin account {name} cannot be deleted because {reason}",
         "NotRestored": "Admin account {name} cannot be restored"
     },
     "Customer": {
@@ -44,7 +45,7 @@
         "Deleted": "Customer {name} deleted successfully",
         "Activated": "Customer {name} activated successfully",
         "Deactivated": "Customer {name} deactivated successfully",
-        "NotDeleted": "Customer {name} cannot be deleted",
+        "NotDeleted": "Customer {name} cannot be deleted because {reason}",
         "NotRestored": "Customer {name} cannot be restored"
     },
     "Email": {
@@ -56,9 +57,10 @@
         "NotUpdated": "Email {name} cannot be updated", 
         "Restored": "Email {name} restored successfully",
         "Deleted": "Email {name} deleted successfully",
-        "NotDeleted": "Email {name} cannot be deleted",
+        "NotDeleted": "Email {name} cannot be deleted because {reason}",
         "NotRestored": "Email {name} cannot be restored",
         "NotBelongToCustomer" : "Email {name} does not belong to customer {customer}"
+        
     },
     "Workspace": {
         "NotFound": "Workspace not found",
@@ -69,7 +71,7 @@
         "Updated": "Workspace {name} updated successfully",
         "Restored": "Workspace {name} restored successfully",
         "Deleted": "Workspace {name} deleted successfully",
-        "NotDeleted": "Workspace {name} cannot be deleted",
+        "NotDeleted": "Workspace {name} cannot be deleted because {reason}",
         "NotRestored": "Workspace {name} cannot be restored",
         "NotBelongToAccount": "Workspace {name} does not belong to account {account}"
     },
@@ -81,7 +83,7 @@
         "Updated": "Rental type {name} updated successfully",
         "Restored": "Rental type {name} restored successfully",
         "Deleted": "Rental type {name} deleted successfully",
-        "NotDeleted": "Rental type {name} cannot be deleted",
+        "NotDeleted": "Rental type {name} cannot be deleted because {reason}",
         "NotRestored": "Rental type {name} cannot be restored"
     },
     "AccountPrice": {
@@ -92,7 +94,7 @@
         "Updated": "Account price {name} updated successfully",
         "Restored": "Account price {name} restored successfully",
         "Deleted": "Account price {name} deleted successfully",
-        "NotDeleted": "Account price {name} cannot be deleted",
+        "NotDeleted": "Account price {name} cannot be deleted because {reason}",
         "NotRestored": "Account price {name} cannot be restored"
     },
     "WorkspaceEmail": {
@@ -103,7 +105,7 @@
         "Updated": "Workspace email {name} updated successfully",
         "Restored": "Workspace email {name} restored successfully",
         "Deleted": "Workspace email {name} deleted successfully",
-        "NotDeleted": "Workspace email {name} cannot be deleted",
+        "NotDeleted": "Workspace email {name} cannot be deleted because {reason}",
         "NotRestored": "Workspace email {name} cannot be restored"
     },
     "Rental": {
@@ -114,7 +116,7 @@
         "Updated": "Rental {name} updated successfully",
         "Restored": "Rental {name} restored successfully",
         "Deleted": "Rental {name} deleted successfully",
-        "NotDeleted": "Rental {name} cannot be deleted",
+        "NotDeleted": "Rental {name} cannot be deleted because {reason}",
         "NotRestored": "Rental {name} cannot be restored",
         "CannotUpdateEndDate": "End date cannot be updated",
         "CannotUpdateStartDate": "Start date cannot be updated"
@@ -127,7 +129,7 @@
         "Updated": "Refresh token {name} updated successfully",
         "Restored": "Refresh token {name} restored successfully",
         "Deleted": "Refresh token {name} deleted successfully",
-        "NotDeleted": "Refresh token {name} cannot be deleted",
+        "NotDeleted": "Refresh token {name} cannot be deleted because {reason}",
         "NotRestored": "Refresh token {name} cannot be restored"
     },
     "User": {
@@ -140,7 +142,7 @@
         "Deleted": "User {name} deleted successfully",
         "Activated": "User {name} activated successfully",
         "Deactivated": "User {name} deactivated successfully",
-        "NotDeleted": "User {name} cannot be deleted",
+        "NotDeleted": "User {name} cannot be deleted because {reason}",
         "NotRestored": "User {name} cannot be restored"
     },
     "RentalRenew": {
@@ -151,7 +153,7 @@
         "Updated": "Rental renew {name} updated successfully",
         "Restored": "Rental renew {name} restored successfully",
         "Deleted": "Rental renew {name} deleted successfully",
-        "NotDeleted": "Rental renew {name} cannot be deleted",
+        "NotDeleted": "Rental renew {name} cannot be deleted because {reason}",
         "NotRestored": "Rental renew {name} cannot be restored",
         "InvalidDate": "New end date must be greater than current end date",
         "CannotUpdateRentalId": "Rental id cannot be updated"

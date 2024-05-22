@@ -108,7 +108,13 @@ export class AdminAccountService
         options?: FindOneOptionsCustom<AdminAccount>,
         isWithDeleted?: boolean,
     ): Observable<AdminAccount> {
-        return from(this.adminAccountRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
+        return from(
+            this.adminAccountRepository.findOne({
+                where: { id },
+                ...options,
+                withDeleted: isWithDeleted,
+            }),
+        );
     }
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
@@ -180,7 +186,8 @@ export class AdminAccountService
                 }),
             );
         }
-        return this.findAllProcess(findAllDto).pipe(
+        const isCanReadAllWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AdminAccount);
+        return this.findAllProcess(findAllDto, isCanReadAllWithDeleted).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
                 data,
@@ -206,6 +213,7 @@ export class AdminAccountService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!adminAccount.deletedAt) {
                         throw new BadRequestException(
@@ -254,7 +262,7 @@ export class AdminAccountService
         );
     }
     restoreProcess(id: string): Observable<AdminAccount> {
-        return from(this.adminAccountRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+        return this.findOneProcess(id, {}, true).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
                     throw new NotFoundException(
@@ -283,6 +291,7 @@ export class AdminAccountService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map((data) => ({
                 status: HttpStatus.OK,

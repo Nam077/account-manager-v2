@@ -386,7 +386,7 @@ export class UserService
         return from(
             this.userRepository.findOne({
                 where: { email: loginDto.email },
-                select: { password: true, email: true, id: true },
+                select: { password: true, email: true, id: true, name: true, role: true },
             }),
         ).pipe(
             switchMap((user) => {

@@ -190,6 +190,7 @@ export class AccountCategoryService
                         throw new BadRequestException(
                             this.i18nService.translate('message.AccountCategory.NotDeleted', {
                                 lang: I18nContext.current().lang,
+                                args: { name: accountCategory.name },
                             }),
                         );
                     }
@@ -197,9 +198,14 @@ export class AccountCategoryService
                 }
 
                 if (accountCategory.accounts && accountCategory.accounts.length > 0) {
+                    const reason = this.i18nService.translate('message.AccountCategory.HasAccount', {
+                        lang: I18nContext.current().lang,
+                        args: { name: accountCategory.name },
+                    });
                     throw new BadRequestException(
                         this.i18nService.translate('message.AccountCategory.NotDeleted', {
                             lang: I18nContext.current().lang,
+                            args: { name: accountCategory.name, reason: reason },
                         }),
                     );
                 }
@@ -245,6 +251,7 @@ export class AccountCategoryService
                     throw new BadRequestException(
                         this.i18nService.translate('message.AccountCategory.NotDeleted', {
                             lang: I18nContext.current().lang,
+                            args: { name: accountCategory.name },
                         }),
                     );
                 }

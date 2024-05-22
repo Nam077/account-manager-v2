@@ -21,6 +21,11 @@ export class RentalTypeController {
         return this.rentalTypeService.create(user, createRentalTypeDto);
     }
 
+    @Get('all')
+    findAllData(@GetCurrentUser() user: UserAuth) {
+        return this.rentalTypeService.findAllData(user);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllRentalTypeDto) {
         return this.rentalTypeService.findAll(user, findAllDto);

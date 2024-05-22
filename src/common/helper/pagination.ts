@@ -3,20 +3,19 @@ import { from, Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 
+import { FindAllDtoAbstract } from '../dto';
+
 /**
  * Parameters for finding data with pagination and search.
  */
-interface FindAllParams {
-    query?: string;
-    page?: number;
-    limit?: number;
-    sort?: 'ASC' | 'DESC';
-    sortField?: string;
-}
 
 /**
  * Represents the paginated data.
  */
+
+interface FindAllDtoWithSearchFields extends FindAllDtoAbstract {
+    sortField?: string;
+}
 interface PaginatedData<T> {
     currentPage: number;
     items: T[];
@@ -116,7 +115,7 @@ const validateRelations = (searchFieldsInRelations: SearchField[], relations?: s
  */
 export const findWithPaginationAndSearch = <T>(
     repository: Repository<T>,
-    findAllDto: FindAllParams,
+    findAllDto: FindAllDtoWithSearchFields,
     fields: Array<keyof T>,
     isWithDeleted = false,
     relations: string[],
@@ -130,7 +129,10 @@ export const findWithPaginationAndSearch = <T>(
         );
     }
     const nameTable = repository.metadata.tableName;
-    const { query, page = 1, limit = 10, sort, sortField } = findAllDto;
+    const { query, page = 1, limit, sort, sortField, withDeleted } = findAllDto;
+
+    console.log(query, page, limit, sort, sortField, withDeleted);
+
     const queryBuilder = repository.createQueryBuilder(nameTable);
     if (additionalConditions.length > 0) {
         applyAdditionalConditions(queryBuilder, additionalConditions);
@@ -159,14 +161,18 @@ export const findWithPaginationAndSearch = <T>(
     }
     addRelationsToQueryBuilder(queryBuilder, nameTable, relations);
     const pageNew = Math.max(page, 1);
-    const limitNew = limit > 0 ? limit : 10;
+    let limitNew = limit > 0 ? limit : 10;
+    if (limitNew > 100) {
+        limitNew = 100;
+    }
     queryBuilder.skip((pageNew - 1) * limitNew).take(limitNew);
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);
     }
-    if (isWithDeleted) {
+    if ((isWithDeleted && withDeleted === 'TRUE') || (isWithDeleted && !withDeleted)) {
         queryBuilder.withDeleted();
     }
+
     return from(queryBuilder.getManyAndCount()).pipe(
         map(([data, total]) => {
             return {

@@ -181,7 +181,7 @@ export class AccountPriceService
         isWithDeleted?: boolean,
     ): Observable<PaginatedData<AccountPrice>> {
         const fields: Array<keyof AccountPrice> = ['id', 'accountId', 'rentalTypeId', 'price'];
-        const relations: string[] = [];
+        const relations: string[] = ['account', 'rentalType'];
         const searchFields: SearchField[] = [];
         return findWithPaginationAndSearch<AccountPrice>(
             this.accountPriceRepository,
@@ -218,13 +218,7 @@ export class AccountPriceService
         );
     }
     removeProcess(id: string, hardRemove?: boolean): Observable<AccountPrice> {
-        return from(
-            this.accountPriceRepository.findOne({
-                where: { id },
-                withDeleted: hardRemove,
-                relations: {},
-            }),
-        ).pipe(
+        return this.findOneProcess(id, {}, hardRemove).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
                     throw new NotFoundException(
@@ -244,7 +238,7 @@ export class AccountPriceService
                     return from(this.accountPriceRepository.remove(accountPrice));
                 }
 
-                return from(this.accountPriceRepository.remove(accountPrice));
+                return from(this.accountPriceRepository.softRemove(accountPrice));
             }),
         );
     }
