@@ -18,5 +18,5 @@ export class FindAllAdminAccountDto extends FindAllDtoAbstract {
     })
     @IsOptionalCustom()
     @IsIn(Object.values(SORT_FIELD_ADMIN_ACCOUNT))
-    sortField?: SORT_FIELD_ADMIN_ACCOUNT;
+    public sortField?: SORT_FIELD_ADMIN_ACCOUNT;
 }

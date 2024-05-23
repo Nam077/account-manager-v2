@@ -19,15 +19,18 @@ export class AuthService {
         private readonly refreshTokenService: RefreshTokenService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
-    login(loginDto: LoginDto, ipGeo: GeoIpI) {
+
+    public login(loginDto: LoginDto, ipGeo: GeoIpI) {
         return from(this.userService.login(loginDto)).pipe(
             switchMap((user) => {
                 const token = this.jwtServiceCustom.generateToken(user);
+
                 const createRefreshTokenDto: CreateRefreshTokenDto = {
                     token: token.refreshToken,
                     userId: user.id,
                     data: JSON.stringify(ipGeo),
                 };
+
                 return this.refreshTokenService.create(createRefreshTokenDto).pipe(
                     switchMap(() => {
                         return of({
@@ -39,12 +42,14 @@ export class AuthService {
             }),
         );
     }
-    validateUser(payload: JwtPayload): Observable<UserAuth> {
+
+    public validateUser(payload: JwtPayload): Observable<UserAuth> {
         return this.userService.validateUser(payload) as Observable<UserAuth>;
     }
 
-    validateRefreshToken(refreshToken: string, payload: JwtPayload): Observable<UserAuth> {
+    public validateRefreshToken(refreshToken: string, payload: JwtPayload): Observable<UserAuth> {
         const isExpired = this.jwtServiceCustom.checkTimeExpire(payload.exp);
+
         if (isExpired) {
             return this.refreshTokenService.removeByToken(refreshToken).pipe(
                 switchMap(() => {
@@ -56,11 +61,13 @@ export class AuthService {
                 }),
             );
         }
+
         return this.refreshTokenService.findByToken(refreshToken).pipe(
             switchMap((refreshToken) => {
                 if (!refreshToken) {
                     throw new UnauthorizedException('Invalid token');
                 }
+
                 return this.userService
                     .findOneProcess(refreshToken.userId, {
                         select: {
@@ -78,6 +85,7 @@ export class AuthService {
                                     }),
                                 );
                             }
+
                             return of({
                                 ...user,
                                 refreshToken: refreshToken.token,
@@ -87,14 +95,16 @@ export class AuthService {
             }),
         );
     }
-    refresh(user: UserAuth) {
+
+    public refresh(user: UserAuth) {
         return of(this.jwtServiceCustom.generateJwtAccessToken(user));
     }
 
-    logoutAll(user: UserAuth) {
+    public logoutAll(user: UserAuth) {
         return this.refreshTokenService.removeByUserId(user.id);
     }
-    logout(user: UserAuth) {
+
+    public logout(user: UserAuth) {
         return this.refreshTokenService.removeByToken(user.refreshToken);
     }
 }

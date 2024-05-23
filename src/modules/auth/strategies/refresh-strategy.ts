@@ -27,8 +27,9 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'refresh-stra
         });
     }
 
-    validate(req: Request, payload: JwtPayload): Observable<UserAuth> {
+    public validate(req: Request, payload: JwtPayload): Observable<UserAuth> {
         const refreshToken = this.getTokenFromRequest(req);
+
         if (!refreshToken) {
             throw new UnauthorizedException(
                 this.i18nService.translate('message.Authentication.InvalidToken', {
@@ -36,10 +37,11 @@ export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'refresh-stra
                 }),
             );
         }
+
         return this.authService.validateRefreshToken(refreshToken, payload);
     }
 
-    getTokenFromRequest(req: Request) {
+    public getTokenFromRequest(req: Request) {
         return req.get('Authorization')?.replace('Bearer ', '') || req.body.refreshToken || req.query.refreshToken;
     }
 }

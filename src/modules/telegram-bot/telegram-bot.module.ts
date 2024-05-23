@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TelegrafModule, TelegrafModuleOptions, TelegrafOptionsFactory } from 'nestjs-telegraf';
 
 import { GreeterUpdate } from './greeter';
+
 @Injectable()
 class TelegrafConfigService implements TelegrafOptionsFactory {
     constructor(private readonly configService: ConfigService) {}

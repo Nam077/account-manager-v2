@@ -4,7 +4,9 @@ import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
 import { ObjectType } from '..';
+
 const IS_DEV = process.env.NODE_ENV === 'development';
+
 const transportsHandler = () => {
     const transportsList: winston.transport[] = [
         new DailyRotateFile({
@@ -31,9 +33,11 @@ const transportsHandler = () => {
             level: 'silly',
         }),
     ];
+
     if (IS_DEV) {
         transportsList.push(new winston.transports.Console({}));
     }
+
     return transportsList;
 };
 

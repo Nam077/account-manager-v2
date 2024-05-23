@@ -13,6 +13,7 @@ class MailerConfigService implements MailerOptionsFactory {
         private readonly configService: ConfigService,
         private readonly i18n: I18nService,
     ) {}
+
     createMailerOptions(): MailerOptions {
         return {
             transport: {

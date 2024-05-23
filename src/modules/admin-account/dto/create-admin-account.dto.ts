@@ -11,12 +11,12 @@ export class CreateAdminAccountDto {
     })
     @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.createAdminAccount.email.required') })
     @IsEmail({}, { message: i18nValidationMessage<I18nTranslations>('validation.createAdminAccount.email.isEmail') })
-    readonly email: string;
+    public readonly email: string;
 
     @ApiProperty({ description: 'Value of the account', example: 'admin-value' })
     @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.createAdminAccount.value.required') })
     @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createAdminAccount.value.isString') })
-    readonly value: string;
+    public readonly value: string;
 
     @ApiProperty({
         description: 'ID of the associated account',
@@ -28,5 +28,5 @@ export class CreateAdminAccountDto {
     @IsUUID(undefined, {
         message: i18nValidationMessage<I18nTranslations>('validation.createAdminAccount.accountId.isUUID'),
     })
-    readonly accountId: string;
+    public readonly accountId: string;
 }

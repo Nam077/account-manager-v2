@@ -12,6 +12,7 @@ import {
 
 import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
 import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
+
 @Entity({ name: 'workspaces' })
 export class Workspace {
     @PrimaryGeneratedColumn('uuid', {

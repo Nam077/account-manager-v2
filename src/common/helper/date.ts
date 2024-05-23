@@ -1,7 +1,9 @@
 import * as moment from 'moment';
+
 export const checkDate = (checkDate: Date): boolean => {
     const currentDate = moment(new Date()).format('YYYY-MM-DD');
     const date = moment(checkDate).format('YYYY-MM-DD');
+
     return moment(currentDate).diff(date, 'days') > 0;
 };
 
@@ -9,6 +11,7 @@ export const checkDaysDifference = (checkDate: Date, days: number): boolean => {
     const currentDate = moment(new Date()).format('YYYY-MM-DD');
     const date = moment(checkDate).format('YYYY-MM-DD');
     const dayBefore = moment(date).subtract(days, 'days');
+
     return moment(currentDate).isSame(dayBefore);
 };
 
@@ -31,6 +34,7 @@ export const addYears = (date: Date, years: number): Date => {
 export const formatDate = (date: Date): string => {
     return moment(date).format('YYYY-MM-DD');
 };
+
 export const formatDateTime = (date: Date): string => {
     return moment(date).format('YYYY-MM-DD HH:mm:ss');
 };

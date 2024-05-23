@@ -10,5 +10,6 @@ export const GeoIp = createParamDecorator((data: unknown, ctx: ExecutionContext)
     const request = ctx.switchToHttp().getRequest();
     const ip = request.ip || request.connection.remoteAddress;
     const geo: Lookup = lookup(ip);
+
     return { ip, geo };
 });

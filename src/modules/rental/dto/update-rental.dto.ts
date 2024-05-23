@@ -25,6 +25,7 @@ export class UpdateRentalDto extends PartialType(CreateRentalDto) {
 
     @IsOptionalCustom()
     status?: RentalStatus;
+
     @IsOptionalCustom()
     note?: string;
 

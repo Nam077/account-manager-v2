@@ -43,7 +43,7 @@ export class WorkspaceController {
         return this.workspaceService.update(user, id, updateWorkspaceDto);
     }
 
-    @Delete('hard-remove/:id')
+    @Delete('hard-delete/:id')
     removeHard(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.workspaceService.remove(user, id, true);
     }

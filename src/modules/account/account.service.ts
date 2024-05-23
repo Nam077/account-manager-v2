@@ -64,6 +64,7 @@ export class AccountService
     createProcess(createDto: CreateAccountDto): Observable<Account> {
         const { name, description, accountCategoryId } = createDto;
         const slug = slugifyString(name);
+
         return from(this.checkExistBySlug(slug)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
@@ -73,6 +74,7 @@ export class AccountService
                         }),
                     );
                 }
+
                 return this.accountCategoryService.findOneProcess(accountCategoryId).pipe(
                     switchMap((accountCategory) => {
                         if (!accountCategory) {
@@ -82,11 +84,14 @@ export class AccountService
                                 }),
                             );
                         }
+
                         const account = new Account();
+
                         account.name = name;
                         account.description = description;
                         account.accountCategory = accountCategory;
                         account.slug = slug;
+
                         return from(this.accountRepository.save(account));
                     }),
                     catchError((error) => throwError(() => new BadRequestException(error.message))),
@@ -94,6 +99,7 @@ export class AccountService
             }),
         );
     }
+
     /**
      * Creates a new account based on the provided data.
      * @author Nam077
@@ -104,6 +110,7 @@ export class AccountService
      */
     create(currentUser: UserAuth, createDto: CreateAccountDto): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -111,6 +118,7 @@ export class AccountService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map((data) => ({
                 status: HttpStatus.CREATED,
@@ -143,10 +151,13 @@ export class AccountService
      */
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to read account');
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Account);
+
         return this.findOneProcess(
             id,
             {
@@ -164,6 +175,7 @@ export class AccountService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     message: this.i18nService.translate('message.Account.Found', {
@@ -182,14 +194,16 @@ export class AccountService
      */
 
     findAllProcess(findAllDto: FindAllAccountDto, isWithDeleted?: boolean): Observable<PaginatedData<Account>> {
-        const fields: Array<keyof Account> = ['id', 'name', 'description', 'slug'];
+        const fields: Array<keyof Account> = ['id', 'name', 'description', 'slug', 'accountCategoryId'];
         const relations = ['accountCategory'];
+
         const searchRelation: SearchField[] = [
             {
                 tableName: 'accountCategory',
                 fields: ['name', 'description'],
             },
         ];
+
         return findWithPaginationAndSearch<Account>(
             this.accountRepository,
             findAllDto,
@@ -199,8 +213,10 @@ export class AccountService
             searchRelation,
         );
     }
+
     findAll(currentUser: UserAuth, findAllDto: FindAllAccountDto): Observable<ApiResponse<PaginatedData<Account>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.ReadAll, Account)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -208,7 +224,9 @@ export class AccountService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Account);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => ({
                 message: this.i18nService.translate('message.Account.Found', {
@@ -219,6 +237,7 @@ export class AccountService
             })),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<Account> {
         return from(
             this.findOneProcess(
@@ -241,6 +260,7 @@ export class AccountService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!account.deletedAt) {
                         throw new BadRequestException(
@@ -249,6 +269,7 @@ export class AccountService
                             }),
                         );
                     }
+
                     return from(this.accountRepository.remove(account));
                 }
 
@@ -267,6 +288,7 @@ export class AccountService
                         }),
                     );
                 }
+
                 if (account.rentals && account.rentals.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Account.NotDeleted', {
@@ -274,13 +296,16 @@ export class AccountService
                         }),
                     );
                 }
+
                 return from(this.accountRepository.softRemove(account));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -288,6 +313,7 @@ export class AccountService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map((data) => ({
                 message: this.i18nService.translate('message.Account.Deleted', {
@@ -299,6 +325,7 @@ export class AccountService
             })),
         );
     }
+
     restoreProcess(id: string): Observable<Account> {
         return this.findOneProcess(id, {}, true).pipe(
             switchMap((account) => {
@@ -309,6 +336,7 @@ export class AccountService
                         }),
                     );
                 }
+
                 if (!account.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Account.NotRestored', {
@@ -316,13 +344,16 @@ export class AccountService
                         }),
                     );
                 }
+
                 return from(this.accountRepository.restore(account.id)).pipe(map(() => account));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -330,6 +361,7 @@ export class AccountService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map((data) => ({
                 message: this.i18nService.translate('message.Account.Restored', {
@@ -341,8 +373,10 @@ export class AccountService
             })),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateAccountDto): Observable<Account> {
         const updateData: DeepPartial<Account> = { ...updateDto };
+
         return from(this.findOneProcess(id)).pipe(
             switchMap((account) => {
                 if (!account) {
@@ -352,9 +386,12 @@ export class AccountService
                         }),
                     );
                 }
+
                 const tasks: Observable<any>[] = [];
+
                 if (updateDto.name && updateDto.name !== account.name) {
                     const slug = slugifyString(updateDto.name);
+
                     tasks.push(
                         from(this.checkExistBySlug(slug)).pipe(
                             tap((isExist) => {
@@ -365,6 +402,7 @@ export class AccountService
                                         }),
                                     );
                                 }
+
                                 updateData.slug = slug;
                             }),
                         ),
@@ -372,6 +410,7 @@ export class AccountService
                 } else {
                     tasks.push(of(null));
                 }
+
                 if (updateDto.accountCategoryId && updateDto.accountCategoryId !== account.accountCategoryId) {
                     tasks.push(
                         this.accountCategoryService.findOneProcess(updateDto.accountCategoryId).pipe(
@@ -383,6 +422,7 @@ export class AccountService
                                         }),
                                     );
                                 }
+
                                 updateData.accountCategory = accountCategory;
                             }),
                         ),
@@ -390,6 +430,7 @@ export class AccountService
                 } else {
                     tasks.push(of(null));
                 }
+
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<Account>(this.accountRepository, account, updateData);
@@ -398,11 +439,14 @@ export class AccountService
             }),
         );
     }
+
     update(currentUser: UserAuth, id: string, updateDto: UpdateAccountDto): Observable<ApiResponse<Account>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to update account');
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map((data) => ({
                 message: this.i18nService.translate('message.Account.Updated', {
@@ -425,9 +469,11 @@ export class AccountService
 
     findAllAccount(user: UserAuth) {
         const ability = this.caslAbilityFactory.createForUser(user);
+
         if (!ability.can(ActionCasl.Manage, Account)) {
             throw new ForbiddenException('You are not allowed to read account');
         }
+
         return this.findAllAccountProcess();
     }
 

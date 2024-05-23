@@ -59,11 +59,14 @@ export class RentalRenewService
         @Inject(forwardRef(() => RentalService))
         private readonly rentalService: RentalService,
     ) {}
+
     checkDate(currentDate: Date, newEndDate: Date): boolean {
         return Date.parse(currentDate.toString()) < Date.parse(newEndDate.toString());
     }
+
     createProcess(createDto: CreateRentalRenewDto): Observable<RentalRenew> {
         const { rentalId, warrantyFee, note, discount, paymentMethod, accountPriceId } = createDto;
+
         const recordContext: {
             rental: Rental;
             accountPrice: AccountPrice;
@@ -85,7 +88,9 @@ export class RentalRenewService
                             }),
                         );
                     }
+
                     recordContext.rental = rental;
+
                     return this.accountPriceService.findOneProcess(accountPriceId, {
                         relations: { rentalType: true },
                     });
@@ -98,9 +103,11 @@ export class RentalRenewService
                             }),
                         );
                     }
+
                     if (accountPrice.accountId !== recordContext.rental.accountId) {
                         throw new BadRequestException('Account price does not belong to the account of the rental');
                     }
+
                     if (accountPrice.rentalType.isWorkspace === true && !recordContext.rental.workspaceEmail) {
                         throw new BadRequestException(
                             'Rentals with workspace account price must have a workspace email',
@@ -109,6 +116,7 @@ export class RentalRenewService
 
                     const newEndDate = addDate(recordContext.rental.endDate, accountPrice.validityDuration);
                     const rentalRenew = new RentalRenew();
+
                     rentalRenew.rentalId = recordContext.rental.id;
                     rentalRenew.accountPriceId = accountPrice.id;
                     rentalRenew.warrantyFee = warrantyFee;
@@ -118,6 +126,7 @@ export class RentalRenewService
                     rentalRenew.paymentMethod = paymentMethod;
                     rentalRenew.newEndDate = newEndDate;
                     rentalRenew.lastStartDate = recordContext.rental.endDate;
+
                     return of(this.rentalRenewRepository.create(rentalRenew));
                 }),
                 switchMap((rentalRenew) => {
@@ -147,8 +156,10 @@ export class RentalRenewService
                 }),
             );
     }
+
     create(currentUser: UserAuth, createDto: CreateRentalRenewDto): Observable<ApiResponse<RentalRenew>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Create, RentalRenew)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -156,6 +167,7 @@ export class RentalRenewService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map((rentalRenew) => {
                 return {
@@ -168,6 +180,7 @@ export class RentalRenewService
             }),
         );
     }
+
     findOneProcess(
         id: string,
         options?: FindOneOptionsCustom<RentalRenew>,
@@ -181,11 +194,13 @@ export class RentalRenewService
             }),
         );
     }
+
     findOne(
         currentUser: UserAuth,
         id: string,
     ): Observable<ApiResponse<RentalRenew | PaginatedData<RentalRenew> | RentalRenew[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Read, RentalRenew)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -193,7 +208,9 @@ export class RentalRenewService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, RentalRenew);
+
         return this.findOneProcess(
             id,
             {
@@ -209,6 +226,7 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 return {
                     message: this.i18nService.translate('message.RentalRenew.Found', {
                         lang: I18nContext.current().lang,
@@ -219,10 +237,12 @@ export class RentalRenewService
             }),
         );
     }
+
     findAllProcess(findAllDto: FindAllRentalRenewDto, isWithDeleted?: boolean): Observable<PaginatedData<RentalRenew>> {
         const fields: Array<keyof RentalRenew> = ['id', 'rentalId'];
         const relations = ['rental'];
         const searchFields: SearchField[] = [];
+
         return findWithPaginationAndSearch<RentalRenew>(
             this.rentalRenewRepository,
             findAllDto,
@@ -232,11 +252,13 @@ export class RentalRenewService
             searchFields,
         );
     }
+
     findAll(
         currentUser: UserAuth,
         findAllDto: FindAllRentalRenewDto,
     ): Observable<ApiResponse<PaginatedData<RentalRenew>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.ReadAll, RentalRenew)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -244,7 +266,9 @@ export class RentalRenewService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Rental);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((rentalRenews) => {
                 return {
@@ -257,6 +281,7 @@ export class RentalRenewService
             }),
         );
     }
+
     findLastByIdRentalOrderByEndDate(id: string): Observable<RentalRenew> {
         return from(
             this.rentalRenewRepository.findOne({
@@ -270,6 +295,7 @@ export class RentalRenewService
             }),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<RentalRenew> {
         return this.findOneProcess(id, {
             withDeleted: hardRemove,
@@ -283,6 +309,7 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 return rentalRenew;
             }),
             switchMap((rentalRenew) => {
@@ -293,6 +320,7 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!rentalRenew.deletedAt) {
                         throw new ForbiddenException(
@@ -301,6 +329,7 @@ export class RentalRenewService
                             }),
                         );
                     }
+
                     if (rentalRenew.rental) {
                         return this.findLastByIdRentalOrderByEndDate(rentalRenew.rental.id).pipe(
                             switchMap((rentalRenewCheck) => {
@@ -311,18 +340,22 @@ export class RentalRenewService
                                         })
                                         .pipe(map(() => rentalRenew));
                                 }
+
                                 return of(rentalRenew);
                             }),
                         );
                     }
+
                     return of(rentalRenew);
                 }
+
                 return of(rentalRenew);
             }),
             switchMap((rentalRenew) => {
                 if (hardRemove) {
                     return from(this.rentalRenewRepository.remove(rentalRenew)).pipe(map(() => rentalRenew));
                 }
+
                 return from(this.rentalRenewRepository.softRemove(rentalRenew)).pipe(map(() => rentalRenew));
             }),
         );
@@ -342,6 +375,7 @@ export class RentalRenewService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map((rentalRenew) => {
                 return {
@@ -354,6 +388,7 @@ export class RentalRenewService
             }),
         );
     }
+
     restoreProcess(id: string): Observable<RentalRenew> {
         return this.findOneProcess(id, {
             withDeleted: true,
@@ -366,6 +401,7 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 if (!rentalRenew.deletedAt) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.RentalRenew.NotRestored', {
@@ -373,6 +409,7 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 return rentalRenew;
             }),
             switchMap((rentalRenew) => {
@@ -380,6 +417,7 @@ export class RentalRenewService
             }),
         );
     }
+
     restore(
         currentUser: UserAuth,
         id: string,
@@ -393,6 +431,7 @@ export class RentalRenewService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map((rentalRenew) => {
                 return {
@@ -405,6 +444,7 @@ export class RentalRenewService
             }),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateRentalRenewDto): Observable<RentalRenew> | any {
         if (updateDto.rentalId) {
             throw new BadRequestException(
@@ -413,6 +453,7 @@ export class RentalRenewService
                 }),
             );
         }
+
         return this.findOneProcess(id, {
             relations: { rental: true },
         }).pipe(
@@ -424,6 +465,7 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 if (updateDto.newEndDate && !this.checkDate(rentalRenew.rental.endDate, updateDto.newEndDate)) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.RentalRenew.InvalidDate', {
@@ -431,12 +473,15 @@ export class RentalRenewService
                         }),
                     );
                 }
+
                 return from(this.rentalRenewRepository.save({ ...rentalRenew, ...updateDto }));
             }),
         );
     }
+
     update(currentUser: UserAuth, id: string, updateDto: UpdateRentalRenewDto): Observable<ApiResponse<RentalRenew>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Update, RentalRenew)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -444,6 +489,7 @@ export class RentalRenewService
                 }),
             );
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map((rentalRenew) => {
                 return {

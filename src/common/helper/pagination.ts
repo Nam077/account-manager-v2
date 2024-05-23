@@ -38,6 +38,7 @@ export interface CustomCondition {
     value: any;
     operator?: 'EQUAL' | 'LIKE' | 'LT' | 'GT'; // Add more operators as needed
 }
+
 /**
  * Applies multiple additional `where` conditions to the query builder.
  * @param queryBuilder - The query builder to modify.
@@ -47,6 +48,7 @@ const applyAdditionalConditions = <T>(queryBuilder: SelectQueryBuilder<T>, condi
     conditions.forEach(({ field, value, operator = 'EQUAL' }, index) => {
         const paramName = `${field}${index}`;
         const conditionString = `${queryBuilder.alias}.${field}`;
+
         switch (operator) {
             case 'LIKE':
                 queryBuilder.andWhere(`${conditionString} LIKE :${paramName}`, { [paramName]: `%${value}%` });
@@ -84,12 +86,14 @@ const addRelationsToQueryBuilder = <T>(
         relations.forEach((relation) => {
             let entityAlias: string;
             let relationName: string;
+
             if (!relation.includes('.')) {
                 entityAlias = tableName;
                 relationName = relation;
             } else {
                 [entityAlias, relationName] = relation.split('.');
             }
+
             queryBuilder.leftJoinAndSelect(`${entityAlias}.${relationName}`, relationName);
         });
     } else {
@@ -99,8 +103,10 @@ const addRelationsToQueryBuilder = <T>(
 const validateRelations = (searchFieldsInRelations: SearchField[], relations?: string[]): boolean => {
     if (searchFieldsInRelations.length > 0) {
         const requiredRelations = searchFieldsInRelations.map((sf) => sf.tableName);
+
         return requiredRelations.every((rr) => relations?.includes(rr));
     }
+
     return true;
 };
 
@@ -128,20 +134,26 @@ export const findWithPaginationAndSearch = <T>(
             HttpStatus.BAD_REQUEST,
         );
     }
+
     const nameTable = repository.metadata.tableName;
     const { query, page = 1, limit, sort, sortField, withDeleted } = findAllDto;
 
-    console.log(query, page, limit, sort, sortField, withDeleted);
-
     const queryBuilder = repository.createQueryBuilder(nameTable);
+
+    // Áp dụng các điều kiện bổ sung nếu có
     if (additionalConditions.length > 0) {
         applyAdditionalConditions(queryBuilder, additionalConditions);
-    } else if (query) {
+    }
+
+    // Áp dụng điều kiện tìm kiếm nếu có
+    if (query) {
         const lowercaseQuery = `%${query.toLowerCase()}%`;
-        queryBuilder.where(
+
+        queryBuilder.andWhere(
             new Brackets((qb) => {
                 fields.forEach((field, index) => {
                     const method = index === 0 ? 'where' : 'orWhere';
+
                     qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, {
                         query: lowercaseQuery,
                     });
@@ -159,16 +171,21 @@ export const findWithPaginationAndSearch = <T>(
             }),
         );
     }
+
     addRelationsToQueryBuilder(queryBuilder, nameTable, relations);
     const pageNew = Math.max(page, 1);
     let limitNew = limit > 0 ? limit : 10;
+
     if (limitNew > 100) {
         limitNew = 100;
     }
+
     queryBuilder.skip((pageNew - 1) * limitNew).take(limitNew);
+
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);
     }
+
     if ((isWithDeleted && withDeleted === 'TRUE') || (isWithDeleted && !withDeleted)) {
         queryBuilder.withDeleted();
     }

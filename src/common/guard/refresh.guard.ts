@@ -7,8 +7,10 @@ export class RefreshGuard extends AuthGuard('refresh-strategy') {
     constructor() {
         super();
     }
+
     canActivate(context: ExecutionContext): Observable<boolean> {
         const rs = super.canActivate(context);
+
         if (rs instanceof Observable) {
             return rs;
         } else if (rs instanceof Promise) {

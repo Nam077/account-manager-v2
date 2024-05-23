@@ -8,6 +8,7 @@ import { FindAllRentalRenewDto } from './dto/find-all.dto';
 import { UpdateRentalRenewDto } from './dto/update-rental-renew.dto';
 import { RentalRenew } from './entities/rental-renew.entity';
 import { RentalRenewService } from './rental-renew.service';
+
 @ApiTags('RentalRenew')
 @ApiBearerAuth()
 @UseGuards(AuthJwtGuard)

@@ -23,6 +23,7 @@ export const GetCurrentUser = createParamDecorator(
     async (data: keyof UserAuth | undefined, context: ExecutionContext): Promise<UserAuth | any> => {
         const user$: Observable<UserAuth> = context.switchToHttp().getRequest().user;
         const user = await firstValueFrom(user$.pipe(map((user) => (data ? user && user[data] : user))));
+
         return user;
     },
 );

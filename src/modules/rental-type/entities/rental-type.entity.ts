@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 
 import { AccountPrice } from '../../account-price/entities/account-price.entity';
+
 @Entity({ name: 'rental_types' })
 export class RentalType {
     @PrimaryGeneratedColumn('uuid', {

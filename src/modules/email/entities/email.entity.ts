@@ -1,4 +1,3 @@
-import { Rental } from 'src/modules/rental/entities/rental.entity';
 import {
     Column,
     CreateDateColumn,
@@ -12,6 +11,7 @@ import {
 } from 'typeorm';
 
 import { Customer } from '../../customer/entities/customer.entity';
+import { Rental } from '../../rental/entities/rental.entity';
 import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
 
 @Entity({ name: 'emails' })

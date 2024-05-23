@@ -24,7 +24,7 @@ export class AuthStrategy extends PassportStrategy(Strategy, 'auth-strategy') {
         });
     }
 
-    validate(payload: JwtPayload): Observable<UserAuth> {
+    public validate(payload: JwtPayload): Observable<UserAuth> {
         return this.authService.validateUser(payload).pipe(
             map((user) => {
                 if (!user) {
@@ -34,6 +34,7 @@ export class AuthStrategy extends PassportStrategy(Strategy, 'auth-strategy') {
                         }),
                     );
                 }
+
                 return user;
             }),
         );

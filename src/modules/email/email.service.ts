@@ -9,8 +9,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { I18nService } from 'nestjs-i18n';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -32,6 +31,7 @@ import { CreateEmailDto } from './dto/create-email.dto';
 import { FindAllEmailDto } from './dto/find-all.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Email } from './entities/email.entity';
+
 @Injectable()
 export class EmailService
     implements
@@ -53,8 +53,10 @@ export class EmailService
         private readonly customerService: CustomerService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
     createProcess(createDto: CreateEmailDto): Observable<Email> {
         const { email, customerId } = createDto;
+
         return from(this.customerService.findOneProcess(customerId)).pipe(
             switchMap((customer) => {
                 if (!customer) {
@@ -64,6 +66,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 return this.checkExistByEmailAndCustomerId(email, customerId);
             }),
             switchMap((isExist) => {
@@ -74,17 +77,22 @@ export class EmailService
                         }),
                     );
                 }
+
                 const emailCreate = new Email();
+
                 emailCreate.email = email;
                 emailCreate.customerId = customerId;
                 const newEmail = this.emailRepository.create(emailCreate);
+
                 return from(this.emailRepository.save(newEmail));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     create(currentUser: UserAuth, createDto: CreateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Create, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -92,6 +100,7 @@ export class EmailService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<Email> => ({
@@ -109,8 +118,10 @@ export class EmailService
     findOneProcess(id: string, options?: FindOneOptionsCustom<Email>, isWithDeleted?: boolean): Observable<Email> {
         return from(this.emailRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Read, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -118,7 +129,9 @@ export class EmailService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Email);
+
         return this.findOneProcess(
             id,
             {
@@ -136,6 +149,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     message: this.i18nService.translate('message.Email.Found', {
@@ -147,15 +161,19 @@ export class EmailService
             }),
         );
     }
+
     findAllProcess(findAllDto: FindAllEmailDto, isWithDeleted?: boolean): Observable<PaginatedData<Email>> {
         const relations = ['customer'];
+
         const searchFields: SearchField[] = [
             {
                 tableName: 'customer',
                 fields: ['name', 'email'],
             },
         ];
+
         const fields: Array<keyof Email> = ['id', 'email'];
+
         return findWithPaginationAndSearch<Email>(
             this.emailRepository,
             findAllDto,
@@ -165,8 +183,10 @@ export class EmailService
             searchFields,
         );
     }
+
     findAll(currentUser: UserAuth, findAllDto: FindAllEmailDto): Observable<ApiResponse<PaginatedData<Email>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.ReadAll, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -174,7 +194,9 @@ export class EmailService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Email);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map(
                 (data): ApiResponse<PaginatedData<Email>> => ({
@@ -207,6 +229,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 if (email.customer.email === email.email) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Email.NotDeleted', {
@@ -234,15 +257,19 @@ export class EmailService
                             }),
                         );
                     }
+
                     return from(this.emailRepository.remove(email));
                 }
+
                 return from(this.emailRepository.softRemove(email));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Delete, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -250,6 +277,7 @@ export class EmailService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map(
                 (data): ApiResponse<Email> => ({
@@ -263,6 +291,7 @@ export class EmailService
             ),
         );
     }
+
     removeByCustomerIdProcess(customerId: string, hardRemove?: boolean): Observable<Email[]> {
         return from(this.emailRepository.find({ where: { customerId }, withDeleted: hardRemove })).pipe(
             switchMap((emails) => {
@@ -273,13 +302,16 @@ export class EmailService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     return from(this.emailRepository.remove(emails));
                 }
+
                 return from(this.emailRepository.softRemove(emails));
             }),
         );
     }
+
     restoreProcess(id: string): Observable<Email> {
         return from(
             this.findOneProcess(
@@ -300,6 +332,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 if (email.customer.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Customer.NotRestored', {
@@ -308,6 +341,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 if (!email.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Email.NotRestored', {
@@ -316,6 +350,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 return from(this.emailRepository.restore(email.id)).pipe(map(() => email));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
@@ -332,6 +367,7 @@ export class EmailService
                         }),
                     );
                 }
+
                 return from(this.emailRepository.restore(emails.map((email) => email.id)));
             }),
         );
@@ -339,6 +375,7 @@ export class EmailService
 
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Restore, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -346,6 +383,7 @@ export class EmailService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map(
                 (data): ApiResponse<Email> => ({
@@ -359,8 +397,10 @@ export class EmailService
             ),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateEmailDto): Observable<Email> {
         const updateData: DeepPartial<Email> = { ...updateDto };
+
         return from(
             this.findOneProcess(id, {
                 relations: {
@@ -390,11 +430,13 @@ export class EmailService
                                         }),
                                     );
                                 }
+
                                 delete email.customer;
                             }),
                         ),
                     );
                 } else tasks.push(of(null));
+
                 if (email.email === email.customer.email) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Email.NotUpdated', {
@@ -403,12 +445,14 @@ export class EmailService
                         }),
                     );
                 }
+
                 if (
                     (updateDto.customerId && updateDto.customerId !== email.customerId) ||
                     (updateDto.email && updateDto.email !== email.email)
                 ) {
                     const checkEmail = updateDto.email || email.email;
                     const checkCustomerId = updateDto.customerId || email.customerId;
+
                     tasks.push(
                         this.checkExistByEmailAndCustomerId(checkEmail, checkCustomerId).pipe(
                             tap((isExist) => {
@@ -423,6 +467,7 @@ export class EmailService
                         ),
                     );
                 } else tasks.push(of(null));
+
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<Email>(this.emailRepository, email, updateData);
@@ -431,8 +476,10 @@ export class EmailService
             }),
         );
     }
+
     update(currentUser: UserAuth, id: string, updateDto: UpdateEmailDto): Observable<ApiResponse<Email>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Update, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -440,6 +487,7 @@ export class EmailService
                 }),
             );
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map(
                 (data): ApiResponse<Email> => ({
@@ -453,6 +501,7 @@ export class EmailService
             ),
         );
     }
+
     findOneByEmailAndCustomerId(email: string, customerId: string): Observable<Email> {
         return from(
             this.emailRepository.findOne({
@@ -463,6 +512,7 @@ export class EmailService
             }),
         );
     }
+
     checkExistByEmailAndCustomerId(email: string, customerId: string): Observable<boolean> {
         return from(this.emailRepository.existsBy({ email, customerId }));
     }
@@ -470,6 +520,7 @@ export class EmailService
     findEmails(user: UserAuth, id: string) {
         const ability = this.caslAbilityFactory.createForUser(user);
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Email);
+
         if (!ability.can(ActionCasl.Read, Email)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -477,6 +528,7 @@ export class EmailService
                 }),
             );
         }
+
         return this.findEmailsProcess(user, id, isCanReadWithDeleted).pipe(
             map((emails) => {
                 return {

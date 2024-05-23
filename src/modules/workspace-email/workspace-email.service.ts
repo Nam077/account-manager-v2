@@ -53,8 +53,10 @@ export class WorkspaceEmailService
         private readonly emailService: EmailService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
     createProcess(createDto: CreateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const { emailId, workspaceId } = createDto;
+
         return from(
             this.workspaceService.findOneAndGetWorkspaceEmailHaveStatus(workspaceId, WorkspaceEmailStatus.ACTIVE),
         ).pipe(
@@ -66,6 +68,7 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 if (workspace.workspaceEmails && workspace.workspaceEmails.length === workspace.maxSlots) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Workspace.Full', {
@@ -73,6 +76,7 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 return from(this.emailService.findOneProcess(emailId));
             }),
             switchMap((email) => {
@@ -83,6 +87,7 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 return from(this.checkExistByWorkspaceIdAndEmailId(workspaceId, emailId));
             }),
             switchMap((isExist) => {
@@ -93,19 +98,25 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 const workspaceEmail = new WorkspaceEmail();
+
                 workspaceEmail.emailId = emailId;
                 workspaceEmail.workspaceId = workspaceId;
+
                 return from(this.workspaceEmailRepository.save(workspaceEmail));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     createProcessAndGetId(createDto: CreateWorkspaceEmailDto): Observable<string> {
         return this.createProcess(createDto).pipe(map((workspaceEmail) => workspaceEmail.id));
     }
+
     create(currentUser: UserAuth, createDto: CreateWorkspaceEmailDto): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Create, WorkspaceEmail)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -113,6 +124,7 @@ export class WorkspaceEmailService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map((workspaceEmail) => {
                 return {
@@ -136,8 +148,10 @@ export class WorkspaceEmailService
             }),
         );
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Read, WorkspaceEmail)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -145,7 +159,9 @@ export class WorkspaceEmailService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, WorkspaceEmail);
+
         return this.findOneProcess(
             id,
             {
@@ -164,6 +180,7 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     data: workspaceEmail,
@@ -174,6 +191,7 @@ export class WorkspaceEmailService
             }),
         );
     }
+
     findAllProcess(
         findAllDto: FindAllWorkspaceEmailDto,
         isWithDeleted?: boolean,
@@ -181,6 +199,7 @@ export class WorkspaceEmailService
         const fields: Array<keyof WorkspaceEmail> = ['id', 'workspaceId', 'emailId'];
         const relations = ['workspace', 'email'];
         const searchFields: SearchField[] = [];
+
         return findWithPaginationAndSearch<WorkspaceEmail>(
             this.workspaceEmailRepository,
             findAllDto,
@@ -190,11 +209,13 @@ export class WorkspaceEmailService
             searchFields,
         );
     }
+
     findAll(
         currentUser: UserAuth,
         findAllDto: FindAllWorkspaceEmailDto,
     ): Observable<ApiResponse<PaginatedData<WorkspaceEmail>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.ReadAll, WorkspaceEmail)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -202,7 +223,9 @@ export class WorkspaceEmailService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, WorkspaceEmail);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((workspaceEmails) => {
                 return {
@@ -215,6 +238,7 @@ export class WorkspaceEmailService
             }),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<WorkspaceEmail> {
         return this.findOneProcess(
             id,
@@ -233,6 +257,7 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!workspaceEmail.deletedAt) {
                         throw new BadRequestException(
@@ -241,8 +266,10 @@ export class WorkspaceEmailService
                             }),
                         );
                     }
+
                     return from(this.workspaceEmailRepository.remove(workspaceEmail));
                 }
+
                 if (workspaceEmail.rentals && workspaceEmail.rentals.length > 0) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.WorkspaceEmail.NotDeleted', {
@@ -258,6 +285,7 @@ export class WorkspaceEmailService
 
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Delete, WorkspaceEmail)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -265,6 +293,7 @@ export class WorkspaceEmailService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map((workspaceEmail) => {
                 return {
@@ -277,6 +306,7 @@ export class WorkspaceEmailService
             }),
         );
     }
+
     restoreProcess(id: string): Observable<WorkspaceEmail> {
         return from(
             this.workspaceEmailRepository.findOne({
@@ -292,6 +322,7 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 if (!workspaceEmail.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.WorkspaceEmail.NotRestored', {
@@ -299,12 +330,15 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 return from(this.workspaceEmailRepository.restore(id)).pipe(map(() => workspaceEmail));
             }),
         );
     }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Restore, WorkspaceEmail)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -312,6 +346,7 @@ export class WorkspaceEmailService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map((workspaceEmail) => {
                 return {
@@ -324,8 +359,10 @@ export class WorkspaceEmailService
             }),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const updateData: DeepPartial<WorkspaceEmail> = updateDto;
+
         return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
@@ -335,7 +372,9 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 const tasks: Observable<any>[] = [];
+
                 if (updateDto.emailId && updateDto.emailId !== workspaceEmail.emailId) {
                     tasks.push(
                         this.emailService.findOneProcess(updateDto.emailId).pipe(
@@ -347,6 +386,7 @@ export class WorkspaceEmailService
                                         }),
                                     );
                                 }
+
                                 return email;
                             }),
                         ),
@@ -365,6 +405,7 @@ export class WorkspaceEmailService
                                             }),
                                         );
                                     }
+
                                     if (
                                         workspace.workspaceEmails &&
                                         workspace.workspaceEmails.length === workspace.maxSlots
@@ -385,6 +426,7 @@ export class WorkspaceEmailService
                 ) {
                     const checkEmailId = updateDto.emailId || workspaceEmail.emailId;
                     const checkWorkspaceId = updateDto.workspaceId || workspaceEmail.workspaceId;
+
                     tasks.push(
                         this.checkExistByWorkspaceIdAndEmailId(checkWorkspaceId, checkEmailId).pipe(
                             tap((isExist) => {
@@ -399,6 +441,7 @@ export class WorkspaceEmailService
                         ),
                     );
                 } else tasks.push(of(null));
+
                 if (updateDto.status !== WorkspaceEmailStatus.INACTIVE && updateDto.status !== workspaceEmail.status) {
                     tasks.push(
                         this.workspaceService
@@ -415,6 +458,7 @@ export class WorkspaceEmailService
                                             }),
                                         );
                                     }
+
                                     if (
                                         workspace.workspaceEmails &&
                                         workspace.workspaceEmails.length === workspace.maxSlots
@@ -429,6 +473,7 @@ export class WorkspaceEmailService
                             ),
                     );
                 }
+
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<WorkspaceEmail>(this.workspaceEmailRepository, workspaceEmail, updateData);
@@ -437,6 +482,7 @@ export class WorkspaceEmailService
             }),
         );
     }
+
     updateStatusProcess(id: string, status: WorkspaceEmailStatus): Observable<WorkspaceEmail> {
         return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
             switchMap((workspaceEmail) => {
@@ -447,17 +493,21 @@ export class WorkspaceEmailService
                         }),
                     );
                 }
+
                 workspaceEmail.status = status;
+
                 return from(this.workspaceEmailRepository.save(workspaceEmail));
             }),
         );
     }
+
     update(
         currentUser: UserAuth,
         id: string,
         updateDto: UpdateWorkspaceEmailDto,
     ): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Update, WorkspaceEmail)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -465,6 +515,7 @@ export class WorkspaceEmailService
                 }),
             );
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map((workspaceEmail) => {
                 return {

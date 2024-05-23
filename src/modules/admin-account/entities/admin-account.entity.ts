@@ -1,5 +1,3 @@
-import { Account } from 'src/modules/account/entities/account.entity';
-import { Workspace } from 'src/modules/workspace/entities/workspace.entity';
 import {
     Column,
     CreateDateColumn,
@@ -11,6 +9,10 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn,
 } from 'typeorm';
+
+import { Account } from '../../account/entities/account.entity';
+import { Workspace } from '../../workspace/entities/workspace.entity';
+
 @Entity({ name: 'admin_accounts' })
 export class AdminAccount {
     @PrimaryGeneratedColumn('uuid', {
@@ -27,25 +29,25 @@ export class AdminAccount {
     email: string;
 
     @Column({ type: 'text', nullable: true, comment: 'Value of the account' })
-    value: string;
+    public value: string;
 
     @CreateDateColumn({
         comment: 'Date and time when the account was created',
         name: 'created_at',
     })
-    createdAt: Date;
+    public createdAt: Date;
 
     @UpdateDateColumn({
         comment: 'Date and time when the account was last updated',
         name: 'updated_at',
     })
-    updatedAt: Date;
+    public updatedAt: Date;
 
     @DeleteDateColumn({
         comment: 'Date and time when the account was deleted',
         name: 'deleted_at',
     })
-    deletedAt: Date;
+    public deletedAt: Date;
 
     @Column({
         type: 'uuid',
@@ -53,13 +55,13 @@ export class AdminAccount {
         name: 'account_id',
         comment: 'Foreign key of the account',
     })
-    accountId: string;
+    public accountId: string;
 
     // relation with account category
     @ManyToOne(() => Account, (account) => account.adminAccounts)
     @JoinColumn({ name: 'account_id' })
-    account: Account;
+    public account: Account;
 
     @OneToMany(() => Workspace, (workspace) => workspace.adminAccount)
-    workspaces: Workspace[];
+    public workspaces: Workspace[];
 }

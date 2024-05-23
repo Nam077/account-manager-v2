@@ -111,7 +111,7 @@ export class Rental {
     @JoinColumn({ name: 'account_id' })
     account: Account;
 
-    @ManyToOne(() => Email, (email) => email.workspaceEmails)
+    @ManyToOne(() => Email, (email) => email.rentals)
     @JoinColumn({ name: 'email_id' })
     email: Email;
 

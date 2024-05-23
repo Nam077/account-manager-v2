@@ -13,6 +13,7 @@ import {
 import { Account } from '../../account/entities/account.entity';
 import { RentalRenew } from '../../rental-renew/entities/rental-renew.entity';
 import { RentalType } from '../../rental-type/entities/rental-type.entity';
+
 @Entity({ name: 'account_prices' })
 export class AccountPrice {
     @PrimaryGeneratedColumn('uuid', {

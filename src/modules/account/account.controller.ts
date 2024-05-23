@@ -40,6 +40,7 @@ export class AccountController {
     restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountService.restore(user, id);
     }
+
     @RemoveFields<Account>(['accountCategory', 'slug', 'accountPrices', 'adminAccounts'])
     @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
@@ -51,6 +52,7 @@ export class AccountController {
     hardRemove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountService.remove(user, id, true);
     }
+
     @Delete(':id')
     remove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountService.remove(user, id);

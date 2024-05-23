@@ -10,6 +10,7 @@ import {
 
 import { Email } from '../../email/entities/email.entity';
 import { Rental } from '../../rental/entities/rental.entity';
+
 @Entity({ name: 'customers' })
 export class Customer {
     //id, name, email, phone, address, phone, company,description. createdAt, updatedAt, deletedAt
@@ -65,11 +66,13 @@ export class Customer {
         name: 'created_at',
     })
     createdAt: Date;
+
     @UpdateDateColumn({
         comment: 'Date and time when the customer was last updated',
         name: 'updated_at',
     })
     updatedAt: Date;
+
     @DeleteDateColumn({
         comment: 'Date and time when the customer was deleted',
         name: 'deleted_at',

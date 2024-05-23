@@ -16,6 +16,7 @@ import {
     ApiResponse,
     CheckForForkJoin,
     CrudService,
+    CustomCondition,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -53,9 +54,11 @@ export class AccountPriceService
         private readonly rentalTypeService: RentalTypeService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
     createProcess(createDto: CreateAccountPriceDto): Observable<AccountPrice> {
         const { accountId, rentalTypeId, price, validityDuration, isLifetime } = createDto;
         const nomalizeDuration = isLifetime ? -9999 : validityDuration;
+
         return this.accountService.findOneProcess(accountId).pipe(
             switchMap((account) => {
                 if (!account) {
@@ -65,6 +68,7 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 return this.rentalTypeService.findOneProcess(rentalTypeId);
             }),
             switchMap((rentalType) => {
@@ -75,6 +79,7 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 return this.checkExistByAccountIdAndRentalTypeIdAndDuration(accountId, rentalTypeId, nomalizeDuration);
             }),
             switchMap((isExist) => {
@@ -85,23 +90,28 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 const accountPrice = new AccountPrice();
+
                 accountPrice.accountId = accountId;
                 accountPrice.rentalTypeId = rentalTypeId;
                 accountPrice.price = price;
                 accountPrice.isLifetime = isLifetime;
                 accountPrice.validityDuration = nomalizeDuration;
                 const accountPriceCreated = this.accountPriceRepository.create(accountPrice);
+
                 return from(this.accountPriceRepository.save(accountPriceCreated));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     create(
         currentUser: UserAuth,
         createDto: CreateAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Create, AccountPrice)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -109,6 +119,7 @@ export class AccountPriceService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
@@ -135,11 +146,13 @@ export class AccountPriceService
             }),
         );
     }
+
     findOne(
         currentUser: UserAuth,
         id: string,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Read, AccountPrice)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -147,7 +160,9 @@ export class AccountPriceService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountPrice);
+
         return this.findOneProcess(
             id,
             {
@@ -166,6 +181,7 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 return {
                     data: accountPrice,
                     status: HttpStatus.OK,
@@ -176,13 +192,25 @@ export class AccountPriceService
             }),
         );
     }
+
     findAllProcess(
         findAllDto: FindAllAccountPriceDto,
         isWithDeleted?: boolean,
     ): Observable<PaginatedData<AccountPrice>> {
         const fields: Array<keyof AccountPrice> = ['id', 'accountId', 'rentalTypeId', 'price'];
         const relations: string[] = ['account', 'rentalType'];
-        const searchFields: SearchField[] = [];
+
+        const searchFields: SearchField[] = [
+            {
+                tableName: 'account',
+                fields: ['name', 'description'],
+            },
+            {
+                tableName: 'rentalType',
+                fields: ['name', 'description'],
+            },
+        ];
+
         return findWithPaginationAndSearch<AccountPrice>(
             this.accountPriceRepository,
             findAllDto,
@@ -192,11 +220,13 @@ export class AccountPriceService
             searchFields,
         );
     }
+
     findAll(
         currentUser: UserAuth,
         findAllDto: FindAllAccountPriceDto,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.ReadAll, AccountPrice)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -204,7 +234,9 @@ export class AccountPriceService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountPrice);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
@@ -217,6 +249,65 @@ export class AccountPriceService
             ),
         );
     }
+
+    findByAccountProcess(findAllDto: FindAllAccountPriceDto, id: string): Observable<PaginatedData<AccountPrice>> {
+        const fields: Array<keyof AccountPrice> = ['id', 'accountId', 'rentalTypeId', 'price'];
+        const relations: string[] = ['account', 'rentalType'];
+
+        const searchFields: SearchField[] = [
+            {
+                tableName: 'account',
+                fields: ['name', 'description'],
+            },
+            {
+                tableName: 'rentalType',
+                fields: ['name', 'description'],
+            },
+        ];
+
+        const additionalConditions: CustomCondition[] = [
+            {
+                field: 'accountId',
+                value: id,
+                operator: 'EQUAL',
+            },
+        ];
+
+        return findWithPaginationAndSearch<AccountPrice>(
+            this.accountPriceRepository,
+            findAllDto,
+            fields,
+            false,
+            relations,
+            searchFields,
+            additionalConditions,
+        );
+    }
+
+    findByAccount(user: UserAuth, findAllDto: FindAllAccountPriceDto, id: string) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (!ability.can(ActionCasl.ReadAll, AccountPrice)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        return this.findByAccountProcess(findAllDto, id).pipe(
+            map(
+                (data): ApiResponse<AccountPrice> => ({
+                    data,
+                    status: HttpStatus.OK,
+                    message: this.i18nService.translate('message.AccountPrice.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                }),
+            ),
+        );
+    }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<AccountPrice> {
         return this.findOneProcess(
             id,
@@ -235,6 +326,7 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!accountPrice.deletedAt) {
                         throw new BadRequestException(
@@ -243,6 +335,7 @@ export class AccountPriceService
                             }),
                         );
                     }
+
                     return from(this.accountPriceRepository.remove(accountPrice));
                 }
 
@@ -258,12 +351,14 @@ export class AccountPriceService
             }),
         );
     }
+
     remove(
         currentUser: UserAuth,
         id: string,
         hardRemove?: boolean,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Delete, AccountPrice)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -271,6 +366,7 @@ export class AccountPriceService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map(
                 (): ApiResponse<AccountPrice> => ({
@@ -282,6 +378,7 @@ export class AccountPriceService
             ),
         );
     }
+
     restoreProcess(id: string): Observable<AccountPrice> {
         return from(
             this.accountPriceRepository.findOne({
@@ -297,6 +394,7 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 if (!accountPrice.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.AccountPrice.NotRestored', {
@@ -304,15 +402,18 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 return from(this.accountPriceRepository.restore(accountPrice)).pipe(map(() => accountPrice));
             }),
         );
     }
+
     restore(
         currentUser: UserAuth,
         id: string,
     ): Observable<ApiResponse<AccountPrice | PaginatedData<AccountPrice> | AccountPrice[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Delete, AccountPrice)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -320,6 +421,7 @@ export class AccountPriceService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
@@ -332,8 +434,10 @@ export class AccountPriceService
             ),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateAccountPriceDto): Observable<AccountPrice> {
         const updateData: DeepPartial<AccountPrice> = { ...updateDto };
+
         return from(this.findOneProcess(id)).pipe(
             switchMap((accountPrice) => {
                 if (!accountPrice) {
@@ -343,8 +447,10 @@ export class AccountPriceService
                         }),
                     );
                 }
+
                 const tasks: Observable<any>[] = [];
                 const check: CheckForForkJoin = {};
+
                 if (updateDto.accountId && accountPrice.accountId !== updateDto.accountId) {
                     tasks.push(
                         this.accountService.findOneProcess(updateData.accountId).pipe(
@@ -356,6 +462,7 @@ export class AccountPriceService
                                         }),
                                     );
                                 }
+
                                 delete updateData.account;
                             }),
                         ),
@@ -374,6 +481,7 @@ export class AccountPriceService
                                         }),
                                     );
                                 }
+
                                 delete updateData.rentalType;
                             }),
                         ),
@@ -389,6 +497,7 @@ export class AccountPriceService
                     const checkAccountId = updateDto.accountId || accountPrice.accountId;
                     const checkRentalTypeId = updateDto.rentalTypeId || accountPrice.rentalTypeId;
                     let checkValidityDuration = updateDto.validityDuration || accountPrice.validityDuration;
+
                     updateDto.isLifetime && (checkValidityDuration = -9999);
                     tasks.push(
                         this.checkExistByAccountIdAndRentalTypeIdAndDuration(
@@ -408,6 +517,7 @@ export class AccountPriceService
                         ),
                     );
                 } else tasks.push(of(null));
+
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<AccountPrice>(this.accountPriceRepository, accountPrice, updateData);
@@ -416,8 +526,10 @@ export class AccountPriceService
             }),
         );
     }
+
     update(currentUser: UserAuth, id: string, updateDto: UpdateAccountPriceDto): Observable<ApiResponse<AccountPrice>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Update, AccountPrice)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -425,6 +537,7 @@ export class AccountPriceService
                 }),
             );
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map(
                 (data): ApiResponse<AccountPrice> => ({
@@ -437,6 +550,7 @@ export class AccountPriceService
             ),
         );
     }
+
     checkExistByAccountIdAndRentalTypeIdAndDuration(
         accountId: string,
         rentalTypeId: string,

@@ -17,44 +17,48 @@ export class CustomerController {
     constructor(private readonly customerService: CustomerService) {}
 
     @Post()
-    create(@GetCurrentUser() user: UserAuth, @Body() createCustomerDto: CreateCustomerDto) {
+    public create(@GetCurrentUser() user: UserAuth, @Body() createCustomerDto: CreateCustomerDto) {
         return this.customerService.create(user, createCustomerDto);
     }
 
     @Get()
-    findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllCustomerDto) {
+    public findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllCustomerDto) {
         return this.customerService.findAll(user, findAllDto);
     }
 
     @Get(':id/email')
-    findEmails(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+    public findEmails(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.customerService.findEmails(user, id);
     }
 
     @Get(':id')
-    findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+    public findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.customerService.findOne(user, id);
     }
 
     @Patch('restore/:id')
-    restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+    public restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.customerService.restore(user, id);
     }
 
     @RemoveFields<Customer>(['emails', 'rentals'])
     @UseInterceptors(RemoveFieldInterceptor)
     @Patch(':id')
-    update(@GetCurrentUser() user: UserAuth, @Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
+    public update(
+        @GetCurrentUser() user: UserAuth,
+        @Param('id') id: string,
+        @Body() updateCustomerDto: UpdateCustomerDto,
+    ) {
         return this.customerService.update(user, id, updateCustomerDto);
     }
 
     @Delete('hard-delete/:id')
-    hardRemove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+    public hardRemove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.customerService.remove(user, id, true);
     }
 
     @Delete(':id')
-    remove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
+    public remove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.customerService.remove(user, id);
     }
 }

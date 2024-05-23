@@ -51,8 +51,10 @@ export class WorkspaceService
         private readonly adminAccountService: AdminAccountService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
     createProcess(createDto: CreateWorkspaceDto): Observable<Workspace> {
         const { adminAccountId, description, maxSlots } = createDto;
+
         return from(this.checkExistByAdminAccountId(adminAccountId)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
@@ -62,6 +64,7 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 return this.adminAccountService.findOneProcess(adminAccountId);
             }),
             switchMap((adminAccount) => {
@@ -72,18 +75,23 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 const workspace = new Workspace();
+
                 workspace.adminAccountId = adminAccountId;
                 workspace.description = description;
                 workspace.maxSlots = maxSlots;
                 workspace.isShared = createDto.isShared;
+
                 return from(this.workspaceRepository.save(workspace));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     create(currentUser: UserAuth, createDto: CreateWorkspaceDto): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Create, Workspace)) {
             throw new BadRequestException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -91,6 +99,7 @@ export class WorkspaceService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(map((data) => ({ data, status: HttpStatus.CREATED })));
     }
 
@@ -101,6 +110,7 @@ export class WorkspaceService
     ): Observable<Workspace> {
         return from(this.workspaceRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
+
     findOneAndGetWorkspaceEmailHaveStatus(id: string, status: WorkspaceEmailStatus): Observable<Workspace> {
         return from(
             this.workspaceRepository
@@ -112,8 +122,10 @@ export class WorkspaceService
                 .getOne(),
         );
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Read, Workspace)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -121,7 +133,9 @@ export class WorkspaceService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Workspace);
+
         return this.findOneProcess(
             id,
             {
@@ -139,6 +153,7 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 return {
                     data: workspace,
                     status: HttpStatus.OK,
@@ -149,10 +164,12 @@ export class WorkspaceService
             }),
         );
     }
+
     findAllProcess(findAllDto: FindAllWorkspaceDto, isWithDeleted?: boolean): Observable<PaginatedData<Workspace>> {
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
         const relations = ['adminAccount', 'adminAccount.account'];
         const searchFields: SearchField[] = [];
+
         return findWithPaginationAndSearch<Workspace>(
             this.workspaceRepository,
             findAllDto,
@@ -162,8 +179,10 @@ export class WorkspaceService
             searchFields,
         );
     }
+
     findAll(currentUser: UserAuth, findAllDto: FindAllWorkspaceDto): Observable<ApiResponse<PaginatedData<Workspace>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.ReadAll, Workspace)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -171,7 +190,9 @@ export class WorkspaceService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Workspace);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => ({
                 data,
@@ -182,6 +203,7 @@ export class WorkspaceService
             })),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<Workspace> {
         return this.findOneProcess(
             id,
@@ -200,6 +222,7 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!workspace.deletedAt) {
                         throw new BadRequestException(
@@ -208,18 +231,23 @@ export class WorkspaceService
                             }),
                         );
                     }
+
                     return from(this.workspaceRepository.remove(workspace));
                 }
+
                 if (workspace.workspaceEmails && workspace.workspaceEmails.length > 0) {
                     throw new BadRequestException('Workspace has workspace emails');
                 }
+
                 return from(this.workspaceRepository.softRemove(workspace));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Delete, Workspace)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -227,6 +255,7 @@ export class WorkspaceService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map((data) => ({
                 data,
@@ -237,6 +266,7 @@ export class WorkspaceService
             })),
         );
     }
+
     restoreProcess(id: string): Observable<Workspace> {
         return from(this.workspaceRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((workspace) => {
@@ -247,6 +277,7 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 if (!workspace.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Workspace.NotRestored', {
@@ -254,16 +285,19 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 return from(this.workspaceRepository.restore(workspace.id)).pipe(map(() => workspace));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     restore(
         currentUser: UserAuth,
         id: string,
     ): Observable<ApiResponse<Workspace | PaginatedData<Workspace> | Workspace[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Restore, Workspace)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -271,6 +305,7 @@ export class WorkspaceService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map((workspace) => ({
                 data: workspace,
@@ -281,8 +316,10 @@ export class WorkspaceService
             })),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateWorkspaceDto): Observable<Workspace> {
         const updateData: DeepPartial<Workspace> = { ...updateDto };
+
         return from(this.findOneProcess(id)).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
@@ -292,7 +329,9 @@ export class WorkspaceService
                         }),
                     );
                 }
+
                 const tasks: Observable<any>[] = [];
+
                 if (updateDto.adminAccountId && updateDto.adminAccountId !== workspace.adminAccountId) {
                     tasks.push(
                         this.adminAccountService.findOneProcess(updateDto.adminAccountId).pipe(
@@ -304,11 +343,13 @@ export class WorkspaceService
                                         }),
                                     );
                                 }
+
                                 delete workspace.adminAccount;
                             }),
                         ),
                     );
                 } else tasks.push(of(null));
+
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         return from(updateEntity<Workspace>(this.workspaceRepository, workspace, updateData));
@@ -317,8 +358,10 @@ export class WorkspaceService
             }),
         );
     }
+
     update(currentUser: UserAuth, id: string, updateDto: UpdateWorkspaceDto): Observable<ApiResponse<Workspace>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Update, Workspace)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -326,6 +369,7 @@ export class WorkspaceService
                 }),
             );
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map((data) => ({
                 data,

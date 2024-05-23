@@ -5,5 +5,6 @@ import { Details, parse } from 'express-useragent';
 export const UserAgentCustom = createParamDecorator((data: unknown, ctx: ExecutionContext): Details => {
     const request = ctx.switchToHttp().getRequest();
     const ua = request.headers['user-agent'];
+
     return parse(ua);
 });

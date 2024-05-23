@@ -14,6 +14,7 @@ export class JwtServiceCustom {
 
     generateJwtAccessToken(user: User): { accessToken: string } {
         const payload = { email: user.email, sub: user.id };
+
         return {
             accessToken: this.jwtService.sign(payload, {
                 secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
@@ -21,8 +22,10 @@ export class JwtServiceCustom {
             }),
         };
     }
+
     generateJwtRefreshToken(user: User): { refreshToken: string } {
         const payload = { email: user.email, sub: user.id };
+
         return {
             refreshToken: this.jwtService.sign(payload, {
                 secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
@@ -37,6 +40,7 @@ export class JwtServiceCustom {
             ...this.generateJwtRefreshToken(user),
         };
     }
+
     checkTimeExpire(exp: number) {
         return timeNowToTimestamp() > exp;
     }

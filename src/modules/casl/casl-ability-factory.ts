@@ -1,9 +1,7 @@
 import { AbilityBuilder, createMongoAbility, ExtractSubjectType, InferSubjects, MongoAbility } from '@casl/ability';
 import { Injectable } from '@nestjs/common';
 
-import { UserAuth } from '../../common';
-import { ActionCasl } from '../../common/enum/action-casl.enum';
-import { UserRole } from '../../common/enum/user-role.enum';
+import { ActionCasl, UserAuth, UserRole } from '../../common';
 import { Account } from '../account/entities/account.entity';
 import { AccountCategory } from '../account-category/entities/account-category.entity';
 import { AccountPrice } from '../account-price/entities/account-price.entity';
@@ -36,8 +34,9 @@ type AppAbility = MongoAbility<[ActionCasl, Subjects]>;
 
 @Injectable()
 export class CaslAbilityFactory {
-    createForUser(user: UserAuth) {
+    public createForUser(user: UserAuth) {
         const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility);
+
         if (user.role === UserRole.SUPER_ADMIN) {
             can(ActionCasl.Manage, 'all');
             cannot(ActionCasl.Delete, User, { role: UserRole.SUPER_ADMIN });
@@ -47,6 +46,7 @@ export class CaslAbilityFactory {
                 id: { $ne: user.id },
             });
         }
+
         if (user.role === UserRole.ADMIN) {
             can(ActionCasl.Manage, 'all');
             cannot(ActionCasl.Manage, User, { role: UserRole.SUPER_ADMIN });
@@ -55,6 +55,7 @@ export class CaslAbilityFactory {
             cannot(ActionCasl.Delete, User, { role: UserRole.SUPER_ADMIN });
             cannot(ActionCasl.Delete, User, { role: UserRole.ADMIN });
         }
+
         if (user.role === UserRole.USER) {
             can(ActionCasl.Update, User, { id: user.id });
             cannot(ActionCasl.Manage, User);
@@ -68,6 +69,7 @@ export class CaslAbilityFactory {
             can(ActionCasl.ReadAll, Account);
             can(ActionCasl.Read, Account);
         }
+
         return build({
             detectSubjectType: (item) => item.constructor as ExtractSubjectType<Subjects>,
         });

@@ -49,9 +49,11 @@ export class AccountCategoryService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
     createProcess(createDto: CreateAccountCategoryDto): Observable<AccountCategory> {
         const { name, description } = createDto;
         const slug = slugifyString(name);
+
         return from(this.checkExistBySlug(slug)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
@@ -62,17 +64,22 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 const accountCategory = new AccountCategory();
+
                 accountCategory.name = name;
                 accountCategory.description = description;
                 accountCategory.slug = slug;
+
                 return from(this.accountCategoryRepository.save(accountCategory));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     create(currentUser: UserAuth, createDto: CreateAccountCategoryDto): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, AccountCategory)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -80,6 +87,7 @@ export class AccountCategoryService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map(
                 (data): ApiResponse<AccountCategory> => ({
@@ -93,6 +101,7 @@ export class AccountCategoryService
             ),
         );
     }
+
     findOneProcess(
         id: string,
         options?: FindOneOptionsCustom<AccountCategory>,
@@ -100,8 +109,10 @@ export class AccountCategoryService
     ): Observable<AccountCategory> {
         return from(this.accountCategoryRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Read, AccountCategory)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -109,7 +120,9 @@ export class AccountCategoryService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountCategory);
+
         return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((accountCategory): ApiResponse<AccountCategory> => {
                 if (!accountCategory) {
@@ -119,6 +132,7 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     data: accountCategory,
@@ -129,6 +143,7 @@ export class AccountCategoryService
             }),
         );
     }
+
     findAllProcess(
         findAllDto: FindAllAccountCategoryDto,
         isWithDeleted?: boolean,
@@ -146,11 +161,13 @@ export class AccountCategoryService
             searchFields,
         );
     }
+
     findAll(
         currentUser: UserAuth,
         findAllDto: FindAllAccountCategoryDto,
     ): Observable<ApiResponse<PaginatedData<AccountCategory>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.ReadAll, AccountCategory)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -158,7 +175,9 @@ export class AccountCategoryService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AccountCategory);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
@@ -169,6 +188,7 @@ export class AccountCategoryService
             })),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<AccountCategory> {
         return from(
             this.accountCategoryRepository.findOne({
@@ -185,6 +205,7 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!accountCategory.deletedAt) {
                         throw new BadRequestException(
@@ -194,6 +215,7 @@ export class AccountCategoryService
                             }),
                         );
                     }
+
                     return from(this.accountCategoryRepository.remove(accountCategory));
                 }
 
@@ -202,6 +224,7 @@ export class AccountCategoryService
                         lang: I18nContext.current().lang,
                         args: { name: accountCategory.name },
                     });
+
                     throw new BadRequestException(
                         this.i18nService.translate('message.AccountCategory.NotDeleted', {
                             lang: I18nContext.current().lang,
@@ -209,16 +232,20 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 return from(this.accountCategoryRepository.softRemove(accountCategory));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Delete, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to delete account category');
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map(
                 (data): ApiResponse<AccountCategory> => ({
@@ -232,6 +259,7 @@ export class AccountCategoryService
             ),
         );
     }
+
     restoreProcess(id: string): Observable<AccountCategory> {
         return from(
             this.accountCategoryRepository.findOne({
@@ -247,6 +275,7 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 if (!accountCategory.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.AccountCategory.NotDeleted', {
@@ -255,6 +284,7 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 return from(this.accountCategoryRepository.restore(accountCategory.id)).pipe(
                     map(() => accountCategory),
                 );
@@ -262,11 +292,14 @@ export class AccountCategoryService
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Restore, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to restore account category');
         }
+
         return this.restoreProcess(id).pipe(
             map(
                 (data): ApiResponse<AccountCategory> => ({
@@ -280,8 +313,10 @@ export class AccountCategoryService
             ),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateAccountCategoryDto): Observable<AccountCategory> {
         const updateData: DeepPartial<AccountCategory> = { ...updateDto };
+
         return from(this.findOneProcess(id)).pipe(
             switchMap((accountCategory) => {
                 if (!accountCategory) {
@@ -291,8 +326,10 @@ export class AccountCategoryService
                         }),
                     );
                 }
+
                 if (updateData.name && accountCategory.name !== updateData.name) {
                     const slug = slugifyString(updateData.name);
+
                     return from(this.checkExistBySlug(slug)).pipe(
                         switchMap((isExist) => {
                             if (isExist) {
@@ -303,11 +340,14 @@ export class AccountCategoryService
                                     }),
                                 );
                             }
+
                             updateData.slug = slug;
+
                             return of(accountCategory);
                         }),
                     );
                 }
+
                 return of(accountCategory);
             }),
             switchMap((accountCategory) => {
@@ -315,15 +355,18 @@ export class AccountCategoryService
             }),
         );
     }
+
     update(
         currentUser: UserAuth,
         id: string,
         updateDto: UpdateAccountCategoryDto,
     ): Observable<ApiResponse<AccountCategory>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Update, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to update account category');
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map(
                 (data): ApiResponse<AccountCategory> => ({
@@ -337,17 +380,22 @@ export class AccountCategoryService
             ),
         );
     }
+
     findOneBySlug(slug: string): Observable<AccountCategory> {
         return from(this.accountCategoryRepository.findOne({ where: { slug } }));
     }
+
     checkExistBySlug(slug: string): Observable<boolean> {
         return from(this.accountCategoryRepository.existsBy({ slug }));
     }
+
     findAllAccountCategory(user: UserAuth) {
         const ability = this.caslAbilityFactory.createForUser(user);
+
         if (!ability.can(ActionCasl.ReadAll, AccountCategory)) {
             throw new ForbiddenException('You are not allowed to read account category');
         }
+
         return this.findAllAccountCategoryProcess();
     }
 

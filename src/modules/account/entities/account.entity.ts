@@ -14,6 +14,7 @@ import { AccountCategory } from '../../account-category/entities/account-categor
 import { AccountPrice } from '../../account-price/entities/account-price.entity';
 import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
 import { Rental } from '../../rental/entities/rental.entity';
+
 @Entity({ name: 'accounts' })
 export class Account {
     @PrimaryGeneratedColumn('uuid', {

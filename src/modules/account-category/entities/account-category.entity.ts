@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 
 import { Account } from '../../account/entities/account.entity';
+
 @Entity({ name: 'account_categories' })
 export class AccountCategory {
     @PrimaryGeneratedColumn('uuid', {

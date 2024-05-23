@@ -46,6 +46,7 @@ export class AdminAccountController {
     ) {
         return this.adminAccountService.update(user, id, updateAdminAccountDto);
     }
+
     @Delete('hard-delete/:id')
     hardRemove(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.adminAccountService.remove(user, id, true);

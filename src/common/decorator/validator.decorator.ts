@@ -30,9 +30,11 @@ export const IsEarlierThanDate =
                 validate: (value: any, args: ValidationArguments) => {
                     const [relatedPropertyName] = args.constraints;
                     const relatedValue = (args.object as any)[relatedPropertyName];
+
                     if (!(value instanceof Date && relatedValue instanceof Date)) {
                         return false; // Ensures both values are Date instances
                     }
+
                     return value < relatedValue; // Compares dates
                 },
                 defaultMessage: (args: ValidationArguments) =>
@@ -53,6 +55,7 @@ export const IsMatch =
                 validate: (value: any, args: ValidationArguments) => {
                     const [relatedPropertyName] = args.constraints;
                     const relatedValue = (args.object as any)[relatedPropertyName];
+
                     return value === relatedValue;
                 },
                 defaultMessage: (args: ValidationArguments) => `${args.property} should match ${args.constraints[0]}`,

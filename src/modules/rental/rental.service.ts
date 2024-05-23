@@ -50,6 +50,7 @@ import { CreateRentalDto } from './dto/create-rental.dto';
 import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
+
 export interface TelegrafContext extends Scenes.SceneContext {}
 
 @Injectable()
@@ -81,8 +82,10 @@ export class RentalService
         private readonly mailService: MailService,
         @InjectBot() private bot: Telegraf<TelegrafContext>,
     ) {}
+
     checkAccount(accountId: string, accountId2: string) {
         if (!accountId2) return;
+
         if (accountId !== accountId2) {
             throw new BadRequestException(
                 this.i18nService.translate('message.Workspace.NotBelongToAccount', {
@@ -91,6 +94,7 @@ export class RentalService
             );
         }
     }
+
     checkEmailBelongToCustomer(email: string, customerId: string): Observable<boolean> {
         return this.emailService.checkExistByEmailAndCustomerId(email, customerId).pipe(
             tap((isExist) => {
@@ -102,10 +106,12 @@ export class RentalService
                         }),
                     );
                 }
+
                 return isExist;
             }),
         );
     }
+
     createProcess(createDto: CreateRentalDto): Observable<Rental> {
         const {
             customerId,
@@ -119,6 +125,7 @@ export class RentalService
             paymentMethod,
             warrantyFee,
         } = createDto;
+
         const recordContext: {
             customer: Customer;
             email: Email;
@@ -132,6 +139,7 @@ export class RentalService
             workspace: null,
             workspaceEmailId: null,
         };
+
         return this.customerService.findOneProcess(customerId).pipe(
             switchMap((customer) => {
                 if (!customer) {
@@ -141,7 +149,9 @@ export class RentalService
                         }),
                     );
                 }
+
                 recordContext.customer = customer;
+
                 return this.emailService.findOneProcess(emailId);
             }),
             switchMap((email) => {
@@ -152,6 +162,7 @@ export class RentalService
                         }),
                     );
                 }
+
                 if (email.customerId !== recordContext.customer.id) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.Email.NotBelongToCustomer', {
@@ -160,7 +171,9 @@ export class RentalService
                         }),
                     );
                 }
+
                 recordContext.email = email;
+
                 return this.accountPriceService.findOneProcess(accountPriceId, {
                     relations: {
                         rentalType: true,
@@ -175,11 +188,14 @@ export class RentalService
                         }),
                     );
                 }
+
                 recordContext.accountPrice = accountPrice;
+
                 if (workspaceId && workspaceId) {
                     if (!accountPrice.rentalType.isWorkspace) {
                         throw new BadRequestException('Account price is not for workspace');
                     }
+
                     return this.workspaceService.findOneProcess(workspaceId, {
                         relations: {
                             adminAccount: true,
@@ -192,16 +208,19 @@ export class RentalService
             switchMap((workspace) => {
                 if (workspace) {
                     recordContext.workspace = workspace;
+
                     return this.workspaceEmailService.createProcessAndGetId({
                         emailId: emailId,
                         workspaceId: workspace.id,
                     });
                 }
+
                 return of(null);
             }),
             switchMap((workspaceEmailId) => {
                 recordContext.workspaceEmailId = workspaceEmailId;
                 const rental = new Rental();
+
                 rental.customer = recordContext.customer;
                 rental.email = recordContext.email;
                 rental.accountId = recordContext.accountPrice.accountId;
@@ -211,6 +230,7 @@ export class RentalService
                 rental.note = note;
                 rental.status = status;
                 const newRental = this.rentalRepository.create(rental);
+
                 return from(this.rentalRepository.save(newRental));
             }),
             switchMap((rental) => {
@@ -227,8 +247,10 @@ export class RentalService
             }),
         );
     }
+
     create(currentUser: UserAuth, createDto: CreateRentalDto): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Create, Rental)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -236,6 +258,7 @@ export class RentalService
                 }),
             );
         }
+
         return this.createProcess(createDto).pipe(
             map((rental) => {
                 return {
@@ -258,8 +281,10 @@ export class RentalService
             }),
         );
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -267,7 +292,9 @@ export class RentalService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Rental);
+
         return this.findOneProcess(
             id,
             {
@@ -288,6 +315,7 @@ export class RentalService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     data: rental,
@@ -298,6 +326,7 @@ export class RentalService
             }),
         );
     }
+
     findAllProcess(findAllDto: FindAllRentalDto, isWithDeleted?: boolean): Observable<PaginatedData<Rental>> {
         const fields: Array<keyof Rental> = [
             'id',
@@ -311,8 +340,24 @@ export class RentalService
             'emailId',
             'workspaceEmailId',
         ];
-        const searchFields: SearchField[] = [];
-        const relations: string[] = ['accountPrice', 'customer', 'email', 'workspaceEmail'];
+
+        const searchFields: SearchField[] = [
+            {
+                tableName: 'customer',
+                fields: ['name', 'email'],
+            },
+            {
+                tableName: 'account',
+                fields: ['name'],
+            },
+            {
+                tableName: 'email',
+                fields: ['email'],
+            },
+        ];
+
+        const relations: string[] = ['account', 'customer', 'email', 'workspaceEmail'];
+
         return findWithPaginationAndSearch<Rental>(
             this.rentalRepository,
             findAllDto,
@@ -322,8 +367,10 @@ export class RentalService
             searchFields,
         );
     }
+
     findAll(currentUser: UserAuth, findAllDto: FindAllRentalDto): Observable<ApiResponse<PaginatedData<Rental>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Read, Rental)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -331,7 +378,9 @@ export class RentalService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, Rental);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((rentals) => {
                 return {
@@ -344,6 +393,7 @@ export class RentalService
             }),
         );
     }
+
     setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental: Rental) {
         if (rental.workspaceEmailId) {
             return this.updateWorkSpaceEmailToNull(rental.id).pipe(
@@ -351,12 +401,15 @@ export class RentalService
                     if (isDelete) {
                         return this.removeWorkspaceEmail(rental);
                     }
+
                     return of(false);
                 }),
             );
         }
+
         return of(true);
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<Rental> {
         return from(this.rentalRepository.findOne({ where: { id }, withDeleted: hardRemove })).pipe(
             map((rental) => {
@@ -367,6 +420,7 @@ export class RentalService
                         }),
                     );
                 }
+
                 return rental;
             }),
             switchMap((rental) => {
@@ -378,21 +432,26 @@ export class RentalService
                             }),
                         );
                     }
+
                     if (rental.workspaceEmailId) {
                         this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental);
                     }
+
                     return from(this.rentalRepository.remove(rental)).pipe(map(() => rental));
                 }
+
                 return from(this.rentalRepository.softRemove(rental)).pipe(map(() => rental));
             }),
         );
     }
+
     remove(
         currentUser: UserAuth,
         id: string,
         hardRemove?: boolean,
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Delete, Rental)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -400,6 +459,7 @@ export class RentalService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map((rental) => {
                 return {
@@ -412,6 +472,7 @@ export class RentalService
             }),
         );
     }
+
     restoreProcess(id: string): Observable<Rental> {
         return from(this.rentalRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             map((rental) => {
@@ -422,6 +483,7 @@ export class RentalService
                         }),
                     );
                 }
+
                 return rental;
             }),
             switchMap((rental) => {
@@ -432,6 +494,7 @@ export class RentalService
                         }),
                     );
                 }
+
                 if (rental.workspaceEmailId) {
                     return from(
                         this.workspaceEmailService.updateStatusProcess(
@@ -440,6 +503,7 @@ export class RentalService
                         ),
                     ).pipe(map(() => rental));
                 }
+
                 return of(rental);
             }),
             switchMap((rental) =>
@@ -451,8 +515,10 @@ export class RentalService
             ),
         );
     }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Restore, Rental)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -460,6 +526,7 @@ export class RentalService
                 }),
             );
         }
+
         return this.restoreProcess(id).pipe(
             map((rental) => {
                 return {
@@ -472,6 +539,7 @@ export class RentalService
             }),
         );
     }
+
     removeWorkSpaceEmailAndCreateNew(
         rental: Rental,
         updateDto: {
@@ -488,6 +556,7 @@ export class RentalService
             }),
         );
     }
+
     updateEmailWorkspaceId(rental: Rental, idEmail: string, workSpaceId?: string): Observable<string> {
         if (rental.workspaceEmailId) {
             return this.removeWorkSpaceEmailAndCreateNew(rental, {
@@ -499,11 +568,14 @@ export class RentalService
                 }),
             );
         }
+
         return of(null);
     }
+
     updateProcess(id: string, updateDto: UpdateRentalDto): Observable<Rental> {
         const { emailId, workspaceId, ...rest } = updateDto;
         const updateData: DeepPartial<Rental> = { ...rest };
+
         return this.findOneProcess(id, {
             relations: {
                 account: true,
@@ -518,8 +590,10 @@ export class RentalService
                         }),
                     );
                 }
+
                 const checkForForkJoin: CheckForForkJoin = {};
                 const tasks: Observable<any>[] = [];
+
                 if (emailId && emailId !== rental.emailId) {
                     tasks.push(
                         this.emailService.findOneProcess(emailId).pipe(
@@ -531,6 +605,7 @@ export class RentalService
                                         }),
                                     );
                                 }
+
                                 checkForForkJoin.email = email;
                             }),
                         ),
@@ -538,6 +613,7 @@ export class RentalService
                 } else {
                     tasks.push(of(null));
                 }
+
                 if (workspaceId && workspaceId !== rental.workspaceEmail?.workspaceId && rental.workspaceEmailId) {
                     tasks.push(
                         this.workspaceService
@@ -555,6 +631,7 @@ export class RentalService
                                             }),
                                         );
                                     }
+
                                     this.checkAccount(rental.accountId, workspace.adminAccount.accountId);
                                 }),
                             ),
@@ -562,6 +639,7 @@ export class RentalService
                 } else {
                     tasks.push(of(null));
                 }
+
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
                         if (checkForForkJoin.email && checkForForkJoin.workspace) {
@@ -588,6 +666,7 @@ export class RentalService
                                 }),
                             );
                         }
+
                         return of(null);
                     }),
                     switchMap(() => {
@@ -596,6 +675,7 @@ export class RentalService
                                 if (updateData.status) {
                                     if (rental.workspaceEmailId) {
                                         let status: WorkspaceEmailStatus;
+
                                         if (updateData.status === RentalStatus.ACTIVE) {
                                             status = WorkspaceEmailStatus.ACTIVE;
                                         } else if (updateData.status === RentalStatus.INACTIVE) {
@@ -603,11 +683,13 @@ export class RentalService
                                         } else {
                                             status = WorkspaceEmailStatus.EXPIRED;
                                         }
+
                                         return this.workspaceEmailService
                                             .updateStatusProcess(rental.workspaceEmailId, status)
                                             .pipe(map(() => updatedRental));
                                     }
                                 }
+
                                 return of(updatedRental);
                             }),
                         );
@@ -616,6 +698,7 @@ export class RentalService
             }),
         );
     }
+
     updateWorkSpaceEmailToNull(id: string): Observable<boolean> {
         return from(
             this.rentalRepository.update(
@@ -635,10 +718,12 @@ export class RentalService
                         }),
                     );
                 }
+
                 return true;
             }),
         );
     }
+
     removeWorkspaceEmail(rental: Rental): Observable<boolean> {
         if (rental.workspaceEmailId) {
             return this.workspaceEmailService.removeProcess(rental.workspaceEmailId).pipe(
@@ -647,14 +732,17 @@ export class RentalService
                 }),
             );
         }
+
         return of(true);
     }
+
     update(
         currentUser: UserAuth,
         id: string,
         updateDto: UpdateRentalDto,
     ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> | any {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (ability.cannot(ActionCasl.Update, Rental)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -665,6 +753,7 @@ export class RentalService
 
         return this.updateProcess(id, updateDto);
     }
+
     checkExpiredAndUpdateStatus(rental: Rental): {
         rental: Rental;
         workspaceEmail: WorkspaceEmail;
@@ -672,14 +761,18 @@ export class RentalService
     } {
         if (checkDate(rental.endDate)) {
             rental.status = RentalStatus.EXPIRED;
+
             if (rental.workspaceEmail) {
                 rental.workspaceEmail.status = WorkspaceEmailStatus.EXPIRED;
             }
         }
+
         let nearExpired = false;
+
         if (checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))) {
             nearExpired = true;
         }
+
         return {
             rental,
             workspaceEmail: rental.workspaceEmail,
@@ -720,17 +813,21 @@ export class RentalService
                     workspaceEmail: [],
                     rentalNearExpired: [],
                 };
+
                 rentals.map((rentalCheck) => {
                     const { rental, workspaceEmail, nearExpired } = this.checkExpiredAndUpdateStatus(rentalCheck);
+
                     if (workspaceEmail) {
                         checks.workspaceEmail.push(workspaceEmail);
                     }
+
                     if (nearExpired) {
                         checks.rentalNearExpired.push(rental);
                     } else {
                         checks.rentalExpired.push(rental);
                     }
                 });
+
                 return forkJoin([
                     this.saveAll(checks.rentalExpired),
                     this.workspaceEmailService.saveAll(checks.workspaceEmail),
@@ -745,6 +842,7 @@ export class RentalService
             }),
         );
     }
+
     sendMailWarningNearExpired(rental: Rental) {
         return from(
             this.mailService
@@ -762,6 +860,7 @@ export class RentalService
                 ),
         );
     }
+
     sendMailExpired(rental: Rental) {
         return from(
             this.mailService
@@ -778,25 +877,34 @@ export class RentalService
                 ),
         );
     }
+
     sendMailExpiredWithForJoin(rentals: Rental[]) {
         const tasks: Observable<any>[] = [];
+
         rentals.map((rental) => {
             return tasks.push(this.sendMailExpired(rental));
         });
+
         return forkJoin(tasks);
     }
+
     sendMailWarningNearExpiredMany(rentals: Rental[]) {
         const tasks: Observable<any>[] = [];
+
         rentals.map((rental) => {
             return tasks.push(this.sendMailWarningNearExpired(rental));
         });
+
         return forkJoin(tasks);
     }
+
     pingToAdminBotMany(rentals: Rental[], nearExpired = false) {
         const tasks: Observable<any>[] = [];
+
         rentals.map((rental) => {
             return tasks.push(this.pingToAdminBot(rental, nearExpired));
         });
+
         return forkJoin(tasks);
     }
 
@@ -835,6 +943,7 @@ export class RentalService
             }),
         );
     }
+
     @Cron(CronExpression.EVERY_DAY_AT_7AM)
     handleCron() {
         this.checkExpiredAll().subscribe((result) => {

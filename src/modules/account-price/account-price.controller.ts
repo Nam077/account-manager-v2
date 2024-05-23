@@ -26,6 +26,15 @@ export class AccountPriceController {
         return this.accountPriceService.findAll(user, findAllDto);
     }
 
+    @Get('/by-account/:id')
+    findByAccount(
+        @GetCurrentUser() user: UserAuth,
+        @Query() findAllDto: FindAllAccountPriceDto,
+        @Param('id') id: string,
+    ) {
+        return this.accountPriceService.findByAccount(user, findAllDto, id);
+    }
+
     @Get(':id')
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.accountPriceService.findOne(user, id);

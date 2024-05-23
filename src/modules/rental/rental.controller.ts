@@ -35,6 +35,7 @@ export class RentalController {
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalService.findOne(user, id);
     }
+
     @Patch('/restore/:id')
     restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalService.restore(user, id);

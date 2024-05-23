@@ -9,6 +9,7 @@ export class MailService {
         private readonly mailerService: MailerService,
         private readonly configService: ConfigService,
     ) {}
+
     public example(): void {
         this.mailerService
             .sendMail({
@@ -24,6 +25,7 @@ export class MailService {
             .then(() => {})
             .catch(() => {});
     }
+
     public sendMailWarningNearExpired(
         to: string,
         context: {

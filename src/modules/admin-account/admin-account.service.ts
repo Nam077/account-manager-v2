@@ -7,8 +7,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { I18nService } from 'nestjs-i18n';
-import { I18nContext } from 'nestjs-i18n';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
@@ -30,6 +29,7 @@ import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { FindAllAdminAccountDto } from './dto/find-all.dto';
 import { UpdateAdminAccountDto } from './dto/update-admin-account.dto';
 import { AdminAccount } from './entities/admin-account.entity';
+
 @Injectable()
 export class AdminAccountService
     implements
@@ -50,6 +50,7 @@ export class AdminAccountService
         private readonly accountService: AccountService,
         private readonly i18nService: I18nService<I18nTranslations>,
     ) {}
+
     createProcess(createDto: CreateAdminAccountDto): Observable<AdminAccount> {
         const { email, accountId, value } = createDto;
 
@@ -62,6 +63,7 @@ export class AdminAccountService
                         }),
                     );
                 }
+
                 return this.accountService.findOneProcess(accountId).pipe(
                     switchMap((account) => {
                         if (!account) {
@@ -71,10 +73,13 @@ export class AdminAccountService
                                 }),
                             );
                         }
+
                         const newAdminAccount = new AdminAccount();
+
                         newAdminAccount.email = email;
                         newAdminAccount.accountId = accountId;
                         newAdminAccount.value = value;
+
                         return from(this.adminAccountRepository.save(newAdminAccount));
                     }),
                     catchError((error) => throwError(() => new BadRequestException(error.message))),
@@ -82,8 +87,10 @@ export class AdminAccountService
             }),
         );
     }
+
     create(currentUser: UserAuth, createDto: CreateAdminAccountDto): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Create, AdminAccount)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -116,8 +123,10 @@ export class AdminAccountService
             }),
         );
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Read, AdminAccount)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -125,7 +134,9 @@ export class AdminAccountService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AdminAccount);
+
         return this.findOneProcess(
             id,
             {
@@ -143,6 +154,7 @@ export class AdminAccountService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     data: adminAccount,
@@ -153,18 +165,21 @@ export class AdminAccountService
             }),
         );
     }
+
     findAllProcess(
         findAllDto: FindAllAdminAccountDto,
         isWithDeleted?: boolean,
     ): Observable<PaginatedData<AdminAccount>> {
         const fields: Array<keyof AdminAccount> = ['id', 'email', 'value'];
         const relations = ['account'];
+
         const searchFields: SearchField[] = [
             {
                 tableName: 'account',
                 fields: ['name', 'description'],
             },
         ];
+
         return findWithPaginationAndSearch<AdminAccount>(
             this.adminAccountRepository,
             findAllDto,
@@ -174,11 +189,13 @@ export class AdminAccountService
             searchFields,
         );
     }
+
     findAll(
         currentUser: UserAuth,
         findAllDto: FindAllAdminAccountDto,
     ): Observable<ApiResponse<PaginatedData<AdminAccount>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.ReadAll, AdminAccount)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -186,7 +203,9 @@ export class AdminAccountService
                 }),
             );
         }
+
         const isCanReadAllWithDeleted = ability.can(ActionCasl.ReadWithDeleted, AdminAccount);
+
         return this.findAllProcess(findAllDto, isCanReadAllWithDeleted).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
@@ -197,6 +216,7 @@ export class AdminAccountService
             })),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<AdminAccount> {
         return this.findOneProcess(
             id,
@@ -224,8 +244,10 @@ export class AdminAccountService
                             }),
                         );
                     }
+
                     return from(this.adminAccountRepository.remove(adminAccount));
                 }
+
                 if (adminAccount.workspaces && adminAccount.workspaces.length > 0) {
                     if (adminAccount.workspaces.length > 0) {
                         throw new BadRequestException(
@@ -240,12 +262,14 @@ export class AdminAccountService
             }),
         );
     }
+
     remove(
         currentUser: UserAuth,
         id: string,
         hardRemove?: boolean,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Delete, AdminAccount)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -253,6 +277,7 @@ export class AdminAccountService
                 }),
             );
         }
+
         return this.removeProcess(id, hardRemove).pipe(
             map((data) => ({
                 status: HttpStatus.OK,
@@ -263,6 +288,7 @@ export class AdminAccountService
             })),
         );
     }
+
     restoreProcess(id: string): Observable<AdminAccount> {
         return this.findOneProcess(id, {}, true).pipe(
             switchMap((adminAccount) => {
@@ -273,6 +299,7 @@ export class AdminAccountService
                         }),
                     );
                 }
+
                 if (!adminAccount.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.AdminAccount.NotRestored', {
@@ -280,12 +307,15 @@ export class AdminAccountService
                         }),
                     );
                 }
+
                 return from(this.adminAccountRepository.restore(adminAccount.id)).pipe(map(() => adminAccount));
             }),
         );
     }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<AdminAccount>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Restore, AdminAccount)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -304,8 +334,10 @@ export class AdminAccountService
             })),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateAdminAccountDto): Observable<AdminAccount> {
         const updateData: DeepPartial<AdminAccount> = { ...updateDto };
+
         return from(this.findOneProcess(id)).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
@@ -315,9 +347,11 @@ export class AdminAccountService
                         }),
                     );
                 }
+
                 const checkEmail = updateDto.email || adminAccount.email;
                 const checkAccountId = updateDto.accountId || adminAccount.accountId;
                 const tasks: Observable<any>[] = [];
+
                 if (updateDto.accountId && updateDto.accountId !== adminAccount.accountId) {
                     tasks.push(
                         this.accountService.findOneProcess(updateDto.accountId).pipe(
@@ -329,6 +363,7 @@ export class AdminAccountService
                                         }),
                                     );
                                 }
+
                                 delete updateData.account;
                             }),
                         ),
@@ -352,6 +387,7 @@ export class AdminAccountService
                         ),
                     );
                 } else tasks.push(of(null));
+
                 return from(tasks).pipe(
                     switchMap(() => {
                         return updateEntity<AdminAccount>(this.adminAccountRepository, adminAccount, updateData);
@@ -360,12 +396,14 @@ export class AdminAccountService
             }),
         );
     }
+
     update(
         currentUser: UserAuth,
         id: string,
         updateDto: UpdateAdminAccountDto,
     ): Observable<ApiResponse<AdminAccount | PaginatedData<AdminAccount> | AdminAccount[]>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Update, AdminAccount)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -373,6 +411,7 @@ export class AdminAccountService
                 }),
             );
         }
+
         return this.updateProcess(id, updateDto).pipe(
             map((data) => ({
                 status: HttpStatus.OK,

@@ -10,6 +10,7 @@ export class RemoveFieldInterceptor implements NestInterceptor {
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request = context.switchToHttp().getRequest();
+
         const removeFields: string[] = [
             'id',
             'createdAt',
@@ -23,6 +24,7 @@ export class RemoveFieldInterceptor implements NestInterceptor {
                 delete request.body[field];
             }
         });
+
         return next.handle();
     }
 }

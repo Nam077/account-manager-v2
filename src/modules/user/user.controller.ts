@@ -30,6 +30,7 @@ export class UserController {
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.userService.findOne(user, id);
     }
+
     @Patch('restore/:id')
     restore(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         console.log(id);

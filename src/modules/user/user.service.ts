@@ -2,8 +2,10 @@ import {
     BadRequestException,
     ConflictException,
     ForbiddenException,
+    forwardRef,
     HttpException,
     HttpStatus,
+    Inject,
     Injectable,
     NotFoundException,
     UnauthorizedException,
@@ -30,6 +32,7 @@ import {
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { LoginDto } from '../auth/dto/login.dto';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
+import { RefreshTokenService } from '../refresh-token/refresh-token.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindAllUserDto } from './dto/find-all.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -52,9 +55,13 @@ export class UserService
         @InjectRepository(User) private readonly userRepository: Repository<User>,
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
+        @Inject(forwardRef(() => RefreshTokenService))
+        private readonly refreshTokenService: RefreshTokenService,
     ) {}
+
     createProcess(createDto: CreateUserDto): Observable<User> {
         const { email, name, password, role } = createDto;
+
         return from(this.checkExistByEmail(email)).pipe(
             switchMap((isExist) => {
                 if (isExist) {
@@ -65,21 +72,26 @@ export class UserService
                         }),
                     );
                 }
+
                 return BcryptServiceInstance.hash(password);
             }),
             switchMap((hash) => {
                 const user = new User();
+
                 user.email = email;
                 user.name = name;
                 user.password = hash;
                 user.role = role;
+
                 return this.userRepository.save(user);
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     create(currentUser: UserAuth, createDto: CreateUserDto): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.Manage, User)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -87,7 +99,9 @@ export class UserService
                 }),
             );
         }
+
         const { role } = currentUser;
+
         if (role === UserRole.SUPER_ADMIN || role === UserRole.ADMIN) {
             if (!ability.can(ActionCasl.AddAdmin, User)) {
                 throw new ForbiddenException(
@@ -97,6 +111,7 @@ export class UserService
                 );
             }
         }
+
         return this.createProcess(createDto).pipe(
             map((user) => {
                 return {
@@ -109,6 +124,7 @@ export class UserService
             }),
         );
     }
+
     findOneProcess(id: string, options?: FindOneOptionsCustom<User>, isWithDeleted?: boolean): Observable<User> {
         return from(
             this.userRepository.findOne({
@@ -118,9 +134,11 @@ export class UserService
             }),
         );
     }
+
     findOne(currentUser: UserAuth, id: string): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, User);
+
         return this.findOneProcess(id, {}, isCanReadWithDeleted).pipe(
             map((user) => {
                 if (!user) {
@@ -130,6 +148,7 @@ export class UserService
                         }),
                     );
                 }
+
                 if (!ability.can(ActionCasl.Read, user)) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.Authentication.Forbidden', {
@@ -138,6 +157,7 @@ export class UserService
                         }),
                     );
                 }
+
                 return {
                     status: HttpStatus.OK,
                     data: user,
@@ -149,10 +169,12 @@ export class UserService
             }),
         );
     }
+
     findAllProcess(findAllDto: FindAllUserDto, isWithDeleted?: boolean): Observable<PaginatedData<User>> {
         const fields: Array<keyof User> = ['id', 'name', 'email', 'role'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
+
         return findWithPaginationAndSearch<User>(
             this.userRepository,
             findAllDto,
@@ -162,8 +184,10 @@ export class UserService
             searchFields,
         );
     }
+
     findAll(currentUser: UserAuth, findAllDto: FindAllUserDto): Observable<ApiResponse<PaginatedData<User>>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         if (!ability.can(ActionCasl.ReadAll, User)) {
             throw new ForbiddenException(
                 this.i18nService.translate('message.Authentication.Forbidden', {
@@ -171,7 +195,9 @@ export class UserService
                 }),
             );
         }
+
         const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, User);
+
         return this.findAllProcess(findAllDto, isCanReadWithDeleted).pipe(
             map((data) => {
                 return {
@@ -184,6 +210,7 @@ export class UserService
             }),
         );
     }
+
     removeProcess(id: string, hardRemove?: boolean): Observable<User> {
         return from(this.findOneProcess(id, {}, hardRemove)).pipe(
             switchMap((user) => {
@@ -194,6 +221,7 @@ export class UserService
                         }),
                     );
                 }
+
                 if (hardRemove) {
                     if (!user.deletedAt) {
                         throw new BadRequestException(
@@ -202,15 +230,21 @@ export class UserService
                             }),
                         );
                     }
+
                     return from(this.userRepository.remove(user));
                 }
-                return from(this.userRepository.softRemove(user));
+
+                return this.refreshTokenService
+                    .removeByUserId(user.id)
+                    .pipe(switchMap(() => this.userRepository.softRemove(user)));
             }),
             catchError((error) => throwError(() => new HttpException(error.message, HttpStatus.NOT_FOUND))),
         );
     }
+
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         return this.findOneProcess(id, {}, hardRemove).pipe(
             switchMap((user) => {
                 if (!user) {
@@ -220,6 +254,7 @@ export class UserService
                         }),
                     );
                 }
+
                 if (!ability.can(ActionCasl.Delete, user)) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.Authentication.Forbidden', {
@@ -227,6 +262,7 @@ export class UserService
                         }),
                     );
                 }
+
                 return this.removeProcess(id, hardRemove).pipe(
                     map((data) => {
                         return {
@@ -242,6 +278,7 @@ export class UserService
             }),
         );
     }
+
     restoreProcess(id: string): Observable<User> {
         return this.findOneProcess(id, {}, true).pipe(
             switchMap((user) => {
@@ -253,6 +290,7 @@ export class UserService
                         }),
                     );
                 }
+
                 if (!user.deletedAt) {
                     throw new BadRequestException(
                         this.i18nService.translate('message.User.NotRestored', {
@@ -261,13 +299,16 @@ export class UserService
                         }),
                     );
                 }
+
                 return from(this.userRepository.restore(user.id)).pipe(map(() => user));
             }),
             catchError((error) => throwError(() => new BadRequestException(error.message))),
         );
     }
+
     restore(currentUser: UserAuth, id: string): Observable<ApiResponse<User>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
+
         return this.findOneProcess(id, {}, true).pipe(
             switchMap((user) => {
                 if (!user) {
@@ -278,6 +319,7 @@ export class UserService
                         }),
                     );
                 }
+
                 if (!ability.can(ActionCasl.Restore, user)) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.Authentication.Forbidden', {
@@ -285,6 +327,7 @@ export class UserService
                         }),
                     );
                 }
+
                 return this.restoreProcess(id).pipe(
                     map((data) => {
                         return {
@@ -300,8 +343,10 @@ export class UserService
             }),
         );
     }
+
     updateProcess(id: string, updateDto: UpdateUserDto): Observable<User> {
         const updateData: DeepPartial<User> = { ...updateDto };
+
         return from(this.findOneProcess(id)).pipe(
             switchMap((user) => {
                 if (!user) {
@@ -313,6 +358,7 @@ export class UserService
                 }
 
                 const tasks: Observable<any>[] = [];
+
                 if (updateDto.email && updateDto.email !== user.email) {
                     tasks.push(
                         this.checkExistByEmail(updateDto.email).pipe(
@@ -336,10 +382,12 @@ export class UserService
                         ),
                     );
                 } else tasks.push(of(null));
+
                 return forkJoin(tasks).pipe(switchMap(() => updateEntity<User>(this.userRepository, user, updateData)));
             }),
         );
     }
+
     update(currentUser: UserAuth, id: string, updateDto: UpdateUserDto): Observable<ApiResponse<User>> {
         return this.findOneProcess(id).pipe(
             switchMap((user) => {
@@ -350,7 +398,9 @@ export class UserService
                         }),
                     );
                 }
+
                 const ability = this.caslAbilityFactory.createForUser(currentUser);
+
                 if (!ability.can(ActionCasl.Update, user)) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.Authentication.Forbidden', {
@@ -358,6 +408,7 @@ export class UserService
                         }),
                     );
                 }
+
                 return this.updateProcess(id, updateDto).pipe(
                     map((data) => {
                         return {
@@ -397,6 +448,7 @@ export class UserService
                         }),
                     );
                 }
+
                 return BcryptServiceInstance.compare(loginDto.password, user.password).pipe(
                     switchMap((isMatch) => {
                         if (!isMatch) {
@@ -406,7 +458,9 @@ export class UserService
                                 }),
                             );
                         }
+
                         delete user.password;
+
                         return of(user);
                     }),
                 );
