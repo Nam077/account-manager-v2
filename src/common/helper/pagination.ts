@@ -154,6 +154,7 @@ export const findWithPaginationAndSearch = <T>(
                 fields.forEach((field, index) => {
                     const method = index === 0 ? 'where' : 'orWhere';
 
+                    // eslint-disable-next-line security/detect-object-injection
                     qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, {
                         query: lowercaseQuery,
                     });

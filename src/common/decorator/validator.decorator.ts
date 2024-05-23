@@ -1,11 +1,12 @@
 import { Transform } from 'class-transformer';
 import { registerDecorator, ValidateIf, ValidationArguments, ValidationOptions } from 'class-validator';
+import * as _ from 'lodash';
 
 import { toCapitalize, toLowerCase, toUpperCase } from '../helper/index';
 
 export const IsOptionalCustom = (options?: ValidationOptions): PropertyDecorator => {
     return (prototype: object, propertyKey: string | symbol): void => {
-        ValidateIf((object) => object[propertyKey] !== undefined, options)(prototype, propertyKey);
+        ValidateIf((object) => object != null && _.has(object, propertyKey), options)(prototype, propertyKey);
     };
 };
 
@@ -29,7 +30,7 @@ export const IsEarlierThanDate =
             validator: {
                 validate: (value: any, args: ValidationArguments) => {
                     const [relatedPropertyName] = args.constraints;
-                    const relatedValue = (args.object as any)[relatedPropertyName];
+                    const relatedValue = _.get(args.object, relatedPropertyName);
 
                     if (!(value instanceof Date && relatedValue instanceof Date)) {
                         return false; // Ensures both values are Date instances
@@ -54,7 +55,7 @@ export const IsMatch =
             validator: {
                 validate: (value: any, args: ValidationArguments) => {
                     const [relatedPropertyName] = args.constraints;
-                    const relatedValue = (args.object as any)[relatedPropertyName];
+                    const relatedValue = _.get(args.object, relatedPropertyName);
 
                     return value === relatedValue;
                 },

@@ -1,5 +1,6 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { has, unset } from 'lodash';
 import { Observable } from 'rxjs';
 
 import { REMOVE_FIELDS } from '../decorator';
@@ -20,9 +21,7 @@ export class RemoveFieldInterceptor implements NestInterceptor {
         ];
 
         removeFields.forEach((field) => {
-            if (request.body[field]) {
-                delete request.body[field];
-            }
+            if (has(request.body, field)) unset(request.body, field);
         });
 
         return next.handle();

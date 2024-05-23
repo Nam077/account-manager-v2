@@ -1,3 +1,4 @@
+import { has, unset } from 'lodash';
 import { DeepPartial } from 'typeorm';
 
 export const removeKeys = <T extends object>(
@@ -7,9 +8,7 @@ export const removeKeys = <T extends object>(
     const clone: DeepPartial<T> = { ...obj };
 
     keys.forEach((key) => {
-        if (key in clone) {
-            delete clone[key];
-        }
+        if (has(clone, key)) unset(clone, key);
     });
 
     return clone;

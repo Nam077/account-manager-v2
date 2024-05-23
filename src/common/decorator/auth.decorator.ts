@@ -1,4 +1,5 @@
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
+import _ from 'lodash';
 import { firstValueFrom, map, Observable } from 'rxjs';
 
 import { UserAuth } from '../interface';
@@ -22,7 +23,7 @@ export const Role = (role: string) => SetMetadata(ROLE_KEY, role);
 export const GetCurrentUser = createParamDecorator(
     async (data: keyof UserAuth | undefined, context: ExecutionContext): Promise<UserAuth | any> => {
         const user$: Observable<UserAuth> = context.switchToHttp().getRequest().user;
-        const user = await firstValueFrom(user$.pipe(map((user) => (data ? user && user[data] : user))));
+        const user = await firstValueFrom(user$.pipe(map((user) => (data ? user && _.get(user, data) : user))));
 
         return user;
     },
