@@ -29,7 +29,4 @@ export class CreateRentalTypeDto {
     @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.maxSlots.isInt') })
     @Min(1, { message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.maxSlots.min') })
     maxSlots: number;
-
-
-    
 }
