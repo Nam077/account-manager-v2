@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
+import { WorkspaceTypeEnums } from '../../../common';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
 
 export class CreateWorkspaceDto {
@@ -36,16 +37,12 @@ export class CreateWorkspaceDto {
     })
     readonly adminAccountId: string;
 
-    // isShared
     @ApiProperty({
-        description: 'Indicates if the workspace is shared',
-        example: false,
+        description: 'Type of the workspace',
+        example: WorkspaceTypeEnums.BUSINESS,
     })
-    @IsNotEmpty({
-        message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.isShared.isNotEmpty'),
+    @IsEnum(WorkspaceTypeEnums, {
+        message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.type.isEnum'),
     })
-    @IsBoolean({
-        message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.isShared.isBoolean'),
-    })
-    readonly isShared: boolean;
+    readonly type: WorkspaceTypeEnums;
 }

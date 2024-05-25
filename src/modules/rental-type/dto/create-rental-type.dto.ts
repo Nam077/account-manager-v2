@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { ToCapitalize } from '../../../common';
+import { RentalTypeEnums } from '../../../common/enum/rental-type.enum';
 import { I18nTranslations } from '../../../i18n/i18n.generated';
 
 export class CreateRentalTypeDto {
@@ -29,4 +30,13 @@ export class CreateRentalTypeDto {
     @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.maxSlots.isInt') })
     @Min(1, { message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.maxSlots.min') })
     maxSlots: number;
+
+    @ApiProperty({
+        description: 'Type of the rental',
+        example: RentalTypeEnums.PERSONAL,
+    })
+    @IsEnum(RentalTypeEnums, {
+        message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.type.isEnum'),
+    })
+    type: RentalTypeEnums;
 }

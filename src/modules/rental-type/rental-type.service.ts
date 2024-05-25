@@ -44,7 +44,7 @@ export class RentalTypeService
     ) {}
 
     createProcess(createDto: CreateRentalTypeDto): Observable<RentalType> {
-        const { name, maxSlots, description, isWorkspace } = createDto;
+        const { name, maxSlots, description, type } = createDto;
         const slug = slugifyString(name);
 
         return from(this.checkExistBySlug(slug)).pipe(
@@ -64,7 +64,7 @@ export class RentalTypeService
                 rentalType.maxSlots = maxSlots;
                 rentalType.description = description;
                 rentalType.slug = slug;
-                rentalType.isWorkspace = isWorkspace;
+                rentalType.type = type;
                 const rentalTypeCreated = this.rentalTypeRepository.create(rentalType);
 
                 return from(this.rentalTypeRepository.save(rentalTypeCreated));
@@ -308,7 +308,11 @@ export class RentalTypeService
     updateProcess(id: string, updateDto: UpdateRentalTypeDto): Observable<RentalType> {
         const updateData: DeepPartial<RentalType> = { ...updateDto };
 
-        return this.findOneProcess(id).pipe(
+        return this.findOneProcess(id, {
+            relations: {
+                accountPrices: updateDto.type ? true : false,
+            },
+        }).pipe(
             switchMap((rentalType: RentalType) => {
                 if (!rentalType) {
                     throw new NotFoundException(
@@ -319,6 +323,16 @@ export class RentalTypeService
                 }
 
                 const tasks: Observable<any>[] = [];
+
+                if (updateDto.type && rentalType.type !== updateDto.type) {
+                    if (rentalType.accountPrices && rentalType.accountPrices.length > 0) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.RentalType.NotUpdated', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+                }
 
                 if (updateData.name && rentalType.name !== updateData.name) {
                     const slug = slugifyString(updateData.name);

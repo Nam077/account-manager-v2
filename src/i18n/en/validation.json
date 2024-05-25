@@ -186,6 +186,9 @@
         "isWorkspace": {
             "isBoolean": "Workspace indicator must be a boolean value.",
             "isNotEmpty": "Workspace indicator is required."
+        },
+        "type": {
+            "isEnum": "Type of the rental type must be one of the predefined values."
         }
     },
     "createUser": {
@@ -221,6 +224,9 @@
         "isShared": {
             "isBoolean": "Shared indicator must be a boolean value.",
             "isNotEmpty": "Shared indicator is required."
+        },
+        "type": {
+            "isEnum": "Type of the workspace must be one of the predefined values."
         }
     },
     "createWorkspaceEmail": {

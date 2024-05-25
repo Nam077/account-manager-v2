@@ -16,14 +16,16 @@ import {
     ActionCasl,
     addDate,
     ApiResponse,
-    caculatorTotalPrice,
+    calculatorTotalPrice,
     CrudService,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalTypeEnums,
     SearchField,
     UserAuth,
     WorkspaceEmailStatus,
+    WorkspaceTypeEnums,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
@@ -77,7 +79,11 @@ export class RentalRenewService
 
         return this.rentalService
             .findOneProcess(rentalId, {
-                relations: { workspaceEmail: true },
+                relations: {
+                    workspaceEmail: {
+                        workspace: true,
+                    },
+                },
             })
             .pipe(
                 switchMap((rental) => {
@@ -108,10 +114,34 @@ export class RentalRenewService
                         throw new BadRequestException('Account price does not belong to the account of the rental');
                     }
 
-                    if (accountPrice.rentalType.isWorkspace === true && !recordContext.rental.workspaceEmail) {
-                        throw new BadRequestException(
-                            'Rentals with workspace account price must have a workspace email',
-                        );
+                    if (recordContext.rental.workspaceEmail) {
+                        if (recordContext.rental.workspaceEmail.workspace.type === WorkspaceTypeEnums.BUSINESS) {
+                            if (accountPrice.rentalType.type !== RentalTypeEnums.BUSINESS) {
+                                throw new BadRequestException(
+                                    this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
+                                        lang: I18nContext.current().lang,
+                                    }),
+                                );
+                            }
+                        }
+
+                        if (recordContext.rental.workspaceEmail.workspace.type === WorkspaceTypeEnums.SHARED) {
+                            if (accountPrice.rentalType.type !== RentalTypeEnums.SHARED) {
+                                throw new BadRequestException(
+                                    this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
+                                        lang: I18nContext.current().lang,
+                                    }),
+                                );
+                            }
+                        }
+                    } else {
+                        if (accountPrice.rentalType.type !== RentalTypeEnums.PERSONAL) {
+                            throw new BadRequestException(
+                                this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
+                                    lang: I18nContext.current().lang,
+                                }),
+                            );
+                        }
                     }
 
                     const newEndDate = addDate(recordContext.rental.endDate, accountPrice.validityDuration);
@@ -122,7 +152,7 @@ export class RentalRenewService
                     rentalRenew.warrantyFee = warrantyFee;
                     rentalRenew.note = note;
                     rentalRenew.discount = discount;
-                    rentalRenew.totalPrice = caculatorTotalPrice(accountPrice.price, discount);
+                    rentalRenew.totalPrice = calculatorTotalPrice(accountPrice.price, discount);
                     rentalRenew.paymentMethod = paymentMethod;
                     rentalRenew.newEndDate = newEndDate;
                     rentalRenew.lastStartDate = recordContext.rental.endDate;

@@ -31,7 +31,9 @@ import {
     updateEntity,
     UserAuth,
     WorkspaceEmailStatus,
+    WorkspaceTypeEnums,
 } from '../../common';
+import { RentalTypeEnums } from '../../common/enum/rental-type.enum';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
 import { AccountPrice } from '../account-price/entities/account-price.entity';
@@ -132,12 +134,14 @@ export class RentalService
             accountPrice: AccountPrice;
             workspace: Workspace;
             workspaceEmailId: string;
+            isCreateWorkspaceEmail: boolean;
         } = {
             customer: null,
             email: null,
             accountPrice: null,
             workspace: null,
             workspaceEmailId: null,
+            isCreateWorkspaceEmail: false,
         };
 
         return this.customerService.findOneProcess(customerId).pipe(
@@ -191,9 +195,23 @@ export class RentalService
 
                 recordContext.accountPrice = accountPrice;
 
-                if (workspaceId && workspaceId) {
-                    if (!accountPrice.rentalType.isWorkspace) {
-                        throw new BadRequestException('Account price is not for workspace');
+                if (accountPrice.rentalType.type === RentalTypeEnums.PERSONAL) {
+                    if (workspaceId) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Rental.WorkspaceNotAllowed', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+
+                    return of(null);
+                } else {
+                    if (!workspaceId) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Rental.WorkspaceRequired', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
 
                     return this.workspaceService.findOneProcess(workspaceId, {
@@ -201,17 +219,43 @@ export class RentalService
                             adminAccount: true,
                         },
                     });
-                } else {
-                    return of(null);
                 }
             }),
             switchMap((workspace) => {
-                if (workspace) {
+                if (recordContext.isCreateWorkspaceEmail && !workspace) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.Workspace.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+
+                if (recordContext.isCreateWorkspaceEmail) {
+                    if (recordContext.accountPrice.rentalType.type === RentalTypeEnums.BUSINESS) {
+                        if (workspace.type !== WorkspaceTypeEnums.BUSINESS) {
+                            throw new BadRequestException(
+                                this.i18nService.translate('message.Rental.WorkspaceTypeNotMatch', {
+                                    lang: I18nContext.current().lang,
+                                }),
+                            );
+                        }
+                    }
+
+                    if (recordContext.accountPrice.rentalType.type === RentalTypeEnums.SHARED) {
+                        if (workspace.type !== WorkspaceTypeEnums.SHARED) {
+                            throw new BadRequestException(
+                                this.i18nService.translate('message.Rental.WorkspaceTypeNotMatch', {
+                                    lang: I18nContext.current().lang,
+                                }),
+                            );
+                        }
+                    }
+
                     recordContext.workspace = workspace;
 
                     return this.workspaceEmailService.createProcessAndGetId({
-                        emailId: emailId,
-                        workspaceId: workspace.id,
+                        emailId,
+                        workspaceId,
                     });
                 }
 
@@ -221,17 +265,16 @@ export class RentalService
                 recordContext.workspaceEmailId = workspaceEmailId;
                 const rental = new Rental();
 
-                rental.customer = recordContext.customer;
-                rental.email = recordContext.email;
+                rental.customerId = recordContext.customer.id;
                 rental.accountId = recordContext.accountPrice.accountId;
-                rental.workspaceEmailId = workspaceEmailId;
+                rental.emailId = recordContext.email.id;
                 rental.startDate = startDate;
-                rental.endDate = new Date();
-                rental.note = note;
+                rental.endDate = new Date(startDate);
                 rental.status = status;
-                const newRental = this.rentalRepository.create(rental);
+                rental.note = note;
+                rental.workspaceEmailId = workspaceEmailId;
 
-                return from(this.rentalRepository.save(newRental));
+                return from(this.rentalRepository.save(rental));
             }),
             switchMap((rental) => {
                 return this.rentalRenewService
