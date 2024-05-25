@@ -88,6 +88,7 @@ export type I18nTranslations = {
             "NotDeleted": string;
             "NotRestored": string;
             "NotBelongToAccount": string;
+            "NotUpdated": string;
         };
         "RentalType": {
             "NotFound": string;
@@ -99,6 +100,7 @@ export type I18nTranslations = {
             "Deleted": string;
             "NotDeleted": string;
             "NotRestored": string;
+            "NotUpdated": string;
         };
         "AccountPrice": {
             "NotFound": string;

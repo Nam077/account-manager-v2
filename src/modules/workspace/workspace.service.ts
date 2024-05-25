@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { catchError, forkJoin, from, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { catchError, forkJoin, from, map, Observable, of, switchMap, throwError } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
 
 import {
@@ -320,7 +320,14 @@ export class WorkspaceService
     updateProcess(id: string, updateDto: UpdateWorkspaceDto): Observable<Workspace> {
         const updateData: DeepPartial<Workspace> = { ...updateDto };
 
-        return from(this.findOneProcess(id)).pipe(
+        return from(
+            this.findOneProcess(id, {
+                relations: {
+                    workspaceEmails: true,
+                    adminAccount: true,
+                },
+            }),
+        ).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException(
@@ -332,13 +339,31 @@ export class WorkspaceService
 
                 const tasks: Observable<any>[] = [];
 
+                if (updateDto.type && updateDto.type !== workspace.type) {
+                    if (workspace.workspaceEmails && workspace.workspaceEmails.length > 0) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.Workspace.NotUpdated', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+                }
+
                 if (updateDto.adminAccountId && updateDto.adminAccountId !== workspace.adminAccountId) {
                     tasks.push(
                         this.adminAccountService.findOneProcess(updateDto.adminAccountId).pipe(
-                            tap((adminAccount) => {
+                            map((adminAccount) => {
                                 if (!adminAccount) {
                                     throw new NotFoundException(
                                         this.i18nService.translate('message.AdminAccount.NotFound', {
+                                            lang: I18nContext.current().lang,
+                                        }),
+                                    );
+                                }
+
+                                if (adminAccount.account.id !== workspace.adminAccount.account.id) {
+                                    throw new BadRequestException(
+                                        this.i18nService.translate('message.Workspace.NotUpdated', {
                                             lang: I18nContext.current().lang,
                                         }),
                                     );

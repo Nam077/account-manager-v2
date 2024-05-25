@@ -73,7 +73,8 @@
         "Deleted": "Workspace {name} deleted successfully",
         "NotDeleted": "Workspace {name} cannot be deleted because {reason}",
         "NotRestored": "Workspace {name} cannot be restored",
-        "NotBelongToAccount": "Workspace {name} does not belong to account {account}"
+        "NotBelongToAccount": "Workspace {name} does not belong to account {account}",
+        "NotUpdated": "Workspace {name} cannot be updated"
     },
     "RentalType": {
         "NotFound": "Rental type not found",
@@ -84,7 +85,8 @@
         "Restored": "Rental type {name} restored successfully",
         "Deleted": "Rental type {name} deleted successfully",
         "NotDeleted": "Rental type {name} cannot be deleted because {reason}",
-        "NotRestored": "Rental type {name} cannot be restored"
+        "NotRestored": "Rental type {name} cannot be restored",
+        "NotUpdated": "Rental type {name} cannot be updated"
     },
     "AccountPrice": {
         "NotFound": "Account price not found",

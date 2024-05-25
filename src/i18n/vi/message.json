@@ -72,7 +72,8 @@
         "Deleted": "Không gian làm việc {name} đã bị xóa thành công",
         "NotDeleted": "Không thể xóa không gian làm việc {name} vì {reason}",
         "NotRestored": "Không thể khôi phục không gian làm việc {name}",
-        "NotBelongToAccount": "Không gian làm việc {name} không thuộc tài khoản {account}"
+        "NotBelongToAccount": "Không gian làm việc {name} không thuộc tài khoản {account}",
+        "NotUpdated": "Không thể cập nhật không gian làm việc {name}"
     },
     "RentalType": {
         "NotFound": "Không tìm thấy loại cho thuê",
@@ -83,7 +84,8 @@
         "Restored": "Loại cho thuê {name} đã được khôi phục thành công",
         "Deleted": "Loại cho thuê {name} đã bị xóa thành công",
         "NotDeleted": "Không thể xóa loại cho thuê {name} vì {reason}",
-        "NotRestored": "Không thể khôi phục loại cho thuê {name}"
+        "NotRestored": "Không thể khôi phục loại cho thuê {name}",
+        "NotUpdated": "Không thể cập nhật loại cho thuê {name}"
     },
     "AccountPrice": {
         "NotFound": "Không tìm thấy giá tài khoản",

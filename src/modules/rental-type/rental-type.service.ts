@@ -308,7 +308,11 @@ export class RentalTypeService
     updateProcess(id: string, updateDto: UpdateRentalTypeDto): Observable<RentalType> {
         const updateData: DeepPartial<RentalType> = { ...updateDto };
 
-        return this.findOneProcess(id).pipe(
+        return this.findOneProcess(id, {
+            relations: {
+                accountPrices: updateDto.type ? true : false,
+            },
+        }).pipe(
             switchMap((rentalType: RentalType) => {
                 if (!rentalType) {
                     throw new NotFoundException(
@@ -319,6 +323,16 @@ export class RentalTypeService
                 }
 
                 const tasks: Observable<any>[] = [];
+
+                if (updateDto.type && rentalType.type !== updateDto.type) {
+                    if (rentalType.accountPrices && rentalType.accountPrices.length > 0) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.RentalType.NotUpdated', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+                }
 
                 if (updateData.name && rentalType.name !== updateData.name) {
                     const slug = slugifyString(updateData.name);
