@@ -21,6 +21,11 @@ export class EmailController {
         return this.emailService.create(user, createEmailDto);
     }
 
+    @Get('by-customer/:id')
+    findByCustomer(@GetCurrentUser() user: UserAuth, @Param('id') id: string, @Query() findAllDto: FindAllEmailDto) {
+        return this.emailService.findAllByCustomer(user, id, findAllDto);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllEmailDto) {
         return this.emailService.findAll(user, findAllDto);

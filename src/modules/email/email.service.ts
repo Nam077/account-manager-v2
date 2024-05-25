@@ -17,6 +17,7 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
+    CustomCondition,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -544,5 +545,60 @@ export class EmailService
 
     findEmailsProcess(user: UserAuth, id: string, isWithDeleted?: boolean): Observable<Email[]> {
         return from(this.emailRepository.find({ where: { customerId: id }, withDeleted: isWithDeleted }));
+    }
+
+    findAllByCustomerProcess(id: string, findAllDto: FindAllEmailDto): Observable<PaginatedData<Email>> {
+        const relations = ['customer'];
+
+        const searchFields: SearchField[] = [
+            {
+                tableName: 'customer',
+                fields: ['name', 'email'],
+            },
+        ];
+
+        const fields: Array<keyof Email> = ['id', 'email'];
+
+        const additionalConditions: CustomCondition[] = [
+            {
+                field: 'customerId',
+                value: id,
+                operator: 'EQUAL',
+            },
+        ];
+
+        return findWithPaginationAndSearch<Email>(
+            this.emailRepository,
+            findAllDto,
+            fields,
+            false,
+            relations,
+            searchFields,
+            additionalConditions,
+        );
+    }
+
+    findAllByCustomer(user: UserAuth, id: string, findAllDto: FindAllEmailDto) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (!ability.can(ActionCasl.ReadAll, Email)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        return this.findAllByCustomerProcess(id, findAllDto).pipe(
+            map(
+                (data): ApiResponse<PaginatedData<Email>> => ({
+                    status: HttpStatus.OK,
+                    message: this.i18nService.translate('message.Email.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                    data,
+                }),
+            ),
+        );
     }
 }
