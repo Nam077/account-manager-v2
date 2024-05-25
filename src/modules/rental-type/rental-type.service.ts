@@ -44,7 +44,7 @@ export class RentalTypeService
     ) {}
 
     createProcess(createDto: CreateRentalTypeDto): Observable<RentalType> {
-        const { name, maxSlots, description, isWorkspace } = createDto;
+        const { name, maxSlots, description, type } = createDto;
         const slug = slugifyString(name);
 
         return from(this.checkExistBySlug(slug)).pipe(
@@ -64,7 +64,7 @@ export class RentalTypeService
                 rentalType.maxSlots = maxSlots;
                 rentalType.description = description;
                 rentalType.slug = slug;
-                rentalType.isWorkspace = isWorkspace;
+                rentalType.type = type;
                 const rentalTypeCreated = this.rentalTypeRepository.create(rentalType);
 
                 return from(this.rentalTypeRepository.save(rentalTypeCreated));

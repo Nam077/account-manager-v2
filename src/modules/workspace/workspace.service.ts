@@ -53,7 +53,7 @@ export class WorkspaceService
     ) {}
 
     createProcess(createDto: CreateWorkspaceDto): Observable<Workspace> {
-        const { adminAccountId, description, maxSlots } = createDto;
+        const { adminAccountId, description, maxSlots, type } = createDto;
 
         return from(this.checkExistByAdminAccountId(adminAccountId)).pipe(
             switchMap((isExist) => {
@@ -81,7 +81,7 @@ export class WorkspaceService
                 workspace.adminAccountId = adminAccountId;
                 workspace.description = description;
                 workspace.maxSlots = maxSlots;
-                workspace.isShared = createDto.isShared;
+                workspace.type = type;
 
                 return from(this.workspaceRepository.save(workspace));
             }),

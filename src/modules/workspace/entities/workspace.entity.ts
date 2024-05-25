@@ -10,6 +10,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { WorkspaceTypeEnums } from '../../../common/enum/workspace-type.enum';
 import { AdminAccount } from '../../admin-account/entities/admin-account.entity';
 import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
 
@@ -39,13 +40,14 @@ export class Workspace {
     maxSlots: number;
 
     @Column({
-        type: 'boolean',
+        type: 'enum',
+        enum: WorkspaceTypeEnums,
         nullable: false,
-        default: 1,
-        comment: 'Is workspace shared',
-        name: 'is_shared',
+        comment: 'Type of the workspace',
+        name: 'type',
+        default: WorkspaceTypeEnums.BUSINESS,
     })
-    isShared: boolean;
+    type: WorkspaceTypeEnums;
 
     @CreateDateColumn({
         comment: 'Date and time when the workspace was created',

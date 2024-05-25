@@ -118,7 +118,10 @@
         "NotDeleted": "Không thể xóa cho thuê {name} vì {reason}",
         "NotRestored": "Không thể khôi phục cho thuê {name}",
         "CannotUpdateEndDate": "Không thể cập nhật ngày kết thúc cho thuê",
-        "CannotUpdateStartDate": "Không thể cập nhật ngày bắt đầu cho thuê"
+        "CannotUpdateStartDate": "Không thể cập nhật ngày bắt đầu cho thuê",
+        "WorkspaceNotAllowed": "Không thể tạo cho thuê vì không gian làm việc không hợp lệ",
+        "WorkspaceRequired": "Không thể tạo cho thuê vì không gian làm việc không được cung cấp",
+        "WorkspaceTypeNotMatch": "Không thể tạo cho thuê vì loại không gian làm việc không khớp"
     },
     "RefreshToken": {
         "NotFound": "Không tìm thấy token làm mới",
@@ -155,7 +158,8 @@
         "NotDeleted": "Không thể xóa gia hạn cho thuê {name} vì {reason}",
         "NotRestored": "Không thể khôi phục gia hạn cho thuê {name}",
         "InvalidDate": "Ngày gia hạn không hợp lệ, vui lòng chọn ngày sau ngày hết hạn",
-        "CannotUpdateRentalId": "Không thể cập nhật mã cho thuê"
+        "CannotUpdateRentalId": "Không thể cập nhật mã cho thuê",
+        "InvalidRentalTypeAccountPrice": "Loại tài khoản không hợp lệ hoặc giá tài khoản không hợp lệ"
     },
     "Authentication": {
         "Unauthorized": "Không được ủy quyền: Thông tin đăng nhập không hợp lệ hoặc bị thiếu.",

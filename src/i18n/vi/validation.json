@@ -186,6 +186,9 @@
         "isWorkspace": {
             "isBoolean": "Chỉ số không gian làm việc phải là một giá trị boolean.",
             "isNotEmpty": "Chỉ số không gian làm việc là bắt buộc."
+        },
+        "type": {
+            "isEnum": "Loại thuê phải là một trong các giá trị được xác định trước."
         }
     },
     "createUser": {
@@ -221,6 +224,9 @@
         "isShared": {
             "isBoolean": "Chỉ số không gian làm việc chia sẻ phải là một giá trị boolean.",
             "isNotEmpty": "Chỉ số không gian làm việc chia sẻ là bắt buộc."
+        },
+        "type": {
+            "isEnum": "Loại không gian làm việc phải là một trong các giá trị được xác định trước."
         }
     },
     "createWorkspaceEmail": {

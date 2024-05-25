@@ -119,7 +119,10 @@
         "NotDeleted": "Rental {name} cannot be deleted because {reason}",
         "NotRestored": "Rental {name} cannot be restored",
         "CannotUpdateEndDate": "End date cannot be updated",
-        "CannotUpdateStartDate": "Start date cannot be updated"
+        "CannotUpdateStartDate": "Start date cannot be updated",
+        "WorkspaceNotAllowed": "Workspace is not allowed for rental",
+        "WorkspaceRequired": "Workspace is required for rental",
+        "WorkspaceTypeNotMatch": "Workspace type does not match rental type"
     },
     "RefreshToken": {
         "NotFound": "Refresh token not found",
@@ -156,7 +159,8 @@
         "NotDeleted": "Rental renew {name} cannot be deleted because {reason}",
         "NotRestored": "Rental renew {name} cannot be restored",
         "InvalidDate": "New end date must be greater than current end date",
-        "CannotUpdateRentalId": "Rental id cannot be updated"
+        "CannotUpdateRentalId": "Rental id cannot be updated",
+        "InvalidRentalTypeAccountPrice": "Invalid rental type or account price"
     },
     "Authentication": {
         "Unauthorized": "Unauthorized: Invalid or missing authentication credentials.",
