@@ -8,6 +8,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
+import { RentalTypeEnums } from '../../../common/enum/rental-type.enum';
 import { AccountPrice } from '../../account-price/entities/account-price.entity';
 
 @Entity({ name: 'rental_types' })
@@ -34,6 +35,15 @@ export class RentalType {
     slug: string;
 
     @Column({
+        type: 'enum',
+        enum: RentalTypeEnums,
+        nullable: false,
+        comment: 'Type of the rental',
+        default: RentalTypeEnums.PERSONAL,
+    })
+    type: RentalTypeEnums;
+
+    @Column({
         type: 'text',
         nullable: true,
         comment: 'Description of the rental type',
@@ -41,22 +51,13 @@ export class RentalType {
     description: string;
 
     @Column({
-        type: 'tinyint',
+        type: 'int',
         nullable: false,
         default: 1,
         comment: 'Maximum slots allowed in the rental type',
         name: 'max_slots',
     })
     maxSlots: number;
-
-    @Column({
-        type: 'boolean',
-        nullable: false,
-        default: false,
-        comment: 'Indicates if the rental type is a workspace',
-        name: 'is_workspace',
-    })
-    isWorkspace: boolean;
 
     @CreateDateColumn({
         comment: 'Date and time when the rental type was created',
