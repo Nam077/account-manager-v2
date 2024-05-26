@@ -423,16 +423,21 @@ export class WorkspaceService
     }
 
     findAllByAccountProcess(id: string, findAllDto: FindAllWorkspaceDto): Observable<PaginatedData<Workspace>> {
+        const { workspaceType } = findAllDto;
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
         const relations = ['adminAccount', 'adminAccount.account'];
         const searchFields: SearchField[] = [];
-        // find all workspaces by account id with accountId from account table
 
         const additionalConditions: CustomCondition[] = [
             {
                 field: 'adminAccount.accountId',
                 operator: 'EQUAL',
                 value: id,
+            },
+            {
+                field: 'type',
+                operator: 'EQUAL',
+                value: workspaceType,
             },
         ];
 

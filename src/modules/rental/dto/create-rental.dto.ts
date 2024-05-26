@@ -65,17 +65,6 @@ export class CreateRentalDto {
     @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createRental.note.isString') })
     note?: string;
 
-    @ApiProperty({
-        description: 'Payment amount',
-        type: 'number',
-        example: 150.0,
-    })
-    @IsNumber(
-        { maxDecimalPlaces: 2 },
-        { message: i18nValidationMessage<I18nTranslations>('validation.createRental.paymentAmount.isNumber') },
-    )
-    paymentAmount: number;
-
     @ApiProperty({ description: 'Warranty fee', type: 'number', example: 50.0 })
     @IsNumber(
         { maxDecimalPlaces: 2 },

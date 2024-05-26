@@ -124,8 +124,8 @@ export class RentalService
             startDate,
             status,
             workspaceId,
-            paymentMethod,
             warrantyFee,
+            paymentMethod,
         } = createDto;
 
         const recordContext: {
@@ -213,6 +213,8 @@ export class RentalService
                             }),
                         );
                     }
+
+                    recordContext.isCreateWorkspaceEmail = true;
 
                     return this.workspaceService.findOneProcess(workspaceId, {
                         relations: {

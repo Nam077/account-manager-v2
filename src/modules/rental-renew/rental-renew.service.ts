@@ -156,6 +156,7 @@ export class RentalRenewService
                     rentalRenew.paymentMethod = paymentMethod;
                     rentalRenew.newEndDate = newEndDate;
                     rentalRenew.lastStartDate = recordContext.rental.endDate;
+                    rentalRenew.paymentAmount = rentalRenew.totalPrice - (rentalRenew.totalPrice * discount) / 100;
 
                     return of(this.rentalRenewRepository.create(rentalRenew));
                 }),

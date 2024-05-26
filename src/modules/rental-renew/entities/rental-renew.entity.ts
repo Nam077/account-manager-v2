@@ -82,6 +82,17 @@ export class RentalRenew {
     })
     paymentMethod: string;
 
+    // payment amount
+    @Column({
+        type: 'decimal',
+        precision: 10,
+        scale: 2,
+        nullable: false,
+        comment: 'Payment amount',
+        name: 'payment_amount',
+    })
+    paymentAmount: number;
+
     @Column({ type: 'text', nullable: true, comment: 'Note regarding the renewal' })
     note: string;
 

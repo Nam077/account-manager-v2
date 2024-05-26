@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 
-import { FindAllDtoAbstract, IsOptionalCustom } from '../../../common';
+import { FindAllDtoAbstract, IsOptionalCustom, WorkspaceTypeEnums } from '../../../common';
 
 enum SORT_FIELD_WORKSPACE {
     ID = 'id',
@@ -16,4 +16,10 @@ export class FindAllWorkspaceDto extends FindAllDtoAbstract {
     @IsOptionalCustom()
     @IsString({ message: 'SortField must be a string' })
     sortField?: SORT_FIELD_WORKSPACE;
+
+    // workspaceType: WorkspaceTypeEnums;
+    @ApiPropertyOptional({ description: 'Type of the workspace', enum: WorkspaceTypeEnums })
+    @IsOptionalCustom()
+    @IsEnum(WorkspaceTypeEnums, { message: 'Type must be a valid enum value' })
+    workspaceType?: WorkspaceTypeEnums;
 }
