@@ -339,7 +339,14 @@ export class AdminAccountService
     updateProcess(id: string, updateDto: UpdateAdminAccountDto): Observable<AdminAccount> {
         const updateData: DeepPartial<AdminAccount> = { ...updateDto };
 
-        return from(this.findOneProcess(id)).pipe(
+        return from(
+            this.findOneProcess(id, {
+                relations: {
+                    account: true,
+                    workspaces: true,
+                },
+            }),
+        ).pipe(
             switchMap((adminAccount) => {
                 if (!adminAccount) {
                     throw new NotFoundException(
@@ -354,6 +361,10 @@ export class AdminAccountService
                 const tasks: Observable<any>[] = [];
 
                 if (updateDto.accountId && updateDto.accountId !== adminAccount.accountId) {
+                    if (adminAccount.workspaces && adminAccount.workspaces.length > 0) {
+                        throw new BadRequestException();
+                    }
+
                     tasks.push(
                         this.accountService.findOneProcess(updateDto.accountId).pipe(
                             tap((account) => {

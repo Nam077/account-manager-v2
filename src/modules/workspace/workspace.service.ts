@@ -168,7 +168,7 @@ export class WorkspaceService
 
     findAllProcess(findAllDto: FindAllWorkspaceDto, isWithDeleted?: boolean): Observable<PaginatedData<Workspace>> {
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
-        const relations = ['adminAccount', 'adminAccount.account'];
+        const relations = ['adminAccount', 'adminAccount.account', 'workspaceEmails'];
         const searchFields: SearchField[] = [];
 
         return findWithPaginationAndSearch<Workspace>(
@@ -426,12 +426,13 @@ export class WorkspaceService
         const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
         const relations = ['adminAccount', 'adminAccount.account'];
         const searchFields: SearchField[] = [];
+        // find all workspaces by account id with accountId from account table
 
         const additionalConditions: CustomCondition[] = [
             {
-                field: 'adminAccountId',
-                value: id,
+                field: 'adminAccount.accountId',
                 operator: 'EQUAL',
+                value: id,
             },
         ];
 

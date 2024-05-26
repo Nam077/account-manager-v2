@@ -49,6 +49,7 @@ export type I18nTranslations = {
             "Deleted": string;
             "NotDeleted": string;
             "NotRestored": string;
+            "NotUpdated": string;
         };
         "Customer": {
             "NotFound": string;

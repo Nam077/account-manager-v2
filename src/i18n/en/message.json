@@ -33,7 +33,8 @@
         "Restored": "Admin account {name} restored successfully",
         "Deleted": "Admin account {name} deleted successfully",
         "NotDeleted": "Admin account {name} cannot be deleted because {reason}",
-        "NotRestored": "Admin account {name} cannot be restored"
+        "NotRestored": "Admin account {name} cannot be restored",
+        "NotUpdated": "Admin account {name} cannot be updated"
     },
     "Customer": {
         "NotFound": "Customer not found",

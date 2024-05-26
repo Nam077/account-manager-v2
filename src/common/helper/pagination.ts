@@ -5,14 +5,6 @@ import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { FindAllDtoAbstract } from '../dto';
 
-/**
- * Parameters for finding data with pagination and search.
- */
-
-/**
- * Represents the paginated data.
- */
-
 interface FindAllDtoWithSearchFields extends FindAllDtoAbstract {
     sortField?: string;
 }
@@ -30,24 +22,16 @@ export interface SearchField {
     fields: string[];
 }
 
-/**
- * Custom condition for additional where clauses.
- */
 export interface CustomCondition {
     field: string;
     value: any;
-    operator?: 'EQUAL' | 'LIKE' | 'LT' | 'GT'; // Add more operators as needed
+    operator?: 'EQUAL' | 'LIKE' | 'LT' | 'GT';
 }
 
-/**
- * Applies multiple additional `where` conditions to the query builder.
- * @param queryBuilder - The query builder to modify.
- * @param conditions - The conditions for the query.
- */
 const applyAdditionalConditions = <T>(queryBuilder: SelectQueryBuilder<T>, conditions: CustomCondition[]): void => {
     conditions.forEach(({ field, value, operator = 'EQUAL' }, index) => {
         const paramName = `${field}${index}`;
-        const conditionString = `${queryBuilder.alias}.${field}`;
+        const conditionString = field.includes('.') ? field : `${queryBuilder.alias}.${field}`;
 
         switch (operator) {
             case 'LIKE':
@@ -66,23 +50,13 @@ const applyAdditionalConditions = <T>(queryBuilder: SelectQueryBuilder<T>, condi
     });
 };
 
-/**
- * Adds relations to the query builder.
- * @param queryBuilder - The query builder to modify.
- * @param tableName - The name of the table.
- * @param relations - The relations to add.
- */
 const addRelationsToQueryBuilder = <T>(
     queryBuilder: SelectQueryBuilder<T>,
     tableName: string,
     relations?: string[],
 ): void => {
     if (relations) {
-        relations = relations.filter((relation) => {
-            if (relation !== '' && relation !== null) {
-                return relation;
-            }
-        });
+        relations = relations.filter((relation) => relation !== '' && relation !== null);
         relations.forEach((relation) => {
             let entityAlias: string;
             let relationName: string;
@@ -96,7 +70,6 @@ const addRelationsToQueryBuilder = <T>(
 
             queryBuilder.leftJoinAndSelect(`${entityAlias}.${relationName}`, relationName);
         });
-    } else {
     }
 };
 
@@ -110,15 +83,6 @@ const validateRelations = (searchFieldsInRelations: SearchField[], relations?: s
     return true;
 };
 
-/**
- * Finds data with pagination and search.
- * @param repository - The repository to query.
- * @param findAllDto - The parameters for finding data.
- * @param fields - The fields to search in.
- * @param searchFieldsInRelations - The fields to search in relations.
- * @param relations
- * @returns An observable of ApiResponse containing the paginated data.
- */
 export const findWithPaginationAndSearch = <T>(
     repository: Repository<T>,
     findAllDto: FindAllDtoWithSearchFields,
@@ -140,12 +104,6 @@ export const findWithPaginationAndSearch = <T>(
 
     const queryBuilder = repository.createQueryBuilder(nameTable);
 
-    // Áp dụng các điều kiện bổ sung nếu có
-    if (additionalConditions.length > 0) {
-        applyAdditionalConditions(queryBuilder, additionalConditions);
-    }
-
-    // Áp dụng điều kiện tìm kiếm nếu có
     if (query) {
         const lowercaseQuery = `%${query.toLowerCase()}%`;
 
@@ -155,17 +113,13 @@ export const findWithPaginationAndSearch = <T>(
                     const method = index === 0 ? 'where' : 'orWhere';
 
                     // eslint-disable-next-line security/detect-object-injection
-                    qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, {
-                        query: lowercaseQuery,
-                    });
+                    qb[method](`LOWER(${nameTable}.${field as string}) LIKE :query`, { query: lowercaseQuery });
                 });
 
                 if (searchFieldsInRelations) {
                     searchFieldsInRelations.forEach(({ tableName, fields }) => {
                         fields.forEach((field) => {
-                            qb.orWhere(`LOWER(${tableName}.${field}) LIKE :query`, {
-                                query: lowercaseQuery,
-                            });
+                            qb.orWhere(`LOWER(${tableName}.${field}) LIKE :query`, { query: lowercaseQuery });
                         });
                     });
                 }
@@ -174,6 +128,11 @@ export const findWithPaginationAndSearch = <T>(
     }
 
     addRelationsToQueryBuilder(queryBuilder, nameTable, relations);
+
+    if (additionalConditions.length > 0) {
+        applyAdditionalConditions(queryBuilder, additionalConditions);
+    }
+
     const pageNew = Math.max(page, 1);
     let limitNew = limit > 0 ? limit : 10;
 
@@ -192,16 +151,14 @@ export const findWithPaginationAndSearch = <T>(
     }
 
     return from(queryBuilder.getManyAndCount()).pipe(
-        map(([data, total]) => {
-            return {
-                currentPage: pageNew,
-                items: data,
-                perPage: data.length,
-                totalItems: total,
-                totalPages: Math.ceil(total / limitNew),
-                nextPage: pageNew * limitNew < total ? pageNew + 1 : undefined,
-            };
-        }),
+        map(([data, total]) => ({
+            currentPage: pageNew,
+            items: data,
+            perPage: data.length,
+            totalItems: total,
+            totalPages: Math.ceil(total / limitNew),
+            nextPage: pageNew * limitNew < total ? pageNew + 1 : undefined,
+        })),
         catchError((error) => throwError(() => new BadRequestException(error.message))),
     );
 };

@@ -33,7 +33,8 @@
         "Restored": "Tài khoản quản trị viên {name} đã được khôi phục thành công",
         "Deleted": "Tài khoản quản trị viên {name} đã bị xóa thành công",
         "NotDeleted": "Không thể xóa tài khoản quản trị viên {name} vì {reason}",
-        "NotRestored": "Không thể khôi phục tài khoản quản trị viên {name}"
+        "NotRestored": "Không thể khôi phục tài khoản quản trị viên {name}",
+        "NotUpdated": "Không thể cập nhật tài khoản quản trị viên {name}"
     },
     "Customer": {
         "NotFound": "Không tìm thấy khách hàng",
