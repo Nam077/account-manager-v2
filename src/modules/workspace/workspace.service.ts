@@ -15,6 +15,7 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
+    CustomCondition,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -140,7 +141,7 @@ export class WorkspaceService
             id,
             {
                 relations: {
-                    adminAccount: true,
+                    adminAccount: { account: true },
                 },
             },
             isCanReadWithDeleted,
@@ -324,7 +325,9 @@ export class WorkspaceService
             this.findOneProcess(id, {
                 relations: {
                     workspaceEmails: true,
-                    adminAccount: true,
+                    adminAccount: {
+                        account: true,
+                    },
                 },
             }),
         ).pipe(
@@ -351,27 +354,33 @@ export class WorkspaceService
 
                 if (updateDto.adminAccountId && updateDto.adminAccountId !== workspace.adminAccountId) {
                     tasks.push(
-                        this.adminAccountService.findOneProcess(updateDto.adminAccountId).pipe(
-                            map((adminAccount) => {
-                                if (!adminAccount) {
-                                    throw new NotFoundException(
-                                        this.i18nService.translate('message.AdminAccount.NotFound', {
-                                            lang: I18nContext.current().lang,
-                                        }),
-                                    );
-                                }
+                        this.adminAccountService
+                            .findOneProcess(updateDto.adminAccountId, {
+                                relations: {
+                                    account: true,
+                                },
+                            })
+                            .pipe(
+                                map((adminAccount) => {
+                                    if (!adminAccount) {
+                                        throw new NotFoundException(
+                                            this.i18nService.translate('message.AdminAccount.NotFound', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
+                                    }
 
-                                if (adminAccount.account.id !== workspace.adminAccount.account.id) {
-                                    throw new BadRequestException(
-                                        this.i18nService.translate('message.Workspace.NotUpdated', {
-                                            lang: I18nContext.current().lang,
-                                        }),
-                                    );
-                                }
+                                    if (adminAccount.account.id !== workspace.adminAccount.account.id) {
+                                        throw new BadRequestException(
+                                            this.i18nService.translate('message.Workspace.NotUpdated', {
+                                                lang: I18nContext.current().lang,
+                                            }),
+                                        );
+                                    }
 
-                                delete workspace.adminAccount;
-                            }),
-                        ),
+                                    delete workspace.adminAccount;
+                                }),
+                            ),
                     );
                 } else tasks.push(of(null));
 
@@ -411,5 +420,51 @@ export class WorkspaceService
 
     checkExistByAdminAccountId(adminAccountId: string): Observable<boolean> {
         return from(this.workspaceRepository.existsBy({ adminAccountId }));
+    }
+
+    findAllByAccountProcess(id: string, findAllDto: FindAllWorkspaceDto): Observable<PaginatedData<Workspace>> {
+        const fields: Array<keyof Workspace> = ['id', 'description', 'maxSlots', 'adminAccountId'];
+        const relations = ['adminAccount', 'adminAccount.account'];
+        const searchFields: SearchField[] = [];
+
+        const additionalConditions: CustomCondition[] = [
+            {
+                field: 'adminAccountId',
+                value: id,
+                operator: 'EQUAL',
+            },
+        ];
+
+        return findWithPaginationAndSearch<Workspace>(
+            this.workspaceRepository,
+            findAllDto,
+            fields,
+            false,
+            relations,
+            searchFields,
+            additionalConditions,
+        );
+    }
+
+    findAllByAccount(user: UserAuth, id: string, findAllDto: FindAllWorkspaceDto) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (ability.cannot(ActionCasl.ReadAll, Workspace)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        return this.findAllByAccountProcess(id, findAllDto).pipe(
+            map((data) => ({
+                data,
+                status: HttpStatus.OK,
+                message: this.i18nService.translate('message.Workspace.Found', {
+                    lang: I18nContext.current().lang,
+                }),
+            })),
+        );
     }
 }

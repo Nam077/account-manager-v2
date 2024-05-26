@@ -40,6 +40,7 @@ export class CreateWorkspaceDto {
     @ApiProperty({
         description: 'Type of the workspace',
         example: WorkspaceTypeEnums.BUSINESS,
+        enum: WorkspaceTypeEnums,
     })
     @IsEnum(WorkspaceTypeEnums, {
         message: i18nValidationMessage<I18nTranslations>('validation.createWorkspace.type.isEnum'),

@@ -21,6 +21,15 @@ export class AdminAccountController {
         return this.adminAccountService.create(user, createAdminAccountDto);
     }
 
+    @Get('by-account/:id')
+    findAllByAccount(
+        @GetCurrentUser() user: UserAuth,
+        @Param('id') id: string,
+        @Query() findAllDto: FindAllAdminAccountDto,
+    ) {
+        return this.adminAccountService.findAllByAccount(user, id, findAllDto);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllAdminAccountDto) {
         return this.adminAccountService.findAll(user, findAllDto);

@@ -21,6 +21,15 @@ export class WorkspaceController {
         return this.workspaceService.create(user, createWorkspaceDto);
     }
 
+    @Get('by-account/:id')
+    findAllByAccount(
+        @GetCurrentUser() user: UserAuth,
+        @Param('id') id: string,
+        @Query() findAllDto: FindAllWorkspaceDto,
+    ) {
+        return this.workspaceService.findAllByAccount(user, id, findAllDto);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllWorkspaceDto) {
         return this.workspaceService.findAll(user, findAllDto);

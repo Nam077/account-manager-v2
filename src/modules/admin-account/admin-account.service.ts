@@ -15,6 +15,7 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
+    CustomCondition,
     findWithPaginationAndSearch,
     PaginatedData,
     SearchField,
@@ -437,6 +438,58 @@ export class AdminAccountService
                 email,
                 accountId,
             }),
+        );
+    }
+
+    findAllByAccountProcess(id: string, findAllDto: FindAllAdminAccountDto): Observable<PaginatedData<AdminAccount>> {
+        const fields: Array<keyof AdminAccount> = ['id', 'email', 'value'];
+        const relations = ['account'];
+
+        const searchFields: SearchField[] = [
+            {
+                tableName: 'account',
+                fields: ['name', 'description'],
+            },
+        ];
+
+        const additionalConditions: CustomCondition[] = [
+            {
+                field: 'accountId',
+                value: id,
+                operator: 'EQUAL',
+            },
+        ];
+
+        return findWithPaginationAndSearch<AdminAccount>(
+            this.adminAccountRepository,
+            findAllDto,
+            fields,
+            false,
+            relations,
+            searchFields,
+            additionalConditions,
+        );
+    }
+
+    findAllByAccount(user: UserAuth, id: string, findAllDto: FindAllAdminAccountDto) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (!ability.can(ActionCasl.ReadAll, AdminAccount)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        return this.findAllByAccountProcess(id, findAllDto).pipe(
+            map((data) => ({
+                status: HttpStatus.OK,
+                data,
+                message: this.i18nService.translate('message.AdminAccount.Found', {
+                    lang: I18nContext.current().lang,
+                }),
+            })),
         );
     }
 }
