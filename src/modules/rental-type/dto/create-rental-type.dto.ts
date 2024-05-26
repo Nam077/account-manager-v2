@@ -34,6 +34,7 @@ export class CreateRentalTypeDto {
     @ApiProperty({
         description: 'Type of the rental',
         example: RentalTypeEnums.PERSONAL,
+        enum: RentalTypeEnums,
     })
     @IsEnum(RentalTypeEnums, {
         message: i18nValidationMessage<I18nTranslations>('validation.createRentalType.type.isEnum'),

@@ -140,7 +140,7 @@ export class WorkspaceService
             id,
             {
                 relations: {
-                    adminAccount: true,
+                    adminAccount: { account: true },
                 },
             },
             isCanReadWithDeleted,
