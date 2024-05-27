@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
 import mysqldump from 'mysqldump';
 import * as path from 'path';
@@ -44,8 +44,7 @@ export class DatabaseDumpService implements OnModuleInit {
         }
     }
 
-    // run at 23:06
-    @Cron('27 23 * * *')
+    @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleCron() {
         console.log('Executing scheduled database dump');
         await this.dumpDatabase();
