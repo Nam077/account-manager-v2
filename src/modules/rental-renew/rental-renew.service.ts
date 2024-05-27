@@ -566,7 +566,7 @@ export class RentalRenewService
             this.rentalRenewRepository,
             findAllDto,
             fields,
-            false,
+            true,
             relations,
             searchFields,
             additionalConditions,
