@@ -21,6 +21,15 @@ export class RentalRenewController {
         return this.rentalRenewService.create(user, createRentalRenewDto);
     }
 
+    @Get('by-rental/:id')
+    findAllByRental(
+        @GetCurrentUser() user: UserAuth,
+        @Param('id') id: string,
+        @Query() findAllDto: FindAllRentalRenewDto,
+    ) {
+        return this.rentalRenewService.findAllByRental(user, id, findAllDto);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllRentalRenewDto) {
         return this.rentalRenewService.findAll(user, findAllDto);

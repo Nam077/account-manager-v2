@@ -18,6 +18,7 @@ import {
     ApiResponse,
     calculatorTotalPrice,
     CrudService,
+    CustomCondition,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -528,6 +529,55 @@ export class RentalRenewService
                         lang: I18nContext.current().lang,
                     }),
                     data: rentalRenew,
+                    status: HttpStatus.OK,
+                };
+            }),
+        );
+    }
+
+    findAllByRentalProcess(id: string, findAllDto: FindAllRentalRenewDto): Observable<PaginatedData<RentalRenew>> {
+        const fields: Array<keyof RentalRenew> = ['id', 'rentalId'];
+        const relations = ['rental'];
+
+        const searchFields: SearchField[] = [];
+
+        const additionalConditions: CustomCondition[] = [
+            {
+                field: 'rentalId',
+                value: id,
+                operator: 'EQUAL',
+            },
+        ];
+
+        return findWithPaginationAndSearch<RentalRenew>(
+            this.rentalRenewRepository,
+            findAllDto,
+            fields,
+            false,
+            relations,
+            searchFields,
+            additionalConditions,
+        );
+    }
+
+    findAllByRental(user: UserAuth, id: string, findAllDto: FindAllRentalRenewDto) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (ability.cannot(ActionCasl.ReadAll, RentalRenew)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        return this.findAllByRentalProcess(id, findAllDto).pipe(
+            map((rentalRenews) => {
+                return {
+                    message: this.i18nService.translate('message.RentalRenew.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                    data: rentalRenews,
                     status: HttpStatus.OK,
                 };
             }),
