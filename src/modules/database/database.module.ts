@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { UserModule } from '../user/user.module';
+import { DatabaseDumpService } from './service/dump.service';
 import { MainConfigServiceService } from './service/main-config-service.service';
 
 @Module({
@@ -16,6 +17,6 @@ import { MainConfigServiceService } from './service/main-config-service.service'
         }),
         UserModule,
     ],
-    providers: [MainConfigServiceService],
+    providers: [MainConfigServiceService, DatabaseDumpService],
 })
 export class DatabaseModule {}

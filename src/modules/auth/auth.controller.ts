@@ -26,6 +26,8 @@ export class AuthController {
     @Get('refresh')
     @UseGuards(RefreshGuard)
     refresh(@GetCurrentUser() user: UserAuth) {
+        console.log('refresh');
+
         return this.authService.refresh(user);
     }
 

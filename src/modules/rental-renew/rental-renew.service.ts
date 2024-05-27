@@ -18,6 +18,7 @@ import {
     ApiResponse,
     calculatorTotalPrice,
     checkDateBefore,
+    checkDateEqual,
     CrudService,
     CustomCondition,
     FindOneOptionsCustom,
@@ -342,10 +343,13 @@ export class RentalRenewService
     }
 
     removeProcess(id: string, hardRemove?: boolean): Observable<RentalRenew> {
-        return this.findOneProcess(id, {
-            withDeleted: hardRemove,
-            relations: { rental: { rentalRenews: true } },
-        }).pipe(
+        return this.findOneProcess(
+            id,
+            {
+                relations: { rental: true },
+            },
+            true,
+        ).pipe(
             map((rentalRenew) => {
                 if (!rentalRenew) {
                     throw new ForbiddenException(
@@ -375,23 +379,23 @@ export class RentalRenewService
                         );
                     }
 
-                    if (rentalRenew.rental) {
-                        return this.findLastByIdRentalOrderByEndDate(rentalRenew.rental.id).pipe(
-                            switchMap((rentalRenewCheck) => {
-                                if (rentalRenew.newEndDate === rentalRenewCheck.rental.endDate) {
-                                    return this.rentalService
-                                        .updateProcess(rentalRenew.rental.id, {
-                                            endDate: rentalRenew.lastStartDate,
-                                        })
-                                        .pipe(map(() => rentalRenew));
-                                }
-
-                                return of(rentalRenew);
-                            }),
-                        );
+                    if (checkDateEqual(rentalRenew.newEndDate, rentalRenew.rental.endDate)) {
+                        return this.rentalService
+                            .updateProcess(rentalRenew.rental.id, {
+                                endDate: rentalRenew.lastStartDate,
+                            })
+                            .pipe(map(() => rentalRenew));
                     }
 
                     return of(rentalRenew);
+                }
+
+                if (checkDateBefore(rentalRenew.newEndDate, rentalRenew.rental.endDate)) {
+                    throw new ForbiddenException(
+                        this.i18nService.translate('message.RentalRenew.NotDeleted', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
                 }
 
                 return of(rentalRenew);
@@ -435,9 +439,7 @@ export class RentalRenewService
     }
 
     restoreProcess(id: string): Observable<RentalRenew> {
-        return this.findOneProcess(id, {
-            withDeleted: true,
-        }).pipe(
+        return this.findOneProcess(id, {}, true).pipe(
             map((rentalRenew) => {
                 if (!rentalRenew) {
                     throw new ForbiddenException(
