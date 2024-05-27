@@ -30,7 +30,6 @@ import {
     SearchField,
     updateEntity,
     UserAuth,
-    WorkspaceEmailStatus,
     WorkspaceTypeEnums,
 } from '../../common';
 import { RentalTypeEnums } from '../../common/enum/rental-type.enum';
@@ -271,7 +270,7 @@ export class RentalService
                 rental.accountId = recordContext.accountPrice.accountId;
                 rental.emailId = recordContext.email.id;
                 rental.startDate = startDate;
-                rental.endDate = new Date(startDate);
+                rental.endDate = new Date(1000, 1, 1);
                 rental.status = status;
                 rental.note = note;
                 rental.workspaceEmailId = workspaceEmailId;
@@ -291,6 +290,8 @@ export class RentalService
                         startDate: startDate,
                     })
                     .pipe(map(() => rental));
+
+                return of(rental);
             }),
         );
     }
@@ -350,6 +351,7 @@ export class RentalService
                     customer: true,
                     email: true,
                     rentalType: true,
+                    workspaceEmail: { workspace: true },
                 },
             },
             isCanReadWithDeleted,
@@ -620,13 +622,27 @@ export class RentalService
     }
 
     updateEmailWorkspaceId(rental: Rental, idEmail: string, workSpaceId?: string): Observable<string> {
+        const workspaceEmailIdCheck = rental.workspaceEmailId || workSpaceId;
+
         if (rental.workspaceEmailId) {
-            return this.removeWorkSpaceEmailAndCreateNew(rental, {
-                emailId: idEmail,
-                workspaceId: workSpaceId || rental.workspaceEmail.workspaceId,
-            }).pipe(
-                map((workspaceEmailId) => {
-                    return workspaceEmailId;
+            return this.workspaceEmailService.checkExistByWorkspaceIdAndEmailId(workspaceEmailIdCheck, idEmail).pipe(
+                switchMap((isExist) => {
+                    if (!isExist) {
+                        return this.removeWorkSpaceEmailAndCreateNew(rental, {
+                            emailId: idEmail,
+                            workspaceId: workSpaceId || rental.workspaceEmail.workspaceId,
+                        }).pipe(
+                            map((workspaceEmailId) => {
+                                return workspaceEmailId;
+                            }),
+                        );
+                    } else {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.WorkspaceEmail.Conflict', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
                 }),
             );
         }
@@ -642,6 +658,7 @@ export class RentalService
             relations: {
                 account: true,
                 workspaceEmail: true,
+                rentalType: true,
             },
         }).pipe(
             switchMap((rental) => {
@@ -668,7 +685,7 @@ export class RentalService
                                     );
                                 }
 
-                                checkForForkJoin.email = email;
+                                checkForForkJoin.email = true;
                             }),
                         ),
                     );
@@ -676,7 +693,12 @@ export class RentalService
                     tasks.push(of(null));
                 }
 
-                if (workspaceId && workspaceId !== rental.workspaceEmail?.workspaceId && rental.workspaceEmailId) {
+                if (
+                    workspaceId &&
+                    workspaceId !== rental.workspaceEmail?.workspaceId &&
+                    rental.workspaceEmailId &&
+                    rental.rentalType.type !== RentalTypeEnums.PERSONAL
+                ) {
                     tasks.push(
                         this.workspaceService
                             .findOneProcess(workspaceId, {
@@ -694,6 +716,8 @@ export class RentalService
                                         );
                                     }
 
+                                    checkForForkJoin.workspace = true;
+
                                     this.checkAccount(rental.accountId, workspace.adminAccount.accountId);
                                 }),
                             ),
@@ -710,14 +734,18 @@ export class RentalService
                                     delete rental.workspaceEmail;
                                     delete rental.email;
                                     updateData.workspaceEmailId = workspaceEmailId;
+                                    updateData.emailId = emailId;
                                 }),
                             );
                         } else if (checkForForkJoin.email) {
+                            console.log('emailId', emailId);
+
                             return this.updateEmailWorkspaceId(rental, emailId).pipe(
                                 map((workspaceEmailId) => {
                                     delete rental.email;
                                     delete rental.workspaceEmail;
                                     updateData.workspaceEmailId = workspaceEmailId;
+                                    updateData.emailId = emailId;
                                 }),
                             );
                         } else if (checkForForkJoin.workspace) {
@@ -734,22 +762,10 @@ export class RentalService
                     switchMap(() => {
                         return updateEntity<Rental>(this.rentalRepository, rental, updateData).pipe(
                             switchMap((updatedRental) => {
-                                if (updateData.status) {
-                                    if (rental.workspaceEmailId) {
-                                        let status: WorkspaceEmailStatus;
-
-                                        if (updateData.status === RentalStatus.ACTIVE) {
-                                            status = WorkspaceEmailStatus.ACTIVE;
-                                        } else if (updateData.status === RentalStatus.INACTIVE) {
-                                            status = WorkspaceEmailStatus.INACTIVE;
-                                        } else {
-                                            status = WorkspaceEmailStatus.EXPIRED;
-                                        }
-
-                                        return this.workspaceEmailService
-                                            .updateStatusProcess(rental.workspaceEmailId, status)
-                                            .pipe(map(() => updatedRental));
-                                    }
+                                if (updateData.status && rental.workspaceEmailId) {
+                                    return this.workspaceEmailService
+                                        .updateStatusProcess(rental.workspaceEmailId, updateData.status)
+                                        .pipe(map(() => updatedRental));
                                 }
 
                                 return of(updatedRental);
@@ -788,7 +804,7 @@ export class RentalService
 
     removeWorkspaceEmail(rental: Rental): Observable<boolean> {
         if (rental.workspaceEmailId) {
-            return this.workspaceEmailService.removeProcess(rental.workspaceEmailId, true).pipe(
+            return this.workspaceEmailService.removeHardProcess(rental.workspaceEmailId).pipe(
                 map(() => {
                     return true;
                 }),
@@ -825,7 +841,7 @@ export class RentalService
             rental.status = RentalStatus.EXPIRED;
 
             if (rental.workspaceEmail) {
-                rental.workspaceEmail.status = WorkspaceEmailStatus.EXPIRED;
+                rental.workspaceEmail.status = RentalStatus.EXPIRED;
             }
         }
 

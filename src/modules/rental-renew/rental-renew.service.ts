@@ -24,9 +24,9 @@ import {
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalStatus,
     SearchField,
     UserAuth,
-    WorkspaceEmailStatus,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
@@ -163,11 +163,11 @@ export class RentalRenewService
                             switchMap(() => {
                                 if (
                                     recordContext.rental.workspaceEmail &&
-                                    recordContext.rental.workspaceEmail.status !== WorkspaceEmailStatus.ACTIVE
+                                    recordContext.rental.workspaceEmail.status !== RentalStatus.ACTIVE
                                 ) {
                                     return this.workspaceEmailService
                                         .updateProcess(recordContext.rental.workspaceEmail.id, {
-                                            status: WorkspaceEmailStatus.ACTIVE,
+                                            status: RentalStatus.ACTIVE,
                                         })
                                         .pipe(map(() => rentalRenew));
                                 } else {

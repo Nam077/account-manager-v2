@@ -18,10 +18,10 @@ import {
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalStatus,
     SearchField,
     updateEntity,
     UserAuth,
-    WorkspaceEmailStatus,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { CaslAbilityFactory } from '../casl/casl-ability-factory';
@@ -57,9 +57,7 @@ export class WorkspaceEmailService
     createProcess(createDto: CreateWorkspaceEmailDto): Observable<WorkspaceEmail> {
         const { emailId, workspaceId } = createDto;
 
-        return from(
-            this.workspaceService.findOneAndGetWorkspaceEmailHaveStatus(workspaceId, WorkspaceEmailStatus.ACTIVE),
-        ).pipe(
+        return from(this.workspaceService.findOneAndGetWorkspaceEmailHaveStatus(workspaceId, RentalStatus.ACTIVE)).pipe(
             switchMap((workspace) => {
                 if (!workspace) {
                     throw new NotFoundException(
@@ -275,6 +273,22 @@ export class WorkspaceEmailService
         );
     }
 
+    removeHardProcess(id: string): Observable<WorkspaceEmail> {
+        return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
+            switchMap((workspaceEmail) => {
+                if (!workspaceEmail) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+
+                return from(this.workspaceEmailRepository.remove(workspaceEmail));
+            }),
+        );
+    }
+
     remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<WorkspaceEmail>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
 
@@ -387,7 +401,7 @@ export class WorkspaceEmailService
                 if (updateDto.workspaceId && updateDto.workspaceId !== workspaceEmail.workspaceId) {
                     tasks.push(
                         this.workspaceService
-                            .findOneAndGetWorkspaceEmailHaveStatus(updateDto.workspaceId, WorkspaceEmailStatus.ACTIVE)
+                            .findOneAndGetWorkspaceEmailHaveStatus(updateDto.workspaceId, RentalStatus.ACTIVE)
                             .pipe(
                                 tap((workspace) => {
                                     if (!workspace) {
@@ -434,12 +448,12 @@ export class WorkspaceEmailService
                     );
                 } else tasks.push(of(null));
 
-                if (updateDto.status !== WorkspaceEmailStatus.INACTIVE && updateDto.status !== workspaceEmail.status) {
+                if (updateDto.status !== RentalStatus.INACTIVE && updateDto.status !== workspaceEmail.status) {
                     tasks.push(
                         this.workspaceService
                             .findOneAndGetWorkspaceEmailHaveStatus(
                                 updateDto.workspaceId || workspaceEmail.workspaceId,
-                                WorkspaceEmailStatus.ACTIVE,
+                                RentalStatus.ACTIVE,
                             )
                             .pipe(
                                 tap((workspace) => {
@@ -475,7 +489,7 @@ export class WorkspaceEmailService
         );
     }
 
-    updateStatusProcess(id: string, status: WorkspaceEmailStatus): Observable<WorkspaceEmail> {
+    updateStatusProcess(id: string, status: RentalStatus): Observable<WorkspaceEmail> {
         return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {

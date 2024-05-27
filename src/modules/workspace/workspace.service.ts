@@ -19,10 +19,10 @@ import {
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
+    RentalStatus,
     SearchField,
     updateEntity,
     UserAuth,
-    WorkspaceEmailStatus,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AdminAccountService } from '../admin-account/admin-account.service';
@@ -112,7 +112,7 @@ export class WorkspaceService
         return from(this.workspaceRepository.findOne({ where: { id }, ...options, withDeleted: isWithDeleted }));
     }
 
-    findOneAndGetWorkspaceEmailHaveStatus(id: string, status: WorkspaceEmailStatus): Observable<Workspace> {
+    findOneAndGetWorkspaceEmailHaveStatus(id: string, status: RentalStatus): Observable<Workspace> {
         return from(
             this.workspaceRepository
                 .createQueryBuilder('workspace')

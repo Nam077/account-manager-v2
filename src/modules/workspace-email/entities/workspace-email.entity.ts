@@ -10,7 +10,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
-import { WorkspaceEmailStatus } from '../../../common/enum/workspace-email-status.enum';
+import { RentalStatus } from '../../../common';
 import { Email } from '../../email/entities/email.entity';
 import { Rental } from '../../rental/entities/rental.entity';
 import { Workspace } from '../../workspace/entities/workspace.entity';
@@ -40,11 +40,11 @@ export class WorkspaceEmail {
 
     @Column({
         type: 'enum',
-        enum: WorkspaceEmailStatus,
-        default: WorkspaceEmailStatus.ACTIVE,
+        enum: RentalStatus,
+        default: RentalStatus.ACTIVE,
         comment: 'Status of the workspace email',
     })
-    status: WorkspaceEmailStatus;
+    status: RentalStatus;
 
     @CreateDateColumn({
         comment: 'Date and time when the workspace email was created',
