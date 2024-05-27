@@ -349,6 +349,7 @@ export class RentalService
                     account: true,
                     customer: true,
                     email: true,
+                    rentalType: true,
                 },
             },
             isCanReadWithDeleted,
@@ -479,14 +480,30 @@ export class RentalService
                         );
                     }
 
-                    if (rental.workspaceEmailId) {
-                        this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental);
-                    }
-
-                    return from(this.rentalRepository.remove(rental)).pipe(map(() => rental));
+                    return this.rentalRenewService.hardRemoveByRentalId(rental.id).pipe(
+                        switchMap(() => {
+                            return this.setWorkspaceEmailToNullAndRemoveWorkspaceEmail(rental).pipe(
+                                switchMap(() => {
+                                    return from(this.rentalRepository.remove(rental)).pipe(map(() => rental));
+                                }),
+                            );
+                        }),
+                    );
                 }
 
-                return from(this.rentalRepository.softRemove(rental)).pipe(map(() => rental));
+                return this.rentalRenewService.softRemoveByRentalId(rental.id).pipe(
+                    switchMap(() => {
+                        if (rental.workspaceEmailId) {
+                            return this.workspaceEmailService.removeProcess(rental.workspaceEmailId).pipe(
+                                switchMap(() => {
+                                    return from(this.rentalRepository.softRemove(rental)).pipe(map(() => rental));
+                                }),
+                            );
+                        }
+
+                        return from(this.rentalRepository.softRemove(rental)).pipe(map(() => rental));
+                    }),
+                );
             }),
         );
     }
@@ -520,7 +537,7 @@ export class RentalService
     }
 
     restoreProcess(id: string): Observable<Rental> {
-        return from(this.rentalRepository.findOne({ where: { id }, withDeleted: true })).pipe(
+        return this.findOneProcess(id, {}, true).pipe(
             map((rental) => {
                 if (!rental) {
                     throw new NotFoundException(
@@ -542,23 +559,22 @@ export class RentalService
                 }
 
                 if (rental.workspaceEmailId) {
-                    return from(
-                        this.workspaceEmailService.updateStatusProcess(
-                            rental.workspaceEmailId,
-                            WorkspaceEmailStatus.ACTIVE,
-                        ),
-                    ).pipe(map(() => rental));
+                    return this.workspaceEmailService.restoreProcess(rental.workspaceEmailId).pipe(
+                        switchMap(() => {
+                            return of(rental);
+                        }),
+                    );
                 }
 
                 return of(rental);
             }),
-            switchMap((rental) =>
-                from(
-                    this.rentalRepository.restore({
-                        id,
+            switchMap((rental) => {
+                return this.rentalRenewService.restoreByRentalId(rental.id).pipe(
+                    switchMap(() => {
+                        return from(this.rentalRepository.restore(rental.id)).pipe(map(() => rental));
                     }),
-                ).pipe(map(() => rental)),
-            ),
+                );
+            }),
         );
     }
 
@@ -772,7 +788,7 @@ export class RentalService
 
     removeWorkspaceEmail(rental: Rental): Observable<boolean> {
         if (rental.workspaceEmailId) {
-            return this.workspaceEmailService.removeProcess(rental.workspaceEmailId).pipe(
+            return this.workspaceEmailService.removeProcess(rental.workspaceEmailId, true).pipe(
                 map(() => {
                     return true;
                 }),

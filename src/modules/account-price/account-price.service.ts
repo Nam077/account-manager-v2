@@ -253,6 +253,7 @@ export class AccountPriceService
     findByAccountProcess(findAllDto: FindAllAccountPriceDto, id: string): Observable<PaginatedData<AccountPrice>> {
         const fields: Array<keyof AccountPrice> = ['id', 'accountId', 'rentalTypeId', 'price'];
         const relations: string[] = ['account', 'rentalType'];
+        const { rentalType } = findAllDto;
 
         const searchFields: SearchField[] = [
             {
@@ -272,6 +273,14 @@ export class AccountPriceService
                 operator: 'EQUAL',
             },
         ];
+
+        if (rentalType) {
+            additionalConditions.push({
+                field: 'rentalType.type',
+                value: rentalType,
+                operator: 'EQUAL',
+            });
+        }
 
         return findWithPaginationAndSearch<AccountPrice>(
             this.accountPriceRepository,

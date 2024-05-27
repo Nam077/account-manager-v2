@@ -59,3 +59,13 @@ export const addDate = (date: Date, days: number): Date => {
             return addDays(date, days);
     }
 };
+
+/**
+ * Checks if a date is before another date.
+ * @param date - The first date to compare.
+ * @param date2 - The second date to compare.
+ * @returns A boolean indicating whether the first date is before the second date.
+ */
+export const checkDateBefore = (date: Date, date2: Date): boolean => {
+    return moment(date).isBefore(date2);
+};

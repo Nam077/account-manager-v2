@@ -48,16 +48,6 @@ export class RentalRenew {
         precision: 10,
         scale: 2,
         nullable: false,
-        comment: 'Total price of the rental',
-        name: 'total_price',
-    })
-    totalPrice: number;
-
-    @Column({
-        type: 'decimal',
-        precision: 10,
-        scale: 2,
-        nullable: false,
         comment: 'Warranty fee',
         name: 'warranty_fee',
     })

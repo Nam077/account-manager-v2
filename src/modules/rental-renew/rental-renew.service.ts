@@ -17,16 +17,15 @@ import {
     addDate,
     ApiResponse,
     calculatorTotalPrice,
+    checkDateBefore,
     CrudService,
     CustomCondition,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
-    RentalTypeEnums,
     SearchField,
     UserAuth,
     WorkspaceEmailStatus,
-    WorkspaceTypeEnums,
 } from '../../common';
 import { I18nTranslations } from '../../i18n/i18n.generated';
 import { AccountPriceService } from '../account-price/account-price.service';
@@ -68,7 +67,7 @@ export class RentalRenewService
     }
 
     createProcess(createDto: CreateRentalRenewDto): Observable<RentalRenew> {
-        const { rentalId, warrantyFee, note, discount, paymentMethod, accountPriceId } = createDto;
+        const { rentalId, warrantyFee, note, discount, paymentMethod, accountPriceId, startDate } = createDto;
 
         const recordContext: {
             rental: Rental;
@@ -81,9 +80,7 @@ export class RentalRenewService
         return this.rentalService
             .findOneProcess(rentalId, {
                 relations: {
-                    workspaceEmail: {
-                        workspace: true,
-                    },
+                    rentalType: true,
                 },
             })
             .pipe(
@@ -91,6 +88,14 @@ export class RentalRenewService
                     if (!rental) {
                         throw new NotFoundException(
                             this.i18nService.translate('message.Rental.NotFound', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
+                    }
+
+                    if (!this.checkDate(rental.endDate, startDate)) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.RentalRenew.InvalidDate', {
                                 lang: I18nContext.current().lang,
                             }),
                         );
@@ -111,41 +116,24 @@ export class RentalRenewService
                         );
                     }
 
-                    if (accountPrice.accountId !== recordContext.rental.accountId) {
-                        throw new BadRequestException('Account price does not belong to the account of the rental');
+                    if (recordContext.rental.rentalType.type !== accountPrice.rentalType.type) {
+                        throw new BadRequestException(
+                            this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
+                                lang: I18nContext.current().lang,
+                            }),
+                        );
                     }
 
-                    if (recordContext.rental.workspaceEmail) {
-                        if (recordContext.rental.workspaceEmail.workspace.type === WorkspaceTypeEnums.BUSINESS) {
-                            if (accountPrice.rentalType.type !== RentalTypeEnums.BUSINESS) {
-                                throw new BadRequestException(
-                                    this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
-                                        lang: I18nContext.current().lang,
-                                    }),
-                                );
-                            }
-                        }
+                    let newEndDate: Date = recordContext.rental.endDate;
+                    let startDateNew: Date = startDate;
 
-                        if (recordContext.rental.workspaceEmail.workspace.type === WorkspaceTypeEnums.SHARED) {
-                            if (accountPrice.rentalType.type !== RentalTypeEnums.SHARED) {
-                                throw new BadRequestException(
-                                    this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
-                                        lang: I18nContext.current().lang,
-                                    }),
-                                );
-                            }
-                        }
-                    } else {
-                        if (accountPrice.rentalType.type !== RentalTypeEnums.PERSONAL) {
-                            throw new BadRequestException(
-                                this.i18nService.translate('message.RentalRenew.InvalidRentalTypeAccountPrice', {
-                                    lang: I18nContext.current().lang,
-                                }),
-                            );
-                        }
+                    if (!checkDateBefore(startDate, newEndDate)) {
+                        newEndDate = startDate;
+                        startDateNew = recordContext.rental.endDate;
                     }
 
-                    const newEndDate = addDate(recordContext.rental.endDate, accountPrice.validityDuration);
+                    const endDateNew = addDate(startDateNew, accountPrice.validityDuration);
+
                     const rentalRenew = new RentalRenew();
 
                     rentalRenew.rentalId = recordContext.rental.id;
@@ -153,11 +141,12 @@ export class RentalRenewService
                     rentalRenew.warrantyFee = warrantyFee;
                     rentalRenew.note = note;
                     rentalRenew.discount = discount;
-                    rentalRenew.totalPrice = calculatorTotalPrice(accountPrice.price, discount);
                     rentalRenew.paymentMethod = paymentMethod;
-                    rentalRenew.newEndDate = newEndDate;
-                    rentalRenew.lastStartDate = recordContext.rental.endDate;
-                    rentalRenew.paymentAmount = rentalRenew.totalPrice - (rentalRenew.totalPrice * discount) / 100;
+                    rentalRenew.newEndDate = endDateNew;
+                    rentalRenew.lastStartDate = startDateNew;
+                    const totalPrice = calculatorTotalPrice(accountPrice.price, discount);
+
+                    rentalRenew.paymentAmount = totalPrice - (totalPrice * discount) / 100;
 
                     return of(this.rentalRenewRepository.create(rentalRenew));
                 }),
@@ -324,6 +313,30 @@ export class RentalRenewService
                 relations: {
                     rental: true,
                 },
+            }),
+        );
+    }
+
+    softRemoveByRentalId(id: string): Observable<RentalRenew[]> {
+        return from(this.rentalRenewRepository.softDelete({ rentalId: id })).pipe(
+            switchMap(() => {
+                return from(this.rentalRenewRepository.find({ where: { rentalId: id }, withDeleted: true }));
+            }),
+        );
+    }
+
+    hardRemoveByRentalId(id: string): Observable<RentalRenew[]> {
+        return from(this.rentalRenewRepository.delete({ rentalId: id })).pipe(
+            switchMap(() => {
+                return from(this.rentalRenewRepository.find({ where: { rentalId: id }, withDeleted: true }));
+            }),
+        );
+    }
+
+    restoreByRentalId(id: string): Observable<RentalRenew[]> {
+        return from(this.rentalRenewRepository.restore({ rentalId: id })).pipe(
+            switchMap(() => {
+                return from(this.rentalRenewRepository.find({ where: { rentalId: id }, withDeleted: true }));
             }),
         );
     }
@@ -537,7 +550,7 @@ export class RentalRenewService
 
     findAllByRentalProcess(id: string, findAllDto: FindAllRentalRenewDto): Observable<PaginatedData<RentalRenew>> {
         const fields: Array<keyof RentalRenew> = ['id', 'rentalId'];
-        const relations = ['rental'];
+        const relations = ['rental', 'rental.account', 'accountPrice', 'accountPrice.rentalType'];
 
         const searchFields: SearchField[] = [];
 
