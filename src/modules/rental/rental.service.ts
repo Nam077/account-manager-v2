@@ -275,6 +275,7 @@ export class RentalService
                 rental.status = status;
                 rental.note = note;
                 rental.workspaceEmailId = workspaceEmailId;
+                rental.rentalTypeId = recordContext.accountPrice.rentalTypeId;
 
                 return from(this.rentalRepository.save(rental));
             }),
@@ -287,6 +288,7 @@ export class RentalService
                         paymentMethod: paymentMethod,
                         warrantyFee: warrantyFee,
                         note: note,
+                        startDate: startDate,
                     })
                     .pipe(map(() => rental));
             }),
@@ -345,7 +347,6 @@ export class RentalService
             {
                 relations: {
                     account: true,
-                    workspaceEmail: true,
                     customer: true,
                     email: true,
                 },

@@ -10,6 +10,7 @@ import {
 
 import { RentalTypeEnums } from '../../../common/enum/rental-type.enum';
 import { AccountPrice } from '../../account-price/entities/account-price.entity';
+import { Rental } from '../../rental/entities/rental.entity';
 
 @Entity({ name: 'rental_types' })
 export class RentalType {
@@ -79,4 +80,7 @@ export class RentalType {
 
     @OneToMany(() => AccountPrice, (accountPrice) => accountPrice.rentalType)
     accountPrices: AccountPrice[];
+
+    @OneToMany(() => Rental, (rental) => rental.rentalType)
+    rentals: Rental[];
 }

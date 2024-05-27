@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { I18nTranslations } from '../../../i18n/i18n.generated';
@@ -52,4 +53,14 @@ export class CreateRentalRenewDto {
     @IsOptional()
     @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createRentalRenew.note.isString') })
     readonly note?: string;
+
+    @ApiProperty({
+        description: 'Start date of the rental',
+        type: 'string',
+        format: 'date',
+        example: '2024-04-01',
+    })
+    @Type(() => Date)
+    @IsDate({ message: i18nValidationMessage<I18nTranslations>('validation.createRental.startDate.isDate') })
+    startDate: Date;
 }

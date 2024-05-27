@@ -15,6 +15,7 @@ import { Account } from '../../account/entities/account.entity';
 import { Customer } from '../../customer/entities/customer.entity';
 import { Email } from '../../email/entities/email.entity';
 import { RentalRenew } from '../../rental-renew/entities/rental-renew.entity';
+import { RentalType } from '../../rental-type/entities/rental-type.entity';
 import { WorkspaceEmail } from '../../workspace-email/entities/workspace-email.entity';
 
 @Entity({ name: 'rentals' })
@@ -56,6 +57,14 @@ export class Rental {
         name: 'email_id',
     })
     emailId: string;
+
+    @Column({
+        type: 'uuid',
+        nullable: false,
+        comment: 'Rental type id',
+        name: 'rental_type_id',
+    })
+    rentalTypeId: string;
 
     @Column({
         type: 'date',
@@ -121,4 +130,8 @@ export class Rental {
 
     @OneToMany(() => RentalRenew, (rentalRenew) => rentalRenew.rental)
     rentalRenews: RentalRenew[];
+
+    @ManyToOne(() => RentalType, (rentalType) => rentalType.rentals)
+    @JoinColumn({ name: 'rental_type_id' })
+    rentalType: RentalType;
 }
