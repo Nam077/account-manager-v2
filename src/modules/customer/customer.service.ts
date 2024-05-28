@@ -63,7 +63,7 @@ export class CustomerService
     }
 
     public createProcess(createDto: CreateCustomerDto): Observable<Customer> {
-        const { name, email, address, company, description, phone } = createDto;
+        const { name, email, description } = createDto;
 
         return from(this.checkExitsByEmail(email)).pipe(
             switchMap((isExist) => {
@@ -80,10 +80,7 @@ export class CustomerService
 
                 newCustomer.name = name;
                 newCustomer.email = email;
-                newCustomer.address = address;
-                newCustomer.company = company;
                 newCustomer.description = description;
-                newCustomer.phone = phone;
 
                 return of(this.customerRepository.create(newCustomer));
             }),
@@ -166,7 +163,7 @@ export class CustomerService
     ): Observable<PaginatedData<Customer>> {
         const relations = [];
         const searchFields: SearchField[] = [];
-        const fields: Array<keyof Customer> = ['id', 'name', 'email', 'phone', 'address', 'company', 'description'];
+        const fields: Array<keyof Customer> = ['id', 'name', 'email', 'description'];
 
         return findWithPaginationAndSearch<Customer>(
             this.customerRepository,

@@ -37,24 +37,6 @@ export class Customer {
     email: string;
 
     @Column({
-        type: 'varchar',
-        length: 255,
-        nullable: false,
-        comment: 'Phone of the customer',
-    })
-    phone: string;
-
-    @Column({ type: 'text', nullable: true, comment: 'Address of the customer' })
-    address: string;
-
-    @Column({
-        type: 'tinytext',
-        nullable: true,
-        comment: 'Company of the customer',
-    })
-    company: string;
-
-    @Column({
         type: 'text',
         nullable: true,
         comment: 'Description of the customer',
