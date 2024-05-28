@@ -18,24 +18,6 @@ export class CreateCustomerDto {
     @IsEmail({}, { message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.email.isEmail') })
     readonly email: string;
 
-    @ApiProperty({ description: 'Phone of the customer', example: '123456789' })
-    @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.phone.required') })
-    @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.phone.isString') })
-    readonly phone: string;
-
-    @ApiProperty({
-        description: 'Address of the customer',
-        example: '123 Main St, City',
-    })
-    @IsOptional()
-    @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.address.isString') })
-    readonly address: string;
-
-    @ApiProperty({ description: 'Company of the customer', example: 'ABC Corp' })
-    @IsOptional()
-    @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.company.isString') })
-    readonly company: string;
-
     @ApiProperty({
         description: 'Description of the customer',
         example: 'Regular customer',
