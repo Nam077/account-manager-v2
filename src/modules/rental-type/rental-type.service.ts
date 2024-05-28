@@ -44,7 +44,7 @@ export class RentalTypeService
     ) {}
 
     createProcess(createDto: CreateRentalTypeDto): Observable<RentalType> {
-        const { name, maxSlots, description, type } = createDto;
+        const { name, description, type } = createDto;
         const slug = slugifyString(name);
 
         return from(this.checkExistBySlug(slug)).pipe(
@@ -61,7 +61,6 @@ export class RentalTypeService
                 const rentalType = new RentalType();
 
                 rentalType.name = name;
-                rentalType.maxSlots = maxSlots;
                 rentalType.description = description;
                 rentalType.slug = slug;
                 rentalType.type = type;
@@ -142,7 +141,7 @@ export class RentalTypeService
     }
 
     findAllProcess(findAllDto: FindAllRentalTypeDto, isWithDeleted?: boolean): Observable<PaginatedData<RentalType>> {
-        const fields: Array<keyof RentalType> = ['id', 'name', 'maxSlots', 'description'];
+        const fields: Array<keyof RentalType> = ['id', 'name', 'description'];
         const relations: string[] = [];
         const searchFields: SearchField[] = [];
 

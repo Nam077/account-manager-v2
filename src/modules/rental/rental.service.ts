@@ -268,7 +268,7 @@ export class RentalService
                 rental.accountId = recordContext.accountPrice.accountId;
                 rental.emailId = recordContext.email.id;
                 rental.startDate = startDate;
-                rental.endDate = new Date(1000, 1, 1);
+                rental.endDate = startDate;
                 rental.status = status;
                 rental.note = note;
                 rental.workspaceEmailId = workspaceEmailId;

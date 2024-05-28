@@ -51,15 +51,6 @@ export class RentalType {
     })
     description: string;
 
-    @Column({
-        type: 'int',
-        nullable: false,
-        default: 1,
-        comment: 'Maximum slots allowed in the rental type',
-        name: 'max_slots',
-    })
-    maxSlots: number;
-
     @CreateDateColumn({
         comment: 'Date and time when the rental type was created',
         name: 'created_at',
