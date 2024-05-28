@@ -1,13 +1,13 @@
+import { GrammyModuleOptions, GrammyOptionsFactory, NestjsGrammyModule } from '@grammyjs/nestjs';
 import { Injectable, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TelegrafModule, TelegrafModuleOptions, TelegrafOptionsFactory } from 'nestjs-telegraf';
 
 import { GreeterUpdate } from './greeter';
 
 @Injectable()
-class TelegrafConfigService implements TelegrafOptionsFactory {
+class GrammyConfigService implements GrammyOptionsFactory {
     constructor(private readonly configService: ConfigService) {}
-    createTelegrafOptions(): TelegrafModuleOptions {
+    createGrammyOptions(): GrammyModuleOptions {
         return {
             token: this.configService.get('TELEGRAM_BOT_TOKEN'),
         };
@@ -15,13 +15,13 @@ class TelegrafConfigService implements TelegrafOptionsFactory {
 }
 @Module({
     imports: [
-        TelegrafModule.forRootAsync({
-            useClass: TelegrafConfigService,
+        NestjsGrammyModule.forRootAsync({
+            useClass: GrammyConfigService,
         }),
         ConfigModule.forRoot({
             isGlobal: true,
         }),
     ],
-    providers: [TelegrafConfigService, GreeterUpdate],
+    providers: [GrammyConfigService, GreeterUpdate],
 })
 export class TelegramBotModule {}

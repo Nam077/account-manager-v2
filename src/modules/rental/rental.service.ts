@@ -1,3 +1,4 @@
+import { InjectBot } from '@grammyjs/nestjs';
 import {
     BadRequestException,
     ForbiddenException,
@@ -10,10 +11,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Bot, Context } from 'grammy';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { InjectBot } from 'nestjs-telegraf';
 import { forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Scenes, Telegraf } from 'telegraf';
 import { DeepPartial, Repository } from 'typeorm';
 
 import {
@@ -52,8 +52,6 @@ import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
 
-export interface TelegrafContext extends Scenes.SceneContext {}
-
 @Injectable()
 export class RentalService
     implements
@@ -81,7 +79,7 @@ export class RentalService
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly configService: ConfigService,
         private readonly mailService: MailService,
-        @InjectBot() private bot: Telegraf<TelegrafContext>,
+        @InjectBot() private bot: Bot<Context>,
     ) {}
 
     checkAccount(accountId: string, accountId2: string) {
@@ -1016,7 +1014,7 @@ export class RentalService
                 : '');
 
         return from(
-            this.bot.telegram.sendMessage(this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
+            this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
                 parse_mode: 'HTML',
             }),
         );
