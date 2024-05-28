@@ -15,6 +15,7 @@ import {
     ActionCasl,
     ApiResponse,
     CrudService,
+    CustomCondition,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -251,6 +252,14 @@ export class WorkspaceEmailService
                 if (!workspaceEmail) {
                     throw new NotFoundException(
                         this.i18nService.translate('message.WorkspaceEmail.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+
+                if (workspaceEmail.rentals && workspaceEmail.rentals.length > 0) {
+                    throw new BadRequestException(
+                        this.i18nService.translate('message.WorkspaceEmail.NotDeleted', {
                             lang: I18nContext.current().lang,
                         }),
                     );
@@ -541,5 +550,59 @@ export class WorkspaceEmailService
 
     saveAll(workspaceEmails: WorkspaceEmail[]): Observable<WorkspaceEmail[]> {
         return from(this.workspaceEmailRepository.save(workspaceEmails));
+    }
+
+    findAllByWorkspaceProcess(
+        id: string,
+        findAllDto: FindAllWorkspaceEmailDto,
+        isWithDeleted?: boolean,
+    ): Observable<PaginatedData<WorkspaceEmail>> {
+        const fields: Array<keyof WorkspaceEmail> = ['id', 'workspaceId', 'emailId'];
+        const relations = ['workspace', 'email', 'workspace.adminAccount', 'adminAccount.account', 'rentals'];
+        const searchFields: SearchField[] = [];
+
+        const customConditions: CustomCondition[] = [
+            {
+                field: 'workspaceId',
+                value: id,
+                operator: 'EQUAL',
+            },
+        ];
+
+        return findWithPaginationAndSearch<WorkspaceEmail>(
+            this.workspaceEmailRepository,
+            findAllDto,
+            fields,
+            isWithDeleted,
+            relations,
+            searchFields,
+            customConditions,
+        );
+    }
+
+    findAllByWorkspace(user: UserAuth, id: string, findAllDto: FindAllWorkspaceEmailDto) {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (ability.cannot(ActionCasl.ReadAll, WorkspaceEmail)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        const isCanReadWithDeleted = ability.can(ActionCasl.ReadWithDeleted, WorkspaceEmail);
+
+        return this.findAllByWorkspaceProcess(id, findAllDto, isCanReadWithDeleted).pipe(
+            map((workspaceEmails) => {
+                return {
+                    status: HttpStatus.OK,
+                    data: workspaceEmails,
+                    message: this.i18nService.translate('message.WorkspaceEmail.Found', {
+                        lang: I18nContext.current().lang,
+                    }),
+                };
+            }),
+        );
     }
 }

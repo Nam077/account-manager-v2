@@ -21,6 +21,15 @@ export class WorkspaceEmailController {
         return this.workspaceEmailService.create(user, createWorkspaceEmailDto);
     }
 
+    @Get('by-workspace/:id')
+    findAllByWorkspace(
+        @GetCurrentUser() user: UserAuth,
+        @Param('id') id: string,
+        @Query() findAllDto: FindAllWorkspaceEmailDto,
+    ) {
+        return this.workspaceEmailService.findAllByWorkspace(user, id, findAllDto);
+    }
+
     @Get()
     findAll(@GetCurrentUser() user: UserAuth, @Query() findAllDto: FindAllWorkspaceEmailDto) {
         return this.workspaceEmailService.findAll(user, findAllDto);
