@@ -27,7 +27,8 @@ export class AccountCategory {
 
     @Column({
         type: 'longtext',
-        nullable: false,
+        nullable: true,
+        default: null,
         comment: 'Description of the account category',
     })
     description: string;

@@ -1,10 +1,10 @@
 import * as moment from 'moment';
 
 export const checkDate = (checkDate: Date): boolean => {
-    const currentDate = moment(new Date()).format('YYYY-MM-DD');
-    const date = moment(checkDate).format('YYYY-MM-DD');
+    const currentDate = moment().startOf('day');
+    const date = moment(checkDate).startOf('day');
 
-    return moment(currentDate).diff(date, 'days') > 0;
+    return currentDate.isAfter(date);
 };
 
 export const checkDaysDifference = (checkDate: Date, days: number): boolean => {

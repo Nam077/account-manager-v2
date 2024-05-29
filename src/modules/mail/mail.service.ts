@@ -40,7 +40,7 @@ export class MailService {
             this.mailerService.sendMail({
                 to,
                 from: this.configService.get('MAIL_FROM'),
-                subject: 'Warning: Account near expired',
+                subject: 'Cảnh báo: Tài khoản sắp hết hạn',
                 template: 'warning-near-expired',
                 context: {
                     ...context,
@@ -63,7 +63,7 @@ export class MailService {
             this.mailerService.sendMail({
                 to,
                 from: this.configService.get('MAIL_FROM'),
-                subject: 'Expired: Account expired',
+                subject: 'Thông báo: Tài khoản đã hết hạn',
                 template: 'expired',
                 context: {
                     ...context,

@@ -111,6 +111,9 @@
         },
         "description": {
             "isString": "Mô tả của khách hàng phải là một chuỗi ký tự."
+        },
+        "socialLink": {
+            "isString": "Liên kết mạng xã hội của khách hàng phải là một chuỗi ký tự."
         }
     },
     "createEmail": {

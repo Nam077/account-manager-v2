@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 export class CreateAccountCategoryDto {
@@ -16,8 +16,7 @@ export class CreateAccountCategoryDto {
         description: 'Description of the account category',
         example: 'Category Description',
     })
-    @IsNotEmpty({ message: i18nValidationMessage('validation.accountCategory.description.required') })
+    @IsOptional()
     @IsString({ message: i18nValidationMessage('validation.accountCategory.description.isString') })
-    @Length(1, 255, { message: i18nValidationMessage('validation.accountCategory.description.lengthAccept') })
     description: string;
 }

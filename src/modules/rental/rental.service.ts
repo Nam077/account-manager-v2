@@ -845,7 +845,10 @@ export class RentalService
 
         let nearExpired = false;
 
-        if (checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))) {
+        if (
+            rental.status !== RentalStatus.EXPIRED &&
+            checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))
+        ) {
             nearExpired = true;
         }
 
@@ -890,7 +893,7 @@ export class RentalService
                     rentalNearExpired: [],
                 };
 
-                rentals.map((rentalCheck) => {
+                rentals.forEach((rentalCheck) => {
                     const { rental, workspaceEmail, nearExpired } = this.checkExpiredAndUpdateStatus(rentalCheck);
 
                     if (workspaceEmail) {
@@ -899,7 +902,7 @@ export class RentalService
 
                     if (nearExpired) {
                         checks.rentalNearExpired.push(rental);
-                    } else {
+                    } else if (rental.status === RentalStatus.EXPIRED) {
                         checks.rentalExpired.push(rental);
                     }
                 });
@@ -957,8 +960,8 @@ export class RentalService
     sendMailExpiredWithForJoin(rentals: Rental[]) {
         const tasks: Observable<any>[] = [];
 
-        rentals.map((rental) => {
-            return tasks.push(this.sendMailExpired(rental));
+        rentals.forEach((rental) => {
+            tasks.push(this.sendMailExpired(rental));
         });
 
         return forkJoin(tasks);
@@ -967,8 +970,8 @@ export class RentalService
     sendMailWarningNearExpiredMany(rentals: Rental[]) {
         const tasks: Observable<any>[] = [];
 
-        rentals.map((rental) => {
-            return tasks.push(this.sendMailWarningNearExpired(rental));
+        rentals.forEach((rental) => {
+            tasks.push(this.sendMailWarningNearExpired(rental));
         });
 
         return forkJoin(tasks);
@@ -977,8 +980,8 @@ export class RentalService
     pingToAdminBotMany(rentals: Rental[], nearExpired = false) {
         const tasks: Observable<any>[] = [];
 
-        rentals.map((rental) => {
-            return tasks.push(this.pingToAdminBot(rental, nearExpired));
+        rentals.forEach((rental) => {
+            tasks.push(this.pingToAdminBot(rental, nearExpired));
         });
 
         return forkJoin(tasks);

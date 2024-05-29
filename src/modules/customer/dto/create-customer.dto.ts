@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
@@ -25,4 +26,17 @@ export class CreateCustomerDto {
     @IsOptional()
     @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.description.isString') })
     readonly description: string;
+
+    @ApiProperty({ description: 'Phone of the customer', example: '123456789' })
+    @Optional()
+    @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.phone.isString') })
+    readonly phone: string;
+
+    @ApiProperty({
+        description: 'Social link of the customer',
+        example: 'https://example.com',
+    })
+    @IsOptional()
+    @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.createCustomer.socialLink.isString') })
+    readonly socialLinks: string;
 }

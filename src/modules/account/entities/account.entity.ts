@@ -32,7 +32,8 @@ export class Account {
 
     @Column({
         type: 'longtext',
-        nullable: false,
+        nullable: true,
+        default: null,
         comment: 'Description of the account',
     })
     description: string;

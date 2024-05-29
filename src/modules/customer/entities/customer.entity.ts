@@ -37,6 +37,23 @@ export class Customer {
     email: string;
 
     @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+        default: null,
+        comment: 'Phone of the customer',
+    })
+    phone: string;
+
+    @Column({
+        type: 'text',
+        nullable: true,
+        comment: 'Social link of the customer',
+        default: null,
+    })
+    socialLinks: string;
+
+    @Column({
         type: 'text',
         nullable: true,
         comment: 'Description of the customer',
