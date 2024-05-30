@@ -18,6 +18,7 @@ import {
     ApiResponse,
     calculatorTotalPrice,
     checkDateBefore,
+    checkDateBeforeNoEqual,
     checkDateEqual,
     CrudService,
     CustomCondition,
@@ -391,7 +392,7 @@ export class RentalRenewService
                     return of(rentalRenew);
                 }
 
-                if (checkDateBefore(rentalRenew.newEndDate, rentalRenew.rental.endDate)) {
+                if (checkDateBeforeNoEqual(rentalRenew.newEndDate, rentalRenew.rental.endDate)) {
                     throw new ForbiddenException(
                         this.i18nService.translate('message.RentalRenew.NotDeleted', {
                             lang: I18nContext.current().lang,

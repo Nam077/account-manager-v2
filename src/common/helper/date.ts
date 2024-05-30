@@ -70,6 +70,10 @@ export const checkDateBefore = (date: Date, date2: Date): boolean => {
     return moment(date).isBefore(date2) || moment(date).isSame(date2);
 };
 
+export const checkDateBeforeNoEqual = (date: Date, date2: Date): boolean => {
+    return moment(date).isBefore(date2);
+};
+
 // kiểm tra xem date có bằng date2 không
 export const checkDateEqual = (date: Date, date2: Date): boolean => {
     return moment(date).isSame(date2);
