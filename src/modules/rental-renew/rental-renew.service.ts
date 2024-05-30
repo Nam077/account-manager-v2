@@ -159,7 +159,9 @@ export class RentalRenewService
                     return this.rentalService
                         .updateProcess(recordContext.rental.id, {
                             endDate: rentalRenew.newEndDate,
-                            status: RentalStatus.ACTIVE,
+                            status: checkDateBeforeNoEqual(new Date(), rentalRenew.newEndDate)
+                                ? RentalStatus.ACTIVE
+                                : recordContext.rental.status,
                         })
                         .pipe(
                             switchMap(() => {
@@ -385,6 +387,9 @@ export class RentalRenewService
                         return this.rentalService
                             .updateProcess(rentalRenew.rental.id, {
                                 endDate: rentalRenew.lastStartDate,
+                                status: checkDateBeforeNoEqual(new Date(), rentalRenew.lastStartDate)
+                                    ? RentalStatus.EXPIRED
+                                    : rentalRenew.rental.status,
                             })
                             .pipe(map(() => rentalRenew));
                     }
