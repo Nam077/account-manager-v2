@@ -387,7 +387,7 @@ export class RentalRenewService
                         return this.rentalService
                             .updateProcess(rentalRenew.rental.id, {
                                 endDate: rentalRenew.lastStartDate,
-                                status: checkDateBeforeNoEqual(new Date(), rentalRenew.lastStartDate)
+                                status: checkDateBeforeNoEqual(rentalRenew.lastStartDate, new Date())
                                     ? RentalStatus.EXPIRED
                                     : rentalRenew.rental.status,
                             })
