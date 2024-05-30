@@ -158,6 +158,7 @@ export class RentalRenewService
                     return this.rentalService
                         .updateProcess(recordContext.rental.id, {
                             endDate: rentalRenew.newEndDate,
+                            status: RentalStatus.ACTIVE,
                         })
                         .pipe(
                             switchMap(() => {
