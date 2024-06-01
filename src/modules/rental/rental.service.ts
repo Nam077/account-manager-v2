@@ -417,7 +417,7 @@ export class RentalService
             },
         ];
 
-        const relations: string[] = ['account', 'customer', 'email', 'workspaceEmail'];
+        const relations: string[] = ['account', 'customer', 'email', 'workspaceEmail', 'rentalType'];
 
         return findWithPaginationAndSearch<Rental>(
             this.rentalRepository,
