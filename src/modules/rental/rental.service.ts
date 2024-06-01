@@ -917,15 +917,21 @@ export class RentalService
                         checks.rentalExpired.push(rental);
                     }
                 });
+                const isSendMail = this.configService.get<boolean>('IS_SEND_MAIL');
+                const isPingToAdminBot = this.configService.get<boolean>('IS_PING_TELEGRAM');
+                const tasks: Observable<any>[] = [of('no-task')];
 
-                return forkJoin([
-                    this.saveAll(checks.rentalExpired),
-                    this.workspaceEmailService.saveAll(checks.workspaceEmail),
-                    this.sendMailExpiredWithForJoin(checks.rentalExpired),
-                    this.sendMailWarningNearExpiredMany(checks.rentalNearExpired),
-                    this.pingToAdminBotMany(checks.rentalNearExpired, true),
-                    this.pingToAdminBotMany(checks.rentalExpired),
-                ]).pipe(
+                if (isSendMail) {
+                    tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
+                    tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
+                }
+
+                if (isPingToAdminBot) {
+                    tasks.push(this.pingToAdminBotMany(checks.rentalNearExpired, true));
+                    tasks.push(this.pingToAdminBotMany(checks.rentalExpired));
+                }
+
+                return forkJoin(tasks).pipe(
                     catchError((error) => {
                         console.error('Error in checkExpiredAll forkJoin:', error);
 

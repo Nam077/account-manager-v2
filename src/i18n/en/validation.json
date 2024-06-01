@@ -111,6 +111,9 @@
         },
         "description": {
             "isString": "Description of the customer must be a string."
+        },
+        "socialLink": {
+            "isString": "Social link of the customer must be a string."
         }
     },
     "createEmail": {
