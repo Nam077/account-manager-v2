@@ -30,8 +30,6 @@ export class GreeterUpdate {
         const match = text.match(checkPattern);
         const message = match && match[1] ? match[1].split(' ')[0] : null;
 
-        console.log('message', message);
-
         if (message === null) {
             this.rentalService.checkExpiredAllPaginated().subscribe(
                 () => {

@@ -9,21 +9,12 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bot, Context } from 'grammy';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
-
-type CheckRental = 'rentalExpired' | 'rentalNearExpired' | 'infoRental';
-interface CheckExpiredAndUpdateStatus {
-    rental: Rental;
-    type: CheckRental;
-    numberDayBeforeExpired?: number;
-    workspaceEmail?: WorkspaceEmail;
-}
-
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 import {
     ActionCasl,
@@ -61,6 +52,15 @@ import { CreateRentalDto } from './dto/create-rental.dto';
 import { FindAllRentalDto } from './dto/find-all.dto';
 import { UpdateRentalDto } from './dto/update-rental.dto';
 import { Rental } from './entities/rental.entity';
+
+type CheckRental = 'rentalExpired' | 'rentalNearExpired' | 'infoRental';
+interface CheckExpiredAndUpdateStatus {
+    rental: Rental;
+    type: CheckRental;
+    numberDayBeforeExpired?: number;
+    workspaceEmail?: WorkspaceEmail;
+    isSend?: boolean;
+}
 
 @Injectable()
 export class RentalService
@@ -877,13 +877,17 @@ export class RentalService
         try {
             const checkDateCount = daysBetweenNow(rental.endDate);
 
-            if (!email) {
-                if (checkDate(rental.endDate) && rental.status === RentalStatus.ACTIVE) {
+            if (!email && rental.status === RentalStatus.ACTIVE) {
+                let isSendMail = false;
+
+                if (checkDate(rental.endDate)) {
                     rental.status = RentalStatus.EXPIRED;
 
                     if (rental.workspaceEmail) {
                         rental.workspaceEmail.status = RentalStatus.EXPIRED;
                     }
+
+                    isSendMail = true;
                 }
 
                 let nearExpired = false;
@@ -893,6 +897,7 @@ export class RentalService
                     checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))
                 ) {
                     nearExpired = true;
+                    isSendMail = true;
                 }
 
                 return {
@@ -900,8 +905,9 @@ export class RentalService
                     workspaceEmail: rental.workspaceEmail,
                     type: nearExpired ? 'rentalNearExpired' : 'rentalExpired',
                     numberDayBeforeExpired: checkDateCount,
+                    isSend: isSendMail,
                 };
-            } else {
+            } else if (email) {
                 if (checkDate(rental.endDate) && rental.status === RentalStatus.ACTIVE) {
                     rental.status = RentalStatus.EXPIRED;
 
@@ -923,6 +929,7 @@ export class RentalService
                         workspaceEmail: rental.workspaceEmail,
                         type: nearExpired ? 'rentalNearExpired' : 'rentalExpired',
                         numberDayBeforeExpired: checkDateCount,
+                        isSend: true,
                     };
                 } else {
                     const checkDate = daysBetweenNow(rental.endDate);
@@ -932,6 +939,7 @@ export class RentalService
                         workspaceEmail: rental.workspaceEmail,
                         type: 'infoRental',
                         numberDayBeforeExpired: checkDate,
+                        isSend: true,
                     };
                 }
             }
@@ -1013,7 +1021,7 @@ export class RentalService
                     }
 
                     if (isPingToAdminBot) {
-                        tasks.push(this.pingToAdminBotMany(rentalChecks));
+                        tasks.push(this.pingToAdminBotMany(rentalChecks.filter((rentalCheck) => rentalCheck.isSend)));
                     }
 
                     return forkJoin(tasks).pipe(
@@ -1114,16 +1122,24 @@ export class RentalService
                 break;
             default:
                 typeMessage = '📄 Thông tin thuê tài khoản';
+
                 break;
         }
 
         let messageDay = '';
 
         if (numberDayBeforeExpired && numberDayBeforeExpired > 0) {
+            if (numberDayBeforeExpired <= this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS')) {
+                typeMessage = '🔔 Sắp hết hạn';
+            } else {
+                typeMessage = '📄 Thông tin thuê tài khoản';
+            }
+
             messageDay = '- Số ngày còn lại: <b>' + numberDayBeforeExpired + ' ngày</b>\n';
         }
 
         if (numberDayBeforeExpired && numberDayBeforeExpired <= 0) {
+            typeMessage = '🚨 Đã hết hạn';
             messageDay = '- Số ngày quá hạn: <b>' + Math.abs(numberDayBeforeExpired) + ' ngày</b>\n';
         }
 
