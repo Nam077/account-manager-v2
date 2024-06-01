@@ -26,11 +26,6 @@ export class RentalController {
         return this.rentalService.findAll(user, findAllDto);
     }
 
-    @Get('check')
-    check() {
-        return this.rentalService.checkExpiredAll();
-    }
-
     @Get(':id')
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalService.findOne(user, id);

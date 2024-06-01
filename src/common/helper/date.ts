@@ -78,3 +78,13 @@ export const checkDateBeforeNoEqual = (date: Date, date2: Date): boolean => {
 export const checkDateEqual = (date: Date, date2: Date): boolean => {
     return moment(date).isSame(date2);
 };
+
+// tinhtoan so ngay giua 2 ngay
+export const daysBetween = (date: Date, date2: Date): number => {
+    return moment(date).diff(moment(date2), 'days');
+};
+
+// tính toán số ngày hiện tại giữa ngày hiện tại với ngày truyền vào
+export const daysBetweenNow = (date: Date): number => {
+    return moment(date).diff(moment(new Date()).startOf('day'), 'days') + 1;
+};

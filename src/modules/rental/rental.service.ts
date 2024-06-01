@@ -9,12 +9,21 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bot, Context } from 'grammy';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { DeepPartial, Repository } from 'typeorm';
+
+type CheckRental = 'rentalExpired' | 'rentalNearExpired' | 'infoRental';
+interface CheckExpiredAndUpdateStatus {
+    rental: Rental;
+    type: CheckRental;
+    numberDayBeforeExpired?: number;
+    workspaceEmail?: WorkspaceEmail;
+}
+
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 import {
     ActionCasl,
@@ -23,6 +32,7 @@ import {
     checkDaysDifference,
     CheckForForkJoin,
     CrudService,
+    daysBetweenNow,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -401,6 +411,10 @@ export class RentalService
                 tableName: 'email',
                 fields: ['email'],
             },
+            {
+                tableName: 'rentalType',
+                fields: ['type', 'name'],
+            },
         ];
 
         const relations: string[] = ['account', 'customer', 'email', 'workspaceEmail'];
@@ -736,8 +750,6 @@ export class RentalService
                                 }),
                             );
                         } else if (checkForForkJoin.email) {
-                            console.log('emailId', emailId);
-
                             return this.updateEmailWorkspaceId(rental, emailId).pipe(
                                 map((workspaceEmailId) => {
                                     delete rental.email;
@@ -830,55 +842,19 @@ export class RentalService
         return this.updateProcess(id, updateDto);
     }
 
-    checkExpiredAndUpdateStatus(rental: Rental): {
-        rental: Rental;
-        workspaceEmail: WorkspaceEmail;
-        nearExpired: boolean;
-    } {
-        try {
-            if (checkDate(rental.endDate)) {
-                rental.status = RentalStatus.EXPIRED;
-
-                if (rental.workspaceEmail) {
-                    rental.workspaceEmail.status = RentalStatus.EXPIRED;
-                }
-            }
-
-            let nearExpired = false;
-
-            if (
-                rental.status !== RentalStatus.EXPIRED &&
-                checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))
-            ) {
-                nearExpired = true;
-            }
-
-            return {
-                rental,
-                workspaceEmail: rental.workspaceEmail,
-                nearExpired,
-            };
-        } catch (error) {
-            console.error('Error in checkExpiredAndUpdateStatus:', error);
-            throw error;
-        }
-    }
-
-    saveAll(rentals: Rental[]): Observable<Rental[]> {
-        return from(this.rentalRepository.save(rentals)).pipe(
-            catchError((error) => {
-                console.error('Error in saveAll:', error);
-
-                return of([]);
-            }),
-        );
-    }
-
-    checkExpiredAll() {
+    findWithPagination(skip: number, take: number, email?: string) {
         return from(
             this.rentalRepository.find({
                 where: {
-                    status: RentalStatus.ACTIVE,
+                    ...(email
+                        ? {
+                              email: {
+                                  email: email,
+                              },
+                          }
+                        : {
+                              status: RentalStatus.ACTIVE,
+                          }),
                 },
                 relations: {
                     workspaceEmail: {
@@ -891,65 +867,168 @@ export class RentalService
                     customer: true,
                     account: true,
                 },
-            }),
-        ).pipe(
-            map((rentals) => {
-                const checks: {
-                    rentalExpired: Rental[];
-                    workspaceEmail: WorkspaceEmail[];
-                    rentalNearExpired: Rental[];
-                } = {
-                    rentalExpired: [],
-                    workspaceEmail: [],
-                    rentalNearExpired: [],
-                };
-
-                rentals.forEach((rentalCheck) => {
-                    const { rental, workspaceEmail, nearExpired } = this.checkExpiredAndUpdateStatus(rentalCheck);
-
-                    if (workspaceEmail) {
-                        checks.workspaceEmail.push(workspaceEmail);
-                    }
-
-                    if (nearExpired) {
-                        checks.rentalNearExpired.push(rental);
-                    } else if (rental.status === RentalStatus.EXPIRED) {
-                        checks.rentalExpired.push(rental);
-                    }
-                });
-                const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
-                const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
-
-                const tasks: Observable<any>[] = [of('no-task')];
-
-                if (isSendMail) {
-                    tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
-                    tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
-                }
-
-                if (isPingToAdminBot) {
-                    tasks.push(this.pingToAdminBotMany(checks.rentalNearExpired, true));
-                    tasks.push(this.pingToAdminBotMany(checks.rentalExpired));
-                }
-
-                return forkJoin(tasks).pipe(
-                    catchError((error) => {
-                        console.error('Error in checkExpiredAll forkJoin:', error);
-
-                        return of('error');
-                    }),
-                );
-            }),
-            map(() => 'success'),
-            catchError((error) => {
-                console.error('Error in checkExpiredAll:', error);
-
-                return of('error');
+                skip,
+                take,
             }),
         );
     }
 
-    sendMailWarningNearExpired(rental: Rental) {
+    private checkExpiredAndUpdateStatus(rental: Rental, email?: string): CheckExpiredAndUpdateStatus {
+        try {
+            const checkDateCount = daysBetweenNow(rental.endDate);
+
+            if (!email) {
+                if (checkDate(rental.endDate) && rental.status === RentalStatus.ACTIVE) {
+                    rental.status = RentalStatus.EXPIRED;
+
+                    if (rental.workspaceEmail) {
+                        rental.workspaceEmail.status = RentalStatus.EXPIRED;
+                    }
+                }
+
+                let nearExpired = false;
+
+                if (
+                    rental.status !== RentalStatus.EXPIRED &&
+                    checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))
+                ) {
+                    nearExpired = true;
+                }
+
+                return {
+                    rental,
+                    workspaceEmail: rental.workspaceEmail,
+                    type: nearExpired ? 'rentalNearExpired' : 'rentalExpired',
+                    numberDayBeforeExpired: checkDateCount,
+                };
+            } else {
+                if (checkDate(rental.endDate) && rental.status === RentalStatus.ACTIVE) {
+                    rental.status = RentalStatus.EXPIRED;
+
+                    if (rental.workspaceEmail) {
+                        rental.workspaceEmail.status = RentalStatus.EXPIRED;
+                    }
+
+                    let nearExpired = false;
+
+                    if (
+                        rental.status !== RentalStatus.EXPIRED &&
+                        checkDaysDifference(rental.endDate, this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'))
+                    ) {
+                        nearExpired = true;
+                    }
+
+                    return {
+                        rental,
+                        workspaceEmail: rental.workspaceEmail,
+                        type: nearExpired ? 'rentalNearExpired' : 'rentalExpired',
+                        numberDayBeforeExpired: checkDateCount,
+                    };
+                } else {
+                    const checkDate = daysBetweenNow(rental.endDate);
+
+                    return {
+                        rental,
+                        workspaceEmail: rental.workspaceEmail,
+                        type: 'infoRental',
+                        numberDayBeforeExpired: checkDate,
+                    };
+                }
+            }
+        } catch (error) {
+            console.error('Error in checkExpiredAndUpdateStatus:', error);
+            throw error;
+        }
+    }
+
+    private saveAll(rentals: Rental[]): Observable<Rental[]> {
+        return from(this.rentalRepository.save(rentals)).pipe(
+            catchError((error) => {
+                console.error('Error in saveAll:', error);
+
+                return of([]);
+            }),
+        );
+    }
+
+    checkExpiredAllPaginated(pageSize: number = 100, email?: string): Observable<string> {
+        let skip = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            return this.findWithPagination(skip, pageSize, email).pipe(
+                switchMap((rentals) => {
+                    if (rentals.length < pageSize) {
+                        hasMore = false;
+                    } else {
+                        skip += pageSize;
+                    }
+
+                    const checks = {
+                        rentalExpired: [],
+                        workspaceEmail: [],
+                        rentalNearExpired: [],
+                        rentalInfo: [],
+                    };
+
+                    const rentalChecks: CheckExpiredAndUpdateStatus[] = [];
+
+                    rentals.forEach((rentalCheck) => {
+                        const rentalCheckResult = this.checkExpiredAndUpdateStatus(rentalCheck, email);
+
+                        rentalChecks.push(rentalCheckResult);
+                        const { rental, workspaceEmail, type, numberDayBeforeExpired } = rentalCheckResult;
+
+                        if (workspaceEmail) {
+                            checks.workspaceEmail.push(workspaceEmail);
+                        }
+
+                        if (type === 'rentalNearExpired') {
+                            checks.rentalNearExpired.push(rental);
+                        }
+
+                        if (type === 'rentalExpired') {
+                            checks.rentalExpired.push(rental);
+                        }
+
+                        if (type === 'infoRental') {
+                            checks.rentalInfo.push({
+                                rental,
+                                numberDayBeforeExpired,
+                            });
+                        }
+                    });
+
+                    const tasks = [
+                        this.saveAll(checks.rentalExpired),
+                        this.workspaceEmailService.saveAll(checks.workspaceEmail),
+                    ];
+
+                    const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
+                    const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
+
+                    if (isSendMail && !email) {
+                        tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
+                        tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
+                    }
+
+                    if (isPingToAdminBot) {
+                        tasks.push(this.pingToAdminBotMany(rentalChecks));
+                    }
+
+                    return forkJoin(tasks).pipe(
+                        switchMap(() => {
+                            return of('Cron checkExpiredAllPaginated success');
+                        }),
+                    );
+                }),
+            );
+        }
+
+        return of('Cron checkExpiredAllPaginated success');
+    }
+
+    private sendMailWarningNearExpired(rental: Rental): Observable<Rental> {
         return from(
             this.mailService.sendMailWarningNearExpired(rental.customer.email, {
                 name: rental.customer.name,
@@ -968,7 +1047,7 @@ export class RentalService
         );
     }
 
-    sendMailExpired(rental: Rental) {
+    private sendMailExpired(rental: Rental): Observable<Rental> {
         return from(
             this.mailService.sendMailExpired(rental.customer.email, {
                 name: rental.customer.name,
@@ -986,8 +1065,8 @@ export class RentalService
         );
     }
 
-    sendMailExpiredWithForJoin(rentals: Rental[]) {
-        const tasks: Observable<any>[] = rentals.map((rental) => this.sendMailExpired(rental));
+    private sendMailExpiredWithForJoin(rentals: Rental[]): Observable<any[]> {
+        const tasks = rentals.map((rental) => this.sendMailExpired(rental));
 
         return forkJoin(tasks).pipe(
             catchError((error) => {
@@ -998,8 +1077,8 @@ export class RentalService
         );
     }
 
-    sendMailWarningNearExpiredMany(rentals: Rental[]) {
-        const tasks: Observable<any>[] = rentals.map((rental) => this.sendMailWarningNearExpired(rental));
+    private sendMailWarningNearExpiredMany(rentals: Rental[]): Observable<any[]> {
+        const tasks = rentals.map((rental) => this.sendMailWarningNearExpired(rental));
 
         return forkJoin(tasks).pipe(
             catchError((error) => {
@@ -1010,8 +1089,8 @@ export class RentalService
         );
     }
 
-    pingToAdminBotMany(rentals: Rental[], nearExpired = false) {
-        const tasks: Observable<any>[] = rentals.map((rental) => this.pingToAdminBot(rental, nearExpired));
+    private pingToAdminBotMany(rentals: CheckExpiredAndUpdateStatus[]): Observable<any[]> {
+        const tasks = rentals.map((rental) => this.pingToAdminBot(rental));
 
         return forkJoin(tasks).pipe(
             catchError((error) => {
@@ -1022,11 +1101,36 @@ export class RentalService
         );
     }
 
-    pingToAdminBot(rental: Rental, nearExpired = false) {
+    private pingToAdminBot(checkExpiredAndUpdateStatus: CheckExpiredAndUpdateStatus): Observable<any> {
+        const { type, rental, numberDayBeforeExpired } = checkExpiredAndUpdateStatus;
+        let typeMessage = '';
+
+        switch (type) {
+            case 'rentalNearExpired':
+                typeMessage = '🔔 Sắp hết hạn';
+                break;
+            case 'rentalExpired':
+                typeMessage = '🚨 Đã hết hạn';
+                break;
+            default:
+                typeMessage = '📄 Thông tin thuê tài khoản';
+                break;
+        }
+
+        let messageDay = '';
+
+        if (numberDayBeforeExpired && numberDayBeforeExpired > 0) {
+            messageDay = '- Số ngày còn lại: <b>' + numberDayBeforeExpired + ' ngày</b>\n';
+        }
+
+        if (numberDayBeforeExpired && numberDayBeforeExpired <= 0) {
+            messageDay = '- Số ngày quá hạn: <b>' + Math.abs(numberDayBeforeExpired) + ' ngày</b>\n';
+        }
+
         const markDown =
             '<b>📄 Thông Tin Thuê Tài Khoản</b>\n' +
             '- Trạng thái thuê: ' +
-            (nearExpired ? '<b>🔔 Sắp hết hạn</b>' : '<b>⏳ Đã hết hạn</b>') +
+            typeMessage +
             '\n' +
             '- Tên khách hàng: <b>' +
             rental.customer.name +
@@ -1040,9 +1144,7 @@ export class RentalService
             '- Ngày hết hạn thuê: <b>' +
             rental.endDate +
             '</b>\n' +
-            (nearExpired
-                ? '- Số ngày còn lại: <b>' + this.configService.get('RENTAL_NEAR_EXPIRED_DAYS') + ' ngày</b>\n'
-                : '') +
+            messageDay +
             (rental.workspaceEmail
                 ? '- Thông tin workspace: <b>' +
                   rental.workspaceEmail.workspace.adminAccount.email +
@@ -1066,13 +1168,8 @@ export class RentalService
 
     @Cron(CronExpression.EVERY_DAY_AT_7AM)
     handleCron() {
-        this.checkExpiredAll().subscribe({
-            next: (result) => {
-                console.log('result', result);
-            },
-            error: (error) => {
-                console.error('Error in handleCron:', error);
-            },
+        this.checkExpiredAllPaginated().subscribe((result) => {
+            console.log(result);
         });
     }
 }
