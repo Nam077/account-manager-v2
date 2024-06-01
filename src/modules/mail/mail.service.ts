@@ -10,22 +10,6 @@ export class MailService {
         private readonly configService: ConfigService,
     ) {}
 
-    public example(): void {
-        this.mailerService
-            .sendMail({
-                to: 'namnguyen177a@gmail.com', // list of receivers
-                from: 'nampronam1@gmail.com', // sender address
-                subject: 'Testing Nest Mailermodule with template ✔',
-                template: 'index', // The `.pug`, `.ejs` or `.hbs` extension is appended automatically.
-                context: {
-                    code: 'cf1a3f828287',
-                    username: 'john doe',
-                },
-            })
-            .then(() => {})
-            .catch(() => {});
-    }
-
     public sendMailWarningNearExpired(
         to: string,
         context: {
@@ -45,6 +29,8 @@ export class MailService {
                 context: {
                     ...context,
                     company: this.configService.get('COMPANY_NAME'),
+                    webUrl: this.configService.get('WEB_URL'),
+                    contactUrl: this.configService.get('CONTACT_URL'),
                 },
             }),
         );
@@ -68,6 +54,8 @@ export class MailService {
                 context: {
                     ...context,
                     company: this.configService.get('COMPANY_NAME'),
+                    webUrl: this.configService.get('WEB_URL'),
+                    contactUrl: this.configService.get('CONTACT_URL'),
                 },
             }),
         );
