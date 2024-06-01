@@ -917,8 +917,9 @@ export class RentalService
                         checks.rentalExpired.push(rental);
                     }
                 });
-                const isSendMail = this.configService.get<boolean>('IS_SEND_MAIL');
-                const isPingToAdminBot = this.configService.get<boolean>('IS_PING_TELEGRAM');
+                const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
+                const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
+
                 const tasks: Observable<any>[] = [of('no-task')];
 
                 if (isSendMail) {
