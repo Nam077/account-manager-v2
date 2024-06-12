@@ -1012,13 +1012,13 @@ export class RentalService
                         this.workspaceEmailService.saveAll(checks.workspaceEmail),
                     ];
 
-                    const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
+                    // const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
                     const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
 
-                    if (isSendMail && !email) {
-                        tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
-                        tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
-                    }
+                    // if (isSendMail && !email) {
+                    //     tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
+                    //     tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
+                    // }
 
                     if (isPingToAdminBot) {
                         tasks.push(this.pingToAdminBotMany(rentalChecks.filter((rentalCheck) => rentalCheck.isSend)));
