@@ -129,7 +129,7 @@ export class RentalRenewService
                     let newEndDate: Date = recordContext.rental.endDate;
                     let startDateNew: Date = startDate;
 
-                    if (!checkDateBefore(startDate, newEndDate)) {
+                    if (checkDateBefore(startDate, newEndDate)) {
                         newEndDate = startDate;
                         startDateNew = recordContext.rental.endDate;
                     }
@@ -145,7 +145,7 @@ export class RentalRenewService
                     rentalRenew.discount = discount;
                     rentalRenew.paymentMethod = paymentMethod;
                     rentalRenew.newEndDate = endDateNew;
-                    rentalRenew.lastStartDate = startDateNew;
+                    rentalRenew.lastStartDate = recordContext.rental.endDate;
                     const totalPrice = calculatorTotalPrice(accountPrice.price, discount);
 
                     rentalRenew.paymentAmount = totalPrice - (totalPrice * discount) / 100;
@@ -156,12 +156,16 @@ export class RentalRenewService
                     return from(this.rentalRenewRepository.save(rentalRenew));
                 }),
                 switchMap((rentalRenew) => {
+                    let status = RentalStatus.EXPIRED;
+
+                    if (checkDateBefore(new Date(), rentalRenew.newEndDate)) {
+                        status = RentalStatus.ACTIVE;
+                    }
+
                     return this.rentalService
                         .updateProcess(recordContext.rental.id, {
                             endDate: rentalRenew.newEndDate,
-                            status: checkDateBeforeNoEqual(new Date(), rentalRenew.newEndDate)
-                                ? RentalStatus.ACTIVE
-                                : recordContext.rental.status,
+                            status: status,
                         })
                         .pipe(
                             switchMap(() => {

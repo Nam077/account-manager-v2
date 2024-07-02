@@ -359,7 +359,7 @@ export class RentalService
                     customer: true,
                     email: true,
                     rentalType: true,
-                    workspaceEmail: { workspace: true },
+                    workspaceEmail: { workspace: { adminAccount: { account: true } } },
                 },
             },
             isCanReadWithDeleted,
@@ -522,11 +522,7 @@ export class RentalService
         );
     }
 
-    remove(
-        currentUser: UserAuth,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
 
         if (ability.cannot(ActionCasl.Delete, Rental)) {
@@ -1183,6 +1179,7 @@ export class RentalService
     }
 
     @Cron(CronExpression.EVERY_DAY_AT_7AM)
+    // @Interval(10000)
     handleCron() {
         this.checkExpiredAllPaginated().subscribe((result) => {
             console.log(result);

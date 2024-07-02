@@ -4,7 +4,7 @@ export const checkDate = (checkDate: Date): boolean => {
     const currentDate = moment().startOf('day');
     const date = moment(checkDate).startOf('day');
 
-    return currentDate.isAfter(date);
+    return currentDate.isAfter(date) || currentDate.isSame(date);
 };
 
 export const checkDaysDifference = (checkDate: Date, days: number): boolean => {
@@ -20,6 +20,10 @@ export const checkDateAfter = (date: Date, date2: Date): boolean => {
 };
 
 export const addMonths = (date: Date, months: number): Date => {
+    if (moment(date).date() === 31) {
+        return moment(date).add(months, 'months').date(30).toDate();
+    }
+
     return moment(date).add(months, 'months').toDate();
 };
 
@@ -64,7 +68,7 @@ export const addDate = (date: Date, days: number): Date => {
  * Checks if a date is before another date.
  * @param date - The first date to compare.
  * @param date2 - The second date to compare.
- * @returns A boolean indicating whether the first date is before the second date.
+ * @returns Là true nếu date truyền vào nhỏ hơn hoặc bằng date2, ngược lại là false.
  */
 export const checkDateBefore = (date: Date, date2: Date): boolean => {
     return moment(date).isBefore(date2) || moment(date).isSame(date2);
@@ -86,5 +90,5 @@ export const daysBetween = (date: Date, date2: Date): number => {
 
 // tính toán số ngày hiện tại giữa ngày hiện tại với ngày truyền vào
 export const daysBetweenNow = (date: Date): number => {
-    return moment(date).diff(moment(new Date()).startOf('day'), 'days') + 1;
+    return moment(date).diff(moment(new Date()).startOf('day'), 'days');
 };
