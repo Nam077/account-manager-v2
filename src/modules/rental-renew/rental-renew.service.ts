@@ -20,6 +20,7 @@ import {
     checkDateBefore,
     checkDateBeforeNoEqual,
     checkDateEqual,
+    checkDateRenew,
     CrudService,
     CustomCondition,
     FindOneOptionsCustom,
@@ -95,7 +96,7 @@ export class RentalRenewService
                         );
                     }
 
-                    if (!this.checkDate(rental.endDate, startDate)) {
+                    if (checkDateRenew(rental.endDate, startDate)) {
                         throw new BadRequestException(
                             this.i18nService.translate('message.RentalRenew.InvalidDate', {
                                 lang: I18nContext.current().lang,
