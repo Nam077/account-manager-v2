@@ -955,81 +955,76 @@ export class RentalService
         );
     }
 
-    checkExpiredAllPaginated(pageSize: number = 100, email?: string): Observable<string> {
-        let skip = 0;
-        let hasMore = true;
+    checkExpiredAllPaginated(
+        pageSize: number = 100,
+        email?: string,
+        skip: number = 0,
+        totalData: number = 0,
+    ): Observable<string> {
+        return this.findWithPagination(skip, pageSize, email).pipe(
+            switchMap((rentals) => {
+                if (rentals.length === 0) {
+                    return of(totalData + ' data has been checked');
+                }
 
-        while (hasMore) {
-            return this.findWithPagination(skip, pageSize, email).pipe(
-                switchMap((rentals) => {
-                    if (rentals.length < pageSize) {
-                        hasMore = false;
-                    } else {
-                        skip += pageSize;
+                const checks = {
+                    rentalExpired: [],
+                    workspaceEmail: [],
+                    rentalNearExpired: [],
+                    rentalInfo: [],
+                };
+
+                const rentalChecks: CheckExpiredAndUpdateStatus[] = [];
+
+                rentals.forEach((rentalCheck) => {
+                    const rentalCheckResult = this.checkExpiredAndUpdateStatus(rentalCheck, email);
+
+                    rentalChecks.push(rentalCheckResult);
+                    const { rental, workspaceEmail, type, numberDayBeforeExpired } = rentalCheckResult;
+
+                    if (workspaceEmail) {
+                        checks.workspaceEmail.push(workspaceEmail);
                     }
 
-                    const checks = {
-                        rentalExpired: [],
-                        workspaceEmail: [],
-                        rentalNearExpired: [],
-                        rentalInfo: [],
-                    };
-
-                    const rentalChecks: CheckExpiredAndUpdateStatus[] = [];
-
-                    rentals.forEach((rentalCheck) => {
-                        const rentalCheckResult = this.checkExpiredAndUpdateStatus(rentalCheck, email);
-
-                        rentalChecks.push(rentalCheckResult);
-                        const { rental, workspaceEmail, type, numberDayBeforeExpired } = rentalCheckResult;
-
-                        if (workspaceEmail) {
-                            checks.workspaceEmail.push(workspaceEmail);
-                        }
-
-                        if (type === 'rentalNearExpired') {
-                            checks.rentalNearExpired.push(rental);
-                        }
-
-                        if (type === 'rentalExpired') {
-                            checks.rentalExpired.push(rental);
-                        }
-
-                        if (type === 'infoRental') {
-                            checks.rentalInfo.push({
-                                rental,
-                                numberDayBeforeExpired,
-                            });
-                        }
-                    });
-
-                    const tasks = [
-                        this.saveAll(checks.rentalExpired),
-                        this.workspaceEmailService.saveAll(checks.workspaceEmail),
-                    ];
-
-                    // const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
-                    const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
-
-                    // if (isSendMail && !email) {
-                    //     tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
-                    //     tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
-                    // }
-
-                    if (isPingToAdminBot) {
-                        tasks.push(this.pingToAdminBotMany(rentalChecks.filter((rentalCheck) => rentalCheck.isSend)));
+                    if (type === 'rentalNearExpired') {
+                        checks.rentalNearExpired.push(rental);
                     }
 
-                    return forkJoin(tasks).pipe(
-                        switchMap(() => {
-                            return of('Cron checkExpiredAllPaginated success');
-                        }),
-                    );
-                }),
-            );
-        }
+                    if (type === 'rentalExpired') {
+                        checks.rentalExpired.push(rental);
+                    }
 
-        return of('Cron checkExpiredAllPaginated success');
+                    if (type === 'infoRental') {
+                        checks.rentalInfo.push({
+                            rental,
+                            numberDayBeforeExpired,
+                        });
+                    }
+                });
+
+                const tasks = [
+                    this.saveAll(checks.rentalExpired),
+                    this.workspaceEmailService.saveAll(checks.workspaceEmail),
+                ];
+
+                const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
+
+                if (isPingToAdminBot) {
+                    tasks.push(this.pingToAdminBotMany(rentalChecks.filter((rentalCheck) => rentalCheck.isSend)));
+                }
+
+                return forkJoin(tasks).pipe(
+                    switchMap(() => {
+                        return this.checkExpiredAllPaginated(
+                            pageSize,
+                            email,
+                            skip + pageSize,
+                            totalData + rentals.length,
+                        );
+                    }),
+                );
+            }),
+        );
     }
 
     private sendMailWarningNearExpired(rental: Rental): Observable<Rental> {
@@ -1179,7 +1174,6 @@ export class RentalService
     }
 
     @Cron(CronExpression.EVERY_DAY_AT_7AM)
-    // @Interval(10000)
     handleCron() {
         this.checkExpiredAllPaginated().subscribe((result) => {
             console.log(result);

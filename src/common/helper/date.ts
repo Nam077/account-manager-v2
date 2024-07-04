@@ -4,7 +4,7 @@ export const checkDate = (checkDate: Date): boolean => {
     const currentDate = moment().startOf('day');
     const date = moment(checkDate).startOf('day');
 
-    return currentDate.isAfter(date) || currentDate.isSame(date);
+    return currentDate.isAfter(date);
 };
 
 export const checkDaysDifference = (checkDate: Date, days: number): boolean => {
