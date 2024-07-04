@@ -1205,7 +1205,10 @@ export class RentalService
                   ' - ' +
                   rental.workspaceEmail.workspace.adminAccount.account.name +
                   '</b>\n'
-                : '');
+                : '') +
+            '- Ghi chú: <b>' +
+            rental.note +
+            '</b>';
 
         return from(
             this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
