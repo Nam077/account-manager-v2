@@ -96,5 +96,3 @@ export const daysBetweenNow = (date: Date): number => {
 export const checkDateRenew = (endDate: Date, startDate: Date): boolean => {
     return moment(startDate).isAfter(endDate) || moment(startDate).isSame(endDate);
 };
-
-console.log(checkDateRenew(new Date(), new Date('2021-01-01'))); // false

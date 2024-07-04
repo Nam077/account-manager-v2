@@ -142,6 +142,7 @@ export class RentalService
             workspace: Workspace;
             workspaceEmailId: string;
             isCreateWorkspaceEmail: boolean;
+            rental?: Rental;
         } = {
             customer: null,
             email: null,
@@ -287,6 +288,8 @@ export class RentalService
                 return from(this.rentalRepository.save(rental));
             }),
             switchMap((rental) => {
+                recordContext.rental = rental;
+
                 return this.rentalRenewService
                     .createProcess({
                         accountPriceId: accountPriceId,
@@ -297,9 +300,53 @@ export class RentalService
                         note: note,
                         startDate: startDate,
                     })
-                    .pipe(map(() => rental));
+                    .pipe(
+                        switchMap((rentalRenew) => {
+                            if (rentalRenew) return of(rental);
+                            else {
+                                return from(this.rentalRepository.remove(rental)).pipe(
+                                    switchMap(() => {
+                                        if (recordContext.workspaceEmailId) {
+                                            return this.workspaceEmailService
+                                                .removeHardProcess(recordContext.workspaceEmailId)
+                                                .pipe(
+                                                    switchMap(() => {
+                                                        throw new BadRequestException(
+                                                            this.i18nService.translate('message.Rental.NotFound', {
+                                                                lang: I18nContext.current().lang,
+                                                            }),
+                                                        );
+                                                    }),
+                                                );
+                                        }
+                                    }),
+                                    switchMap(() => {
+                                        throw new BadRequestException(
+                                            'Error in create rental renew, please try again!',
+                                        );
+                                    }),
+                                );
+                            }
+                        }),
+                    );
 
                 return of(rental);
+            }),
+        );
+    }
+
+    hardRemoveNocheck(id: string): Observable<boolean> {
+        return from(this.rentalRepository.delete(id)).pipe(
+            map((result) => {
+                if (result.affected === 0) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+
+                return true;
             }),
         );
     }

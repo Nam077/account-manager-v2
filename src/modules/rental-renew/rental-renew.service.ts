@@ -96,7 +96,7 @@ export class RentalRenewService
                         );
                     }
 
-                    if (checkDateRenew(rental.endDate, startDate)) {
+                    if (!checkDateRenew(rental.endDate, startDate)) {
                         throw new BadRequestException(
                             this.i18nService.translate('message.RentalRenew.InvalidDate', {
                                 lang: I18nContext.current().lang,
