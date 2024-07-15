@@ -1156,7 +1156,7 @@ export class RentalService
             const host = extractLinksWithHost(rental.customer.socialLinks);
 
             return host.map((link) => {
-                return `<a href="${link}">${link.host}</a>`;
+                return `<a href="${link.url}">${link.host}</a>`;
             });
         };
 
