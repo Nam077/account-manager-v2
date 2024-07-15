@@ -24,6 +24,7 @@ import {
     CheckForForkJoin,
     CrudService,
     daysBetweenNow,
+    extractLinksWithHost,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -42,6 +43,7 @@ import { CustomerService } from '../customer/customer.service';
 import { Customer } from '../customer/entities/customer.entity';
 import { EmailService } from '../email/email.service';
 import { Email } from '../email/entities/email.entity';
+import { MailService } from '../mail/mail.service';
 import { RentalRenewService } from '../rental-renew/rental-renew.service';
 import { Workspace } from '../workspace/entities/workspace.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
@@ -87,7 +89,7 @@ export class RentalService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly configService: ConfigService,
-        // private readonly mailService: MailService,
+        private readonly mailService: MailService,
         @InjectBot() private bot: Bot<Context>,
     ) {}
 
@@ -1150,6 +1152,14 @@ export class RentalService
         const { type, rental, numberDayBeforeExpired } = checkExpiredAndUpdateStatus;
         let typeMessage = '';
 
+        const getSocialLinkCustomer = (rental: Rental) => {
+            const host = extractLinksWithHost(rental.customer.socialLinks);
+
+            return host.map((link) => {
+                return `<a href="${link}">${link.host}</a>`;
+            });
+        };
+
         switch (type) {
             case 'rentalNearExpired':
                 typeMessage = '🔔 Sắp hết hạn';
@@ -1207,7 +1217,12 @@ export class RentalService
                 : '') +
             '- Ghi chú: <b>' +
             rental.note +
-            '</b>';
+            '</b>' +
+            '\n- Số điện thoại: ' +
+            rental.customer.phone +
+            '</b>' +
+            '\n- Link mạng xã hội: ' +
+            getSocialLinkCustomer(rental).join('\n');
 
         return from(
             this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
