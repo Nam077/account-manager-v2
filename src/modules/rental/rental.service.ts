@@ -1222,7 +1222,7 @@ export class RentalService
             rental.customer.phone +
             '</b>' +
             '\n- Link mạng xã hội: ' +
-            getSocialLinkCustomer(rental).join('\n');
+            getSocialLinkCustomer(rental).join(', ');
 
         return from(
             this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
