@@ -63,7 +63,7 @@ export class CustomerService
     }
 
     public createProcess(createDto: CreateCustomerDto): Observable<Customer> {
-        const { name, email, description } = createDto;
+        const { name, email, description, phone, socialLinks } = createDto;
 
         return from(this.checkExitsByEmail(email)).pipe(
             switchMap((isExist) => {
@@ -81,6 +81,8 @@ export class CustomerService
                 newCustomer.name = name;
                 newCustomer.email = email;
                 newCustomer.description = description;
+                newCustomer.phone = phone;
+                newCustomer.socialLinks = socialLinks;
 
                 return of(this.customerRepository.create(newCustomer));
             }),

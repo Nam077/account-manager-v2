@@ -257,14 +257,6 @@ export class WorkspaceEmailService
                     );
                 }
 
-                if (workspaceEmail.rentals && workspaceEmail.rentals.length > 0) {
-                    throw new BadRequestException(
-                        this.i18nService.translate('message.WorkspaceEmail.NotDeleted', {
-                            lang: I18nContext.current().lang,
-                        }),
-                    );
-                }
-
                 if (hardRemove) {
                     if (!workspaceEmail.deletedAt) {
                         throw new BadRequestException(
@@ -283,7 +275,7 @@ export class WorkspaceEmailService
     }
 
     removeHardProcess(id: string): Observable<WorkspaceEmail> {
-        return from(this.workspaceEmailRepository.findOne({ where: { id } })).pipe(
+        return from(this.workspaceEmailRepository.findOne({ where: { id }, withDeleted: true })).pipe(
             switchMap((workspaceEmail) => {
                 if (!workspaceEmail) {
                     throw new NotFoundException(

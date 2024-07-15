@@ -141,6 +141,9 @@ export const findWithPaginationAndSearch = <T>(
     }
 
     queryBuilder.skip((pageNew - 1) * limitNew).take(limitNew);
+    // sắp xếp theo trường createdAt mặc định cái nào mới nhất sẽ lên trên
+
+    queryBuilder.orderBy(`${nameTable}.createdAt`, 'DESC');
 
     if (sort && sortField) {
         queryBuilder.orderBy(`${nameTable}.${sortField}`, sort);

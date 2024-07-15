@@ -141,6 +141,7 @@ export class RentalService
             workspace: Workspace;
             workspaceEmailId: string;
             isCreateWorkspaceEmail: boolean;
+            rental?: Rental;
         } = {
             customer: null,
             email: null,
@@ -286,6 +287,8 @@ export class RentalService
                 return from(this.rentalRepository.save(rental));
             }),
             switchMap((rental) => {
+                recordContext.rental = rental;
+
                 return this.rentalRenewService
                     .createProcess({
                         accountPriceId: accountPriceId,
@@ -296,9 +299,53 @@ export class RentalService
                         note: note,
                         startDate: startDate,
                     })
-                    .pipe(map(() => rental));
+                    .pipe(
+                        switchMap((rentalRenew) => {
+                            if (rentalRenew) return of(rental);
+                            else {
+                                return from(this.rentalRepository.remove(rental)).pipe(
+                                    switchMap(() => {
+                                        if (recordContext.workspaceEmailId) {
+                                            return this.workspaceEmailService
+                                                .removeHardProcess(recordContext.workspaceEmailId)
+                                                .pipe(
+                                                    switchMap(() => {
+                                                        throw new BadRequestException(
+                                                            this.i18nService.translate('message.Rental.NotFound', {
+                                                                lang: I18nContext.current().lang,
+                                                            }),
+                                                        );
+                                                    }),
+                                                );
+                                        }
+                                    }),
+                                    switchMap(() => {
+                                        throw new BadRequestException(
+                                            'Error in create rental renew, please try again!',
+                                        );
+                                    }),
+                                );
+                            }
+                        }),
+                    );
 
                 return of(rental);
+            }),
+        );
+    }
+
+    hardRemoveNocheck(id: string): Observable<boolean> {
+        return from(this.rentalRepository.delete(id)).pipe(
+            map((result) => {
+                if (result.affected === 0) {
+                    throw new NotFoundException(
+                        this.i18nService.translate('message.Rental.NotFound', {
+                            lang: I18nContext.current().lang,
+                        }),
+                    );
+                }
+
+                return true;
             }),
         );
     }
@@ -358,7 +405,7 @@ export class RentalService
                     customer: true,
                     email: true,
                     rentalType: true,
-                    workspaceEmail: { workspace: true },
+                    workspaceEmail: { workspace: { adminAccount: { account: true } } },
                 },
             },
             isCanReadWithDeleted,
@@ -521,11 +568,7 @@ export class RentalService
         );
     }
 
-    remove(
-        currentUser: UserAuth,
-        id: string,
-        hardRemove?: boolean,
-    ): Observable<ApiResponse<Rental | PaginatedData<Rental> | Rental[]>> {
+    remove(currentUser: UserAuth, id: string, hardRemove?: boolean): Observable<ApiResponse<Rental>> {
         const ability = this.caslAbilityFactory.createForUser(currentUser);
 
         if (ability.cannot(ActionCasl.Delete, Rental)) {
@@ -958,81 +1001,76 @@ export class RentalService
         );
     }
 
-    checkExpiredAllPaginated(pageSize: number = 100, email?: string): Observable<string> {
-        let skip = 0;
-        let hasMore = true;
+    checkExpiredAllPaginated(
+        pageSize: number = 100,
+        email?: string,
+        skip: number = 0,
+        totalData: number = 0,
+    ): Observable<string> {
+        return this.findWithPagination(skip, pageSize, email).pipe(
+            switchMap((rentals) => {
+                if (rentals.length === 0) {
+                    return of(totalData + ' data has been checked');
+                }
 
-        while (hasMore) {
-            return this.findWithPagination(skip, pageSize, email).pipe(
-                switchMap((rentals) => {
-                    if (rentals.length < pageSize) {
-                        hasMore = false;
-                    } else {
-                        skip += pageSize;
+                const checks = {
+                    rentalExpired: [],
+                    workspaceEmail: [],
+                    rentalNearExpired: [],
+                    rentalInfo: [],
+                };
+
+                const rentalChecks: CheckExpiredAndUpdateStatus[] = [];
+
+                rentals.forEach((rentalCheck) => {
+                    const rentalCheckResult = this.checkExpiredAndUpdateStatus(rentalCheck, email);
+
+                    rentalChecks.push(rentalCheckResult);
+                    const { rental, workspaceEmail, type, numberDayBeforeExpired } = rentalCheckResult;
+
+                    if (workspaceEmail) {
+                        checks.workspaceEmail.push(workspaceEmail);
                     }
 
-                    const checks = {
-                        rentalExpired: [],
-                        workspaceEmail: [],
-                        rentalNearExpired: [],
-                        rentalInfo: [],
-                    };
-
-                    const rentalChecks: CheckExpiredAndUpdateStatus[] = [];
-
-                    rentals.forEach((rentalCheck) => {
-                        const rentalCheckResult = this.checkExpiredAndUpdateStatus(rentalCheck, email);
-
-                        rentalChecks.push(rentalCheckResult);
-                        const { rental, workspaceEmail, type, numberDayBeforeExpired } = rentalCheckResult;
-
-                        if (workspaceEmail) {
-                            checks.workspaceEmail.push(workspaceEmail);
-                        }
-
-                        if (type === 'rentalNearExpired') {
-                            checks.rentalNearExpired.push(rental);
-                        }
-
-                        if (type === 'rentalExpired') {
-                            checks.rentalExpired.push(rental);
-                        }
-
-                        if (type === 'infoRental') {
-                            checks.rentalInfo.push({
-                                rental,
-                                numberDayBeforeExpired,
-                            });
-                        }
-                    });
-
-                    const tasks = [
-                        this.saveAll(checks.rentalExpired),
-                        this.workspaceEmailService.saveAll(checks.workspaceEmail),
-                    ];
-
-                    // const isSendMail = Boolean(this.configService.get<boolean>('IS_SEND_MAIL'));
-                    const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
-
-                    // if (isSendMail && !email) {
-                    //     tasks.push(this.sendMailExpiredWithForJoin(checks.rentalExpired));
-                    //     tasks.push(this.sendMailWarningNearExpiredMany(checks.rentalNearExpired));
-                    // }
-
-                    if (isPingToAdminBot) {
-                        tasks.push(this.pingToAdminBotMany(rentalChecks.filter((rentalCheck) => rentalCheck.isSend)));
+                    if (type === 'rentalNearExpired') {
+                        checks.rentalNearExpired.push(rental);
                     }
 
-                    return forkJoin(tasks).pipe(
-                        switchMap(() => {
-                            return of('Cron checkExpiredAllPaginated success');
-                        }),
-                    );
-                }),
-            );
-        }
+                    if (type === 'rentalExpired') {
+                        checks.rentalExpired.push(rental);
+                    }
 
-        return of('Cron checkExpiredAllPaginated success');
+                    if (type === 'infoRental') {
+                        checks.rentalInfo.push({
+                            rental,
+                            numberDayBeforeExpired,
+                        });
+                    }
+                });
+
+                const tasks = [
+                    this.saveAll(checks.rentalExpired),
+                    this.workspaceEmailService.saveAll(checks.workspaceEmail),
+                ];
+
+                const isPingToAdminBot = Boolean(this.configService.get<boolean>('IS_PING_TELEGRAM'));
+
+                if (isPingToAdminBot) {
+                    tasks.push(this.pingToAdminBotMany(rentalChecks.filter((rentalCheck) => rentalCheck.isSend)));
+                }
+
+                return forkJoin(tasks).pipe(
+                    switchMap(() => {
+                        return this.checkExpiredAllPaginated(
+                            pageSize,
+                            email,
+                            skip + pageSize,
+                            totalData + rentals.length,
+                        );
+                    }),
+                );
+            }),
+        );
     }
 
     private sendMailWarningNearExpired(rental: Rental): Observable<Rental> {
@@ -1166,7 +1204,10 @@ export class RentalService
                   ' - ' +
                   rental.workspaceEmail.workspace.adminAccount.account.name +
                   '</b>\n'
-                : '');
+                : '') +
+            '- Ghi chú: <b>' +
+            rental.note +
+            '</b>';
 
         return from(
             this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
