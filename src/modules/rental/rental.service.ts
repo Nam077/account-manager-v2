@@ -42,7 +42,6 @@ import { CustomerService } from '../customer/customer.service';
 import { Customer } from '../customer/entities/customer.entity';
 import { EmailService } from '../email/email.service';
 import { Email } from '../email/entities/email.entity';
-import { MailService } from '../mail/mail.service';
 import { RentalRenewService } from '../rental-renew/rental-renew.service';
 import { Workspace } from '../workspace/entities/workspace.entity';
 import { WorkspaceService } from '../workspace/workspace.service';
@@ -88,7 +87,7 @@ export class RentalService
         private readonly caslAbilityFactory: CaslAbilityFactory,
         private readonly i18nService: I18nService<I18nTranslations>,
         private readonly configService: ConfigService,
-        private readonly mailService: MailService,
+        // private readonly mailService: MailService,
         @InjectBot() private bot: Bot<Context>,
     ) {}
 
