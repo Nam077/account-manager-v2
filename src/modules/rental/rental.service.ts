@@ -1218,7 +1218,7 @@ export class RentalService
             '- Ghi chú: <b>' +
             rental.note +
             '</b>' +
-            '\n- Số điện thoại: ' +
+            '\n- Số điện thoại: <b>' +
             rental.customer.phone +
             '</b>' +
             '\n- Link mạng xã hội: ' +
