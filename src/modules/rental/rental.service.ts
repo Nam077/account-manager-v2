@@ -26,6 +26,7 @@ import {
     CrudService,
     CustomCondition,
     daysBetweenNow,
+    extractLinksWithHost,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
     PaginatedData,
@@ -1174,6 +1175,14 @@ export class RentalService
         const { type, rental, numberDayBeforeExpired } = checkExpiredAndUpdateStatus;
         let typeMessage = '';
 
+        const getSocialLinkCustomer = (rental: Rental) => {
+            const host = extractLinksWithHost(rental.customer.socialLinks);
+
+            return host.map((link) => {
+                return `<a href="${link.url}">${link.host}</a>`;
+            });
+        };
+
         switch (type) {
             case 'rentalNearExpired':
                 typeMessage = '🔔 Sắp hết hạn';
@@ -1231,7 +1240,12 @@ export class RentalService
                 : '') +
             '- Ghi chú: <b>' +
             rental.note +
-            '</b>';
+            '</b>' +
+            '\n- Số điện thoại: <b>' +
+            rental.customer.phone +
+            '</b>' +
+            '\n- Link mạng xã hội: ' +
+            getSocialLinkCustomer(rental).join(', ');
 
         return from(
             this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
