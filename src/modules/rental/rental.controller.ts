@@ -26,6 +26,11 @@ export class RentalController {
         return this.rentalService.findAll(user, findAllDto);
     }
 
+    @Get('info')
+    getInfo(@GetCurrentUser() user: UserAuth) {
+        return this.rentalService.getInfo(user);
+    }
+
     @Get(':id')
     findOne(@GetCurrentUser() user: UserAuth, @Param('id') id: string) {
         return this.rentalService.findOne(user, id);

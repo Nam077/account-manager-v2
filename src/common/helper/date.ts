@@ -96,3 +96,8 @@ export const daysBetweenNow = (date: Date): number => {
 export const checkDateRenew = (endDate: Date, startDate: Date): boolean => {
     return moment(startDate).isAfter(endDate) || moment(startDate).isSame(endDate);
 };
+
+// lấy ngày hiện tại sau đó cộng thêm số ngày truyền vào trả về dạng Date
+export const addDaysNow = (days: number): Date => {
+    return moment(new Date()).add(days, 'days').toDate();
+};

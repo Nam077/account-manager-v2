@@ -12,9 +12,10 @@ import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Bot, Context } from 'grammy';
+import * as moment from 'moment';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { catchError, forkJoin, from, map, Observable, of, switchMap, tap } from 'rxjs';
-import { DeepPartial, Repository } from 'typeorm';
+import { Between, DeepPartial, Repository } from 'typeorm';
 
 import {
     ActionCasl,
@@ -23,6 +24,7 @@ import {
     checkDaysDifference,
     CheckForForkJoin,
     CrudService,
+    CustomCondition,
     daysBetweenNow,
     FindOneOptionsCustom,
     findWithPaginationAndSearch,
@@ -465,6 +467,26 @@ export class RentalService
         ];
 
         const relations: string[] = ['account', 'customer', 'email', 'workspaceEmail', 'rentalType'];
+        const conditions: CustomCondition[] = [];
+
+        if (findAllDto.status && findAllDto.status !== 'near_expired') {
+            conditions.push({
+                field: 'status',
+                value: findAllDto.status,
+                operator: 'EQUAL',
+            });
+        }
+
+        if (findAllDto.status === 'near_expired') {
+            const startDate = moment().startOf('day').toDate();
+            const endDate = moment().add(this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'), 'days').toDate();
+
+            conditions.push({
+                field: 'endDate',
+                value: { start: startDate, end: endDate },
+                operator: 'BETWEEN',
+            });
+        }
 
         return findWithPaginationAndSearch<Rental>(
             this.rentalRepository,
@@ -473,6 +495,7 @@ export class RentalService
             isWithDeleted,
             relations,
             searchFields,
+            conditions,
         );
     }
 
@@ -1228,5 +1251,53 @@ export class RentalService
         this.checkExpiredAllPaginated().subscribe((result) => {
             console.log(result);
         });
+    }
+
+    getInfoHandle() {
+        const task: Observable<number>[] = [];
+
+        task.push(from(this.rentalRepository.count({ where: { status: RentalStatus.EXPIRED } })));
+        task.push(from(this.rentalRepository.count({ where: { status: RentalStatus.ACTIVE } })));
+        // đưa ra số lượng trong khoảng 2 ngày trước hết hạn
+        task.push(
+            from(
+                this.rentalRepository.count({
+                    where: {
+                        status: RentalStatus.ACTIVE,
+                        endDate: Between(
+                            moment().startOf('day').toDate(), // Start of today
+                            moment()
+                                .add(this.configService.get<number>('RENTAL_NEAR_EXPIRED_DAYS'), 'days')
+                                .endOf('day')
+                                .toDate(), // Use .toDate() to get a Date object
+                        ),
+                    },
+                }),
+            ),
+        );
+
+        return forkJoin(task).pipe(
+            map(([countExpired, countActive, countNearExpired]) => {
+                return {
+                    countExpired,
+                    countActive,
+                    countNearExpired,
+                };
+            }),
+        );
+    }
+
+    getInfo(user: UserAuth): Observable<{ countExpired: number; countActive: number }> {
+        const ability = this.caslAbilityFactory.createForUser(user);
+
+        if (ability.cannot(ActionCasl.Read, Rental)) {
+            throw new ForbiddenException(
+                this.i18nService.translate('message.Authentication.Forbidden', {
+                    lang: I18nContext.current().lang,
+                }),
+            );
+        }
+
+        return this.getInfoHandle();
     }
 }

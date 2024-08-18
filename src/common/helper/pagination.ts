@@ -25,7 +25,7 @@ export interface SearchField {
 export interface CustomCondition {
     field: string;
     value: any;
-    operator?: 'EQUAL' | 'LIKE' | 'LT' | 'GT';
+    operator?: 'EQUAL' | 'LIKE' | 'LT' | 'GT' | 'BETWEEN';
 }
 
 const applyAdditionalConditions = <T>(queryBuilder: SelectQueryBuilder<T>, conditions: CustomCondition[]): void => {
@@ -42,6 +42,11 @@ const applyAdditionalConditions = <T>(queryBuilder: SelectQueryBuilder<T>, condi
                 break;
             case 'GT':
                 queryBuilder.andWhere(`${conditionString} > :${paramName}`, { [paramName]: value });
+                break;
+            case 'BETWEEN':
+                const { start, end } = value as { start: any; end: any };
+
+                queryBuilder.andWhere(`${conditionString} BETWEEN :start AND :end`, { start, end });
                 break;
             default:
                 queryBuilder.andWhere(`${conditionString} = :${paramName}`, { [paramName]: value });
