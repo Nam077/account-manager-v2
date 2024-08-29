@@ -1032,10 +1032,14 @@ export class RentalService
         skip: number = 0,
         totalData: number = 0,
     ): Observable<string> {
+        console.log(`Starting pagination check with skip: ${skip}, pageSize: ${pageSize}`);
+
         return this.findWithPagination(skip, pageSize, email).pipe(
             switchMap((rentals) => {
                 if (rentals.length === 0) {
-                    return of(totalData + ' data has been checked');
+                    console.log(`No more rentals to process. Total rentals checked: ${totalData}`);
+
+                    return of(`${totalData} data has been checked`);
                 }
 
                 const checks = {
@@ -1051,6 +1055,7 @@ export class RentalService
                     const rentalCheckResult = this.checkExpiredAndUpdateStatus(rentalCheck, email);
 
                     rentalChecks.push(rentalCheckResult);
+
                     const { rental, workspaceEmail, type, numberDayBeforeExpired } = rentalCheckResult;
 
                     if (workspaceEmail) {
@@ -1086,14 +1091,24 @@ export class RentalService
 
                 return forkJoin(tasks).pipe(
                     switchMap(() => {
-                        return this.checkExpiredAllPaginated(
-                            pageSize,
-                            email,
-                            skip + pageSize,
-                            totalData + rentals.length,
-                        );
+                        const newTotalData = totalData + rentals.length;
+
+                        console.log(`Processed ${rentals.length} rentals. Total checked so far: ${newTotalData}`);
+
+                        // Recursively call the method to process the next batch
+                        return this.checkExpiredAllPaginated(pageSize, email, skip + pageSize, newTotalData);
+                    }),
+                    catchError((error) => {
+                        console.error('Error during pagination check:', error);
+
+                        return of(`Error occurred after checking ${totalData} data. Check logs for details.`);
                     }),
                 );
+            }),
+            catchError((error) => {
+                console.error('Error in findWithPagination:', error);
+
+                return of(`Error occurred during data retrieval. No data checked.`);
             }),
         );
     }
@@ -1160,6 +1175,10 @@ export class RentalService
     }
 
     private pingToAdminBotMany(rentals: CheckExpiredAndUpdateStatus[]): Observable<any[]> {
+        if (rentals.length === 0) {
+            return of([]);
+        }
+
         const tasks = rentals.map((rental) => this.pingToAdminBot(rental));
 
         return forkJoin(tasks).pipe(
@@ -1245,7 +1264,12 @@ export class RentalService
             rental.customer.phone +
             '</b>' +
             '\n- Link mạng xã hội: ' +
-            getSocialLinkCustomer(rental).join(', ');
+            getSocialLinkCustomer(rental).join(', ') +
+            '\n- Link xem chi tiết: <a href="' +
+            this.configService.get<string>('FRONTEND_URL') +
+            '/rental/' +
+            rental.id +
+            '">Xem chi tiết</a>';
 
         return from(
             this.bot.api.sendMessage(this.configService.get('TELEGRAM_ADMIN_CHAT_ID'), markDown, {
