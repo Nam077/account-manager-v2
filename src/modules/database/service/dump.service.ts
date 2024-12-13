@@ -1,9 +1,9 @@
-import { InjectBot } from '@grammyjs/nestjs';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
-import { Bot, Context } from 'grammy';
+import { Bot, Context, InputFile } from 'grammy';
+import { InjectBot } from '@grammyjs/nestjs';
 import mysqldump from 'mysqldump';
 import * as path from 'path';
 
@@ -65,22 +65,27 @@ export class DatabaseDumpService implements OnModuleInit {
     async sendDumpToAdminBot(dumpFileName: string) {
         try {
             const adminChatId = this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID');
-
+            
             if (!adminChatId) {
                 throw new Error('TELEGRAM_ADMIN_CHAT_ID is not configured');
+            }
+
+            if (!fs.existsSync(dumpFileName)) {
+                throw new Error(`Dump file not found at path: ${dumpFileName}`);
             }
 
             const date = new Date();
             const caption = `Database backup from ${date.toISOString()}`;
 
-            // Send the file directly as the second parameter
-            await this.bot.api.sendDocument(adminChatId, dumpFileName, {
-                caption: caption,
+            // Send the file using InputFile from grammy
+            await this.bot.api.sendDocument(adminChatId, new InputFile(dumpFileName), {
+                caption: caption
             });
 
             console.log(`Database dump sent successfully to admin (Chat ID: ${adminChatId})`);
         } catch (error) {
             console.error('Error sending database dump to admin:', error);
+            throw error; // Re-throw to handle it in the calling function
         }
     }
 
