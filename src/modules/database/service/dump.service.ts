@@ -4,10 +4,11 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
 import mysqldump from 'mysqldump';
 import * as path from 'path';
+import { Bot, Context } from 'grammy';
 
 @Injectable()
 export class DatabaseDumpService implements OnModuleInit {
-    constructor(private readonly configService: ConfigService) {}
+    constructor(private readonly configService: ConfigService, @InjectBot() private bot: Bot<Context>,) {}
 
     private generateFileName(): string {
         const date = new Date();
@@ -48,6 +49,26 @@ export class DatabaseDumpService implements OnModuleInit {
     async handleCron() {
         console.log('Executing scheduled database dump');
         await this.dumpDatabase();
+    }
+
+    async sendDumpToAdminBot() {
+        try {
+            const dumpFileName = this.generateFileName();
+            const adminChatId = this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID');
+            
+            if (!adminChatId) {
+                throw new Error('TELEGRAM_ADMIN_CHAT_ID is not configured');
+            }
+
+            // Send the file to admin
+            await this.bot.api.sendDocument(adminChatId, {
+                source: dumpFileName,
+            });
+
+            console.log(`Database dump sent successfully to admin (Chat ID: ${adminChatId})`);
+        } catch (error) {
+            console.error('Error sending database dump to admin:', error);
+        }
     }
 
     async onModuleInit() {
