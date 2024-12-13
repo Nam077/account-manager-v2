@@ -1,14 +1,18 @@
+import { InjectBot } from '@grammyjs/nestjs';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
+import { Bot, Context } from 'grammy';
 import mysqldump from 'mysqldump';
 import * as path from 'path';
-import { Bot, Context } from 'grammy';
-import { InjectBot } from '@grammyjs/nestjs';
+
 @Injectable()
 export class DatabaseDumpService implements OnModuleInit {
-    constructor(private readonly configService: ConfigService, @InjectBot() private bot: Bot<Context>,) {}
+    constructor(
+        private readonly configService: ConfigService,
+        @InjectBot() private bot: Bot<Context>,
+    ) {}
 
     private generateFileName(): string {
         const date = new Date();
@@ -41,6 +45,7 @@ export class DatabaseDumpService implements OnModuleInit {
             });
 
             console.log(`Database schema dumped to ${dumpFileName}`);
+
             return dumpFileName;
         } catch (error) {
             console.error('Error dumping database schema:', error);
@@ -50,21 +55,27 @@ export class DatabaseDumpService implements OnModuleInit {
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleCron() {
         console.log('Executing scheduled database dump');
-       const dumpFileName = await this.dumpDatabase();
-       await this.sendDumpToAdminBot(dumpFileName);
+        const dumpFileName = await this.dumpDatabase();
+
+        if (dumpFileName) {
+            await this.sendDumpToAdminBot(dumpFileName);
+        }
     }
 
     async sendDumpToAdminBot(dumpFileName: string) {
         try {
             const adminChatId = this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID');
-            
+
             if (!adminChatId) {
                 throw new Error('TELEGRAM_ADMIN_CHAT_ID is not configured');
             }
 
-            // Send the file to admin
-            await this.bot.api.sendDocument(adminChatId, {
-                source: dumpFileName,
+            const date = new Date();
+            const caption = `Database backup from ${date.toISOString()}`;
+
+            // Send the file directly as the second parameter
+            await this.bot.api.sendDocument(adminChatId, dumpFileName, {
+                caption: caption,
             });
 
             console.log(`Database dump sent successfully to admin (Chat ID: ${adminChatId})`);
@@ -76,7 +87,9 @@ export class DatabaseDumpService implements OnModuleInit {
     async onModuleInit() {
         // Run the dump on startup
         const dumpFileName = await this.dumpDatabase();
-        await this.sendDumpToAdminBot(dumpFileName);
-        
+
+        if (dumpFileName) {
+            await this.sendDumpToAdminBot(dumpFileName);
+        }
     }
 }
