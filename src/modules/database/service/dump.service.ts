@@ -26,7 +26,7 @@ export class DatabaseDumpService implements OnModuleInit {
         return path.join(folderPath, fileName);
     }
 
-    async dumpDatabase(): Promise<void> {
+    async dumpDatabase(): Promise<string> {
         const dumpFileName = this.generateFileName();
 
         try {
@@ -39,7 +39,9 @@ export class DatabaseDumpService implements OnModuleInit {
                 },
                 dumpToFile: dumpFileName,
             });
-            console.log(`Database schema dumped successfully to ${dumpFileName}`);
+
+            console.log(`Database schema dumped to ${dumpFileName}`);
+            return dumpFileName;
         } catch (error) {
             console.error('Error dumping database schema:', error);
         }
@@ -48,12 +50,12 @@ export class DatabaseDumpService implements OnModuleInit {
     @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
     async handleCron() {
         console.log('Executing scheduled database dump');
-        await this.dumpDatabase();
+       const dumpFileName = await this.dumpDatabase();
+       await this.sendDumpToAdminBot(dumpFileName);
     }
 
-    async sendDumpToAdminBot() {
+    async sendDumpToAdminBot(dumpFileName: string) {
         try {
-            const dumpFileName = this.generateFileName();
             const adminChatId = this.configService.get<string>('TELEGRAM_ADMIN_CHAT_ID');
             
             if (!adminChatId) {
@@ -73,6 +75,8 @@ export class DatabaseDumpService implements OnModuleInit {
 
     async onModuleInit() {
         // Run the dump on startup
-        await this.dumpDatabase();
+        const dumpFileName = await this.dumpDatabase();
+        await this.sendDumpToAdminBot(dumpFileName);
+        
     }
 }
