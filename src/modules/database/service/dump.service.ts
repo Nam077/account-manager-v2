@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import mysqldump from 'mysqldump';
 import * as path from 'path';
 import { Bot, Context } from 'grammy';
-
+import { InjectBot } from '@grammyjs/nestjs';
 @Injectable()
 export class DatabaseDumpService implements OnModuleInit {
     constructor(private readonly configService: ConfigService, @InjectBot() private bot: Bot<Context>,) {}
